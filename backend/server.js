@@ -8,14 +8,10 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "DulceInspiracion2026";
 
-// ── CORS — permite cualquier origen (Netlify, local, etc.) ──
 app.use(cors({
-  origin: "*",
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"]
+  origin: process.env.FRONTEND_URL || "*",
+  credentials: true
 }));
-// Responder a preflight OPTIONS automáticamente
-app.options("*", cors());
 app.use(express.json({ limit: "20mb" }));
 
 // ── CONEXIÓN POSTGRESQL (Railway / Render) ──────────────────────
@@ -42,7 +38,10 @@ async function initDB() {
   const client = await pool.connect();
   try {
     await client.query(`
-      CREATE TABLE IF NOT EXISTS usuarios (
+      -- Add stock column to existing installations
+    ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;
+
+    CREATE TABLE IF NOT EXISTS usuarios (
         id             SERIAL PRIMARY KEY,
         nombre         VARCHAR(100) NOT NULL,
         email          VARCHAR(200) NOT NULL UNIQUE,
@@ -57,6 +56,7 @@ async function initDB() {
         descripcion    TEXT NOT NULL,
         precio         DECIMAL(10,2) NOT NULL,
         imagen         TEXT NULL,
+        stock          INT NOT NULL DEFAULT 0,
         estado         VARCHAR(20) NOT NULL DEFAULT 'activo'
                        CHECK (estado IN ('activo','inactivo')),
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
@@ -102,13 +102,13 @@ async function initDB() {
     const prodCheck = await client.query("SELECT COUNT(*) FROM productos");
     if (parseInt(prodCheck.rows[0].count) === 0) {
       await client.query(`
-        INSERT INTO productos (nombre, descripcion, precio, estado) VALUES
-        ('Caja de Bombones Premium', 'Deliciosos bombones de chocolate belga con relleno de trufa y caramelo. Presentación elegante en caja de 12 unidades.', 850, 'activo'),
-        ('Paletas Artesanales x6', 'Paletas de frutas tropicales hechas a mano: mango, tamarindo, parcha y más. Perfectas para el calor dominicano.', 320, 'activo'),
-        ('Dulces de Leche Surtidos', 'Variedad de dulces de leche tradicionales: con coco, con nuez y clásicos. Bolsa de 500g llena de sabor casero.', 450, 'activo'),
-        ('Torta de Chocolate Premium', 'Torta húmeda de chocolate con ganache y decoración artesanal. Tamaño mediano, perfecta para 8-10 personas.', 1200, 'activo'),
-        ('Macarons Franceses x12', 'Macarons importados con rellenos de vainilla, frambuesa y pistache. La elegancia europea en tu mesa.', 750, 'activo'),
-        ('Kit Candy Bar Fiesta', 'Todo para tu candy bar: gomitas, masmelos, chocolatinas, piruletas y más. Suficiente para 30 personas.', 2200, 'activo')
+        INSERT INTO productos (nombre, descripcion, precio, stock, estado) VALUES
+        ('Caja de Bombones Premium', 'Deliciosos bombones de chocolate belga con relleno de trufa y caramelo. Presentación elegante en caja de 12 unidades.', 850, 20, 'activo'),
+        ('Paletas Artesanales x6', 'Paletas de frutas tropicales hechas a mano: mango, tamarindo, parcha y más. Perfectas para el calor dominicano.', 320, 30, 'activo'),
+        ('Dulces de Leche Surtidos', 'Variedad de dulces de leche tradicionales: con coco, con nuez y clásicos. Bolsa de 500g llena de sabor casero.', 450, 25, 'activo'),
+        ('Torta de Chocolate Premium', 'Torta húmeda de chocolate con ganache y decoración artesanal. Tamaño mediano, perfecta para 8-10 personas.', 1200, 10, 'activo'),
+        ('Macarons Franceses x12', 'Macarons importados con rellenos de vainilla, frambuesa y pistache. La elegancia europea en tu mesa.', 750, 15, 'activo'),
+        ('Kit Candy Bar Fiesta', 'Todo para tu candy bar: gomitas, masmelos, chocolatinas, piruletas y más. Suficiente para 30 personas.', 2200, 8, 'activo')
       `);
       console.log("✅ Productos de ejemplo insertados");
     }
@@ -182,9 +182,9 @@ app.post("/api/admin/productos", authMiddleware, async (req, res) => {
   const { nombre, descripcion, precio, imagen, estado } = req.body;
   try {
     const result = await pool.query(
-      `INSERT INTO productos (nombre, descripcion, precio, imagen, estado, fecha_creacion)
-       VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING *`,
-      [nombre, descripcion, precio, imagen, estado || "activo"]
+      `INSERT INTO productos (nombre, descripcion, precio, imagen, stock, estado, fecha_creacion)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *`,
+      [nombre, descripcion, precio, imagen, req.body.stock || 0, estado || "activo"]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -196,9 +196,9 @@ app.put("/api/admin/productos/:id", authMiddleware, async (req, res) => {
   const { nombre, descripcion, precio, imagen, estado } = req.body;
   try {
     await pool.query(
-      `UPDATE productos SET nombre=$1, descripcion=$2, precio=$3, imagen=$4, estado=$5
-       WHERE id=$6`,
-      [nombre, descripcion, precio, imagen, estado, req.params.id]
+      `UPDATE productos SET nombre=$1, descripcion=$2, precio=$3, imagen=$4, estado=$5, stock=$6
+       WHERE id=$7`,
+      [nombre, descripcion, precio, imagen, estado, req.body.stock !== undefined ? req.body.stock : 0, req.params.id]
     );
     res.json({ ok: true });
   } catch (err) {
@@ -221,6 +221,30 @@ app.post("/api/pedidos", async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
+
+    // ── Verificar y rebajar stock de cada producto ──
+    for (const item of items) {
+      if (!item.id || typeof item.id !== "number") continue; // skip combos/non-db items
+      const prod = await client.query(
+        "SELECT stock, nombre FROM productos WHERE id=$1 FOR UPDATE",
+        [item.id]
+      );
+      if (!prod.rows.length) continue;
+      const { stock, nombre } = prod.rows[0];
+      if (stock !== null && stock < item.cantidad) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: `Stock insuficiente para "${nombre}". Disponible: ${stock}, solicitado: ${item.cantidad}`
+        });
+      }
+      if (stock !== null) {
+        await client.query(
+          "UPDATE productos SET stock = stock - $1 WHERE id=$2",
+          [item.cantidad, item.id]
+        );
+      }
+    }
+
     const ped = await client.query(
       `INSERT INTO pedidos (nombre, apellido, telefono, ubicacion, total, metodo_pago, estado, fecha_creacion)
        VALUES ($1,$2,$3,$4,$5,$6,'pendiente',NOW()) RETURNING id`,
@@ -231,7 +255,7 @@ app.post("/api/pedidos", async (req, res) => {
       await client.query(
         `INSERT INTO detalle_pedido (pedido_id, producto_id, nombre_producto, precio, cantidad)
          VALUES ($1,$2,$3,$4,$5)`,
-        [pedidoId, item.id, item.nombre, item.precio, item.cantidad]
+        [pedidoId, item.id || null, item.nombre, item.precio, item.cantidad]
       );
     }
     await client.query("COMMIT");
@@ -265,14 +289,58 @@ app.get("/api/admin/pedidos", authMiddleware, async (req, res) => {
 });
 
 app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
+  const client = await pool.connect();
   try {
-    await pool.query(
-      "UPDATE pedidos SET estado=$1 WHERE id=$2",
-      [req.body.estado, req.params.id]
+    await client.query("BEGIN");
+
+    // Get current state before updating
+    const current = await client.query(
+      "SELECT estado FROM pedidos WHERE id=$1",
+      [req.params.id]
     );
+    const estadoAnterior = current.rows[0]?.estado;
+    const estadoNuevo    = req.body.estado;
+
+    // ── If cancelling: restore stock ──
+    if (estadoNuevo === "cancelado" && estadoAnterior !== "cancelado") {
+      const detalles = await client.query(
+        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL",
+        [req.params.id]
+      );
+      for (const row of detalles.rows) {
+        await client.query(
+          "UPDATE productos SET stock = stock + $1 WHERE id=$2",
+          [row.cantidad, row.producto_id]
+        );
+      }
+    }
+
+    // ── If un-cancelling (e.g. back to pendiente): deduct stock again ──
+    if (estadoAnterior === "cancelado" && estadoNuevo !== "cancelado") {
+      const detalles = await client.query(
+        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL",
+        [req.params.id]
+      );
+      for (const row of detalles.rows) {
+        await client.query(
+          "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id=$2",
+          [row.cantidad, row.producto_id]
+        );
+      }
+    }
+
+    await client.query(
+      "UPDATE pedidos SET estado=$1 WHERE id=$2",
+      [estadoNuevo, req.params.id]
+    );
+
+    await client.query("COMMIT");
     res.json({ ok: true });
   } catch (err) {
+    await client.query("ROLLBACK");
     res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
   }
 });
 
@@ -286,40 +354,4 @@ connectDB().then(initDB).then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   });
-});
-
-// ── USUARIOS ADMIN ──────────────────────────────────────────────
-app.get("/api/admin/usuarios", authMiddleware, async (req, res) => {
-  try {
-    const result = await pool.query(
-      "SELECT id, nombre, email, activo, fecha_creacion FROM usuarios ORDER BY fecha_creacion ASC"
-    );
-    res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
-  const { nombre, email, password } = req.body;
-  if (!nombre || !email || !password) return res.status(400).json({ error: "Todos los campos son requeridos" });
-  try {
-    const hash = await bcrypt.hash(password, 10);
-    const result = await pool.query(
-      "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3) RETURNING id, nombre, email",
-      [nombre, email, hash]
-    );
-    res.status(201).json(result.rows[0]);
-  } catch (err) {
-    if (err.code === "23505") return res.status(400).json({ error: "Ese email ya está registrado" });
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.delete("/api/admin/usuarios/:id", authMiddleware, async (req, res) => {
-  try {
-    // Prevent deleting yourself
-    if (parseInt(req.params.id) === req.user.id)
-      return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
-    await pool.query("DELETE FROM usuarios WHERE id=$1", [req.params.id]);
-    res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: err.message }); }
 });
