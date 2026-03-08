@@ -287,3 +287,39 @@ connectDB().then(initDB).then(() => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   });
 });
+
+// ── USUARIOS ADMIN ──────────────────────────────────────────────
+app.get("/api/admin/usuarios", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(
+      "SELECT id, nombre, email, activo, fecha_creacion FROM usuarios ORDER BY fecha_creacion ASC"
+    );
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
+  const { nombre, email, password } = req.body;
+  if (!nombre || !email || !password) return res.status(400).json({ error: "Todos los campos son requeridos" });
+  try {
+    const hash = await bcrypt.hash(password, 10);
+    const result = await pool.query(
+      "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3) RETURNING id, nombre, email",
+      [nombre, email, hash]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (err) {
+    if (err.code === "23505") return res.status(400).json({ error: "Ese email ya está registrado" });
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete("/api/admin/usuarios/:id", authMiddleware, async (req, res) => {
+  try {
+    // Prevent deleting yourself
+    if (parseInt(req.params.id) === req.user.id)
+      return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
+    await pool.query("DELETE FROM usuarios WHERE id=$1", [req.params.id]);
+    res.json({ ok: true });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
