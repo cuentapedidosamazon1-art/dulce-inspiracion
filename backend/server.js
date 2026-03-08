@@ -8,10 +8,14 @@ const app  = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || "DulceInspiracion2026";
 
+// ── CORS — permite cualquier origen (Netlify, local, etc.) ──
 app.use(cors({
-  origin: process.env.FRONTEND_URL || "*",
-  credentials: true
+  origin: "*",
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
+// Responder a preflight OPTIONS automáticamente
+app.options("*", cors());
 app.use(express.json({ limit: "20mb" }));
 
 // ── CONEXIÓN POSTGRESQL (Railway / Render) ──────────────────────
