@@ -350,6 +350,19 @@ app.get("/api/health", (req, res) => {
 });
 
 // ── INICIAR ─────────────────────────────────────────────────────
+
+// ── KEEP-ALIVE — evita que Render se duerma (plan gratis) ──────
+// Hace un ping a sí mismo cada 10 minutos
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+setInterval(async () => {
+  try {
+    const https = require('https');
+    const http  = require('http');
+    const lib   = SELF_URL.startsWith('https') ? https : http;
+    lib.get(SELF_URL + '/api/health', () => {}).on('error', () => {});
+  } catch(e) { /* silent */ }
+}, 10 * 60 * 1000); // cada 10 minutos
+
 connectDB().then(initDB).then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
