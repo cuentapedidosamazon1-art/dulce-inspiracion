@@ -222,6 +222,7 @@ nav.scrolled { box-shadow: 0 4px 30px rgba(26,10,14,.1); }
 .hero-desc {
   font-size:1.05rem; color:var(--muted);
   line-height:1.75; margin-bottom:36px; max-width:440px;
+  text-align:justify;
 }
 .hero-stats {
   display:flex; gap:32px; margin-top:48px;
@@ -424,7 +425,7 @@ nav.scrolled { box-shadow: 0 4px 30px rgba(26,10,14,.1); }
   font-size:1.8rem; margin-bottom:22px;
 }
 .about-card h3 { font-family:var(--ff-head); font-size:1.3rem; font-weight:700; margin-bottom:12px; }
-.about-card p { color:var(--muted); line-height:1.75; font-size:.92rem; }
+.about-card p { color:var(--muted); line-height:1.75; font-size:.92rem; text-align:justify; }
 
 /* ═══ TESTIMONIOS ════════════════════════════════════════════ */
 #testimonios {
@@ -482,7 +483,7 @@ footer {
   display:flex; align-items:center; justify-content:center; font-size:1.2rem;
 }
 .footer-brand-name { font-family:var(--ff-head); font-size:1.1rem; color:#fff; }
-.footer-desc { color:#9b7080; font-size:.83rem; line-height:1.7; max-width:260px; }
+.footer-desc { color:#9b7080; font-size:.83rem; line-height:1.7; max-width:260px; text-align:justify; }
 .footer-col h4 { color:var(--gold2); font-weight:600; font-size:.82rem; letter-spacing:.1em; text-transform:uppercase; margin-bottom:18px; }
 .footer-col a, .footer-col p {
   display:block; color:#6e5060; font-size:.84rem;
@@ -638,8 +639,9 @@ footer {
 #admin-view { display:none; min-height:100vh; background:var(--cream); }
 .admin-nav {
   background:var(--dark);
-  position:sticky; top:0; z-index:100;
+  position:fixed; top:0; left:0; right:0; z-index:500;
   border-bottom:1px solid rgba(255,255,255,.06);
+  box-shadow: 0 4px 24px rgba(0,0,0,.3);
 }
 .admin-nav-inner {
   max-width:1280px; margin:0 auto;
@@ -661,7 +663,7 @@ footer {
   padding:8px 14px; border-radius:10px; font-family:var(--ff-body); font-size:.84rem;
 }
 .btn-logout:hover { background:rgba(239,68,68,.1); }
-.admin-content { max-width:1280px; margin:0 auto; padding:36px 32px; }
+.admin-content { max-width:1280px; margin:0 auto; padding:36px 32px; padding-top: 100px; }
 .admin-tabs {
   display:flex; gap:4px; border-bottom:2px solid rgba(0,0,0,.08);
   margin-bottom:36px;
@@ -771,9 +773,1129 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   table { font-size:.8rem; }
   td,th { padding:10px 12px; }
 }
+
+/* ═══ SPLASH SCREEN ════════════════════════════════════════ */
+#splash {
+  position:fixed; inset:0; z-index:9999;
+  background: linear-gradient(135deg, #1a0a0e 0%, #2d1020 50%, #1a0a0e 100%);
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  transition: opacity .6s ease, visibility .6s ease;
+}
+#splash.hidden { opacity:0; visibility:hidden; pointer-events:none; }
+.splash-logo {
+  font-size:6rem; animation: splashBounce 1s ease infinite alternate;
+  filter: drop-shadow(0 0 40px rgba(232,83,106,.6));
+}
+.splash-title {
+  font-family: var(--ff-head);
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  color:#fff; margin:16px 0 8px;
+  background: linear-gradient(135deg, #fff, var(--gold2));
+  -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.splash-sub { color: rgba(255,255,255,.5); font-size:.9rem; margin-bottom:40px; }
+.splash-bar {
+  width:200px; height:3px; background:rgba(255,255,255,.1);
+  border-radius:999px; overflow:hidden;
+}
+.splash-fill {
+  height:100%; width:0%;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  border-radius:999px;
+  animation: splashLoad 1.8s ease forwards;
+}
+@keyframes splashBounce { from{transform:translateY(0) scale(1)} to{transform:translateY(-16px) scale(1.05)} }
+@keyframes splashLoad   { from{width:0%} to{width:100%} }
+
+/* ═══ ADMIN — STATS ══════════════════════════════════════════ */
+.stats-grid {
+  display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px; margin-bottom:32px;
+}
+.stat-card {
+  background:#fff; border-radius:18px; padding:24px;
+  border:1px solid var(--border);
+  display:flex; align-items:center; gap:16px;
+  transition:box-shadow .2s;
+}
+.stat-card:hover { box-shadow:0 8px 24px rgba(26,10,14,.08); }
+.stat-icon {
+  width:52px; height:52px; border-radius:14px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.5rem; flex-shrink:0;
+}
+.stat-icon.rose   { background:rgba(192,57,75,.1); }
+.stat-icon.gold   { background:rgba(201,150,58,.1); }
+.stat-icon.green  { background:rgba(22,163,74,.1); }
+.stat-icon.blue   { background:rgba(59,130,246,.1); }
+.stat-val { font-family:var(--ff-head); font-size:1.9rem; font-weight:700; color:var(--dark); line-height:1; }
+.stat-lbl { font-size:.74rem; color:var(--muted); margin-top:4px; text-transform:uppercase; letter-spacing:.05em; }
+
+/* Chart container */
+.chart-wrap {
+  background:#fff; border-radius:20px; padding:28px;
+  border:1px solid var(--border); margin-bottom:28px;
+}
+.chart-title { font-family:var(--ff-head); font-size:1.2rem; font-weight:700; margin-bottom:20px; color:var(--dark); }
+.bar-chart { display:flex; align-items:flex-end; gap:8px; height:140px; }
+.bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:6px; }
+.bar {
+  width:100%; border-radius:8px 8px 0 0;
+  background: linear-gradient(to top, var(--rose), var(--rose2));
+  transition:height .6s cubic-bezier(.22,.68,0,1.2);
+  min-height:4px;
+}
+.bar-lbl { font-size:.65rem; color:var(--muted); text-align:center; }
+.bar-val { font-size:.7rem; font-weight:700; color:var(--rose); }
+
+/* ── Notif bell ── */
+.notif-wrap { position:relative; }
+.notif-dot {
+  position:absolute; top:-4px; right:-4px;
+  width:10px; height:10px; border-radius:50%;
+  background:var(--rose); border:2px solid var(--dark);
+  display:none;
+}
+.notif-dot.active { display:block; animation:pulse 1.5s infinite; }
+.btn-notif {
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.12);
+  color:#fff; padding:8px 14px; border-radius:10px;
+  font-family:var(--ff-body); font-size:.84rem;
+  cursor:pointer; display:flex; align-items:center; gap:6px;
+}
+.btn-notif:hover { background:rgba(255,255,255,.14); }
+
+/* Coupon admin table */
+.coupon-admin-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
+  gap:16px;
+}
+.coupon-admin-card {
+  background:#fff; border-radius:16px; padding:20px;
+  border:1px solid var(--border);
+  display:flex; flex-direction:column; gap:10px;
+}
+.coupon-code-display {
+  font-family:monospace; font-size:1.2rem; font-weight:700;
+  letter-spacing:.15em; color:var(--rose);
+  background:rgba(192,57,75,.06); padding:8px 14px;
+  border-radius:8px; text-align:center;
+}
+.coupon-meta { font-size:.78rem; color:var(--muted); }
+.coupon-meta span { color:var(--dark); font-weight:600; }
+
+/* ═══ RESPONSIVE additions ════════════════════════════════════ */
+@media(max-width:640px){
+  
+  .coupon-wrap { flex-direction:column; }
+}
+
+
+/* ═══ LOGOUT BUTTON FLOATING ══════════════════════════════ */
+#btn-logout-float {
+  position: fixed;
+  bottom: 28px;
+  right: 28px;
+  z-index: 1000;
+  display: none;
+  background: linear-gradient(135deg, #dc2626, #991b1b);
+  color: #fff;
+  border: none;
+  border-radius: 16px;
+  padding: 14px 22px;
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: .88rem;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(220,38,38,.5);
+  display: none;
+  align-items: center;
+  gap: 10px;
+  transition: transform .2s, box-shadow .2s;
+  letter-spacing: .02em;
+}
+#btn-logout-float:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 36px rgba(220,38,38,.6);
+}
+#btn-logout-float.visible { display: flex; }
+
+/* ═══ DASHBOARD ════════════════════════════════════════════ */
+.dashboard-greeting {
+  font-family: var(--ff-head);
+  font-size: clamp(1.6rem, 3vw, 2.4rem);
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+.dashboard-date {
+  color: var(--muted);
+  font-size: .88rem;
+  margin-bottom: 32px;
+}
+.dash-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.dash-card {
+  background: #fff;
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+  transition: transform .25s, box-shadow .25s;
+}
+.dash-card:hover { transform: translateY(-4px); box-shadow: var(--shadow); }
+.dash-card::after {
+  content: "";
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 3px;
+}
+.dash-card.rose::after  { background: linear-gradient(90deg, var(--rose), var(--rose2)); }
+.dash-card.gold::after  { background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+.dash-card.green::after { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.dash-card.blue::after  { background: linear-gradient(90deg, #2563eb, #60a5fa); }
+.dash-card-icon { font-size: 2rem; margin-bottom: 12px; display: block; }
+.dash-card-val {
+  font-family: var(--ff-head);
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--dark);
+  line-height: 1;
+}
+.dash-card-lbl {
+  font-size: .74rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-top: 6px;
+}
+.dash-card-trend {
+  position: absolute;
+  top: 18px; right: 18px;
+  font-size: .72rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.trend-up   { background: rgba(22,163,74,.1);  color: #15803d; }
+.trend-pend { background: rgba(251,191,36,.1); color: #b45309; }
+
+.dash-recent-title {
+  font-family: var(--ff-head);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+  color: var(--dark);
+}
+.dash-recent-list { display: flex; flex-direction: column; gap: 10px; }
+.dash-recent-item {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.dash-client { font-weight: 600; font-size: .9rem; }
+.dash-total  { font-family: var(--ff-head); color: var(--rose); font-weight: 700; }
+.dash-time   { font-size: .72rem; color: var(--muted); }
+
+/* ═══ USUARIOS ADMIN ════════════════════════════════════ */
+.users-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+.user-card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 22px;
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: box-shadow .2s;
+}
+.user-card:hover { box-shadow: 0 8px 24px rgba(26,10,14,.08); }
+.user-avatar {
+  width: 48px; height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 1.1rem; color: #fff;
+  flex-shrink: 0;
+}
+.user-info { flex: 1; min-width: 0; }
+.user-name  { font-weight: 700; font-size: .92rem; }
+.user-email { font-size: .76rem; color: var(--muted); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.user-you   { font-size: .68rem; background: rgba(192,57,75,.1); color: var(--rose); padding: 2px 8px; border-radius: 999px; font-weight: 600; margin-top: 4px; display: inline-block; }
+.btn-del-user {
+  background: none; border: none;
+  color: #ef4444; cursor: pointer;
+  padding: 6px; border-radius: 8px;
+  transition: background .2s;
+  flex-shrink: 0;
+}
+.btn-del-user:hover { background: rgba(239,68,68,.1); }
+
+/* ═══ COMPROBANTE PDF ══════════════════════════════════ */
+@media print {
+  body > *:not(#print-area) { display: none !important; }
+  #print-area { display: block !important; }
+}
+#print-area {
+  display: none;
+  font-family: 'Georgia', serif;
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 40px;
+}
+.print-header {
+  text-align: center;
+  border-bottom: 2px solid #c0394b;
+  padding-bottom: 20px;
+  margin-bottom: 24px;
+}
+.print-logo   { font-size: 2.5rem; }
+.print-title  { font-size: 1.5rem; font-weight: 700; color: #1a0a0e; margin: 8px 0 4px; }
+.print-sub    { font-size: .82rem; color: #9b7080; }
+.print-body   { margin-bottom: 24px; }
+.print-row    { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0e8e0; font-size: .9rem; }
+.print-label  { color: #5c3040; font-weight: 600; }
+.print-items  { margin: 16px 0; }
+.print-item   { display: flex; justify-content: space-between; padding: 6px 0; font-size: .88rem; }
+.print-total-row { display: flex; justify-content: space-between; padding: 14px 0; border-top: 2px solid #c0394b; font-size: 1.1rem; font-weight: 700; color: #c0394b; margin-top: 8px; }
+.print-footer { text-align: center; color: #9b7080; font-size: .78rem; margin-top: 32px; border-top: 1px solid #f0e8e0; padding-top: 16px; }
+
+
+/* ═══ INVENTARIO ═══════════════════════════════════════════ */
+.stock-badge {
+  position:absolute; top:14px; left:14px;
+  padding:4px 10px; border-radius:999px;
+  font-size:.7rem; font-weight:700; letter-spacing:.03em;
+}
+.stock-ok    { background:rgba(22,163,74,.15);  color:#15803d; }
+.stock-low   { background:rgba(251,191,36,.2);  color:#b45309; }
+.stock-out   { background:rgba(239,68,68,.15);  color:#dc2626; }
+
+.btn-add:disabled {
+  background: var(--muted) !important;
+  cursor: not-allowed !important;
+  transform: none !important;
+  opacity: .6;
+}
+
+/* Stock indicator in admin table */
+.stock-num {
+  font-weight:700; font-size:.95rem;
+}
+.stock-num.low  { color:#b45309; }
+.stock-num.out  { color:#dc2626; }
+.stock-num.ok   { color:#15803d; }
+
+/* Stock field in product form */
+.stock-hint {
+  font-size:.72rem; color:var(--muted);
+  margin-top:5px;
+}
+
+
+/* ═══ PEDIDOS AGRUPADOS POR FECHA ══════════════════════════ */
+.orders-date-group { margin-bottom: 32px; }
+.orders-date-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 16px;
+  padding: 12px 18px;
+  background: linear-gradient(135deg, rgba(192,57,75,.06), rgba(201,150,58,.06));
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
+.orders-date-label {
+  font-family: var(--ff-head);
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+.orders-date-count {
+  font-size: .74rem;
+  background: var(--rose);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.orders-date-total {
+  margin-left: auto;
+  font-size: .82rem;
+  font-weight: 700;
+  color: var(--rose);
+  font-family: var(--ff-head);
+}
+.order-daily-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px; height: 24px;
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  color: #fff;
+  border-radius: 6px;
+  font-size: .7rem;
+  font-weight: 700;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+
+/* ═══ ESTADÍSTICAS MEJORADAS ══════════════════════════════ */
+.stat-sublbl {
+  font-size: .68rem;
+  color: var(--muted);
+  margin-top: 3px;
+  font-style: italic;
+}
+.kpi-trend-up   { color: #15803d; font-size:.72rem; font-weight:700; }
+.kpi-trend-down { color: #dc2626; font-size:.72rem; font-weight:700; }
+.kpi-trend-flat { color: var(--muted); font-size:.72rem; }
+
+.weekly-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 14px;
+}
+.weekly-label {
+  font-size: .78rem;
+  font-weight: 600;
+  color: var(--mid);
+  min-width: 90px;
+}
+.weekly-bar-wrap {
+  flex: 1;
+  background: rgba(0,0,0,.06);
+  border-radius: 999px;
+  height: 10px;
+  overflow: hidden;
+}
+.weekly-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  transition: width .7s cubic-bezier(.22,.68,0,1.2);
+}
+.weekly-val {
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--rose);
+  min-width: 80px;
+  text-align: right;
+}
+.weekly-growth {
+  font-size: .7rem;
+  min-width: 54px;
+  text-align: right;
+}
+
+@media(max-width:640px){
+  #charts-row { grid-template-columns: 1fr !important; }
+}
+
+
+/* ═══ CARRITO MEJORADO ════════════════════════════════════ */
+.cart-item {
+  transition: background .2s;
+  border-radius: 14px;
+  padding: 14px 10px !important;
+}
+.cart-item:hover { background: rgba(192,57,75,.03); }
+.cart-item img {
+  border-radius: 14px !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,.1);
+}
+.cart-summary-box {
+  background: linear-gradient(135deg, rgba(192,57,75,.05), rgba(201,150,58,.05));
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-top: 12px;
+}
+.cart-summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .84rem;
+  padding: 4px 0;
+  color: var(--mid);
+}
+.cart-summary-row.total {
+  border-top: 1.5px solid var(--border);
+  margin-top: 8px;
+  padding-top: 10px;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--dark);
+}
+.cart-summary-row.total span:last-child {
+  font-family: var(--ff-head);
+  font-size: 1.3rem;
+  color: var(--rose);
+}
+.cart-empty-btn {
+  font-size: .72rem;
+  color: #ef4444;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-decoration: underline;
+  margin-top: 8px;
+  display: block;
+  margin-left: auto;
+}
+
+/* ═══ TRANSFERENCIA / BANCOS ══════════════════════════════ */
+.bank-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 10px;
+}
+.bank-card {
+  border: 2px solid rgba(0,0,0,.07);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all .2s;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+}
+.bank-card:hover { border-color: var(--rose); background: rgba(192,57,75,.02); }
+.bank-card.selected { border-color: var(--rose); background: rgba(192,57,75,.04); }
+.bank-card.selected::after {
+  content: "✓";
+  position: absolute;
+  top: 10px; right: 12px;
+  width: 20px; height: 20px;
+  background: var(--rose);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .72rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.bank-logo {
+  width: 44px; height: 44px;
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem;
+  flex-shrink: 0;
+}
+.bank-logo.popular  { background: linear-gradient(135deg, #c8102e, #8b0000); color: #fff; font-size: .7rem; font-weight: 800; letter-spacing: -.02em; }
+.bank-logo.reservas { background: linear-gradient(135deg, #003087, #001f5b); color: #fff; font-size: .7rem; font-weight: 800; }
+.bank-logo.bhd      { background: linear-gradient(135deg, #e8960c, #b36c00); color: #fff; font-size: .7rem; font-weight: 800; }
+.bank-info { flex: 1; min-width: 0; }
+.bank-name  { font-weight: 700; font-size: .88rem; color: var(--dark); }
+.bank-acct  { font-size: .76rem; color: var(--muted); margin-top: 2px; font-family: monospace; letter-spacing: .04em; }
+.bank-owner { font-size: .72rem; color: var(--mid); margin-top: 1px; }
+
+/* Nota importante transferencia */
+.transfer-note {
+  background: rgba(251,191,36,.1);
+  border: 1px solid rgba(251,191,36,.3);
+  border-radius: 12px;
+  padding: 12px 14px;
+  margin-top: 14px;
+  font-size: .78rem;
+  color: #92400e;
+  line-height: 1.6;
+}
+.transfer-note strong { display: block; margin-bottom: 4px; font-size: .82rem; }
+
+/* Upload comprobante */
+.upload-comprobante {
+  border: 2px dashed rgba(192,57,75,.3);
+  border-radius: 14px;
+  padding: 18px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  margin-top: 12px;
+  background: var(--cream);
+}
+.upload-comprobante:hover { border-color: var(--rose); background: rgba(192,57,75,.03); }
+.upload-comprobante.has-file { border-color: #16a34a; background: rgba(22,163,74,.04); }
+.upload-comp-icon { font-size: 2rem; display: block; margin-bottom: 6px; }
+.upload-comp-text { font-size: .8rem; color: var(--muted); }
+.upload-comp-filename { font-size: .76rem; color: #15803d; font-weight: 600; margin-top: 4px; }
+
+/* Método de pago mejorado */
+.pay-method-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+@media(max-width:480px){
+  .pay-method-tabs { grid-template-columns: 1fr; }
+}
+.pay-method-tab {
+  border: 2px solid rgba(0,0,0,.08);
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .2s;
+}
+.pay-method-tab:hover { border-color: var(--rose); }
+.pay-method-tab.active { border-color: var(--rose); background: rgba(192,57,75,.04); }
+.pay-method-tab .pay-emoji { font-size: 1.6rem; }
+.pay-method-tab .pay-lbl  { font-weight: 700; font-size: .86rem; }
+.pay-method-tab .pay-sub  { font-size: .7rem; color: var(--muted); }
+.pay-details-panel { display: none; }
+.pay-details-panel.visible { display: block; }
+
+/* Efectivo info */
+.cash-info {
+  background: rgba(22,163,74,.08);
+  border: 1px solid rgba(22,163,74,.2);
+  border-radius: 12px;
+  padding: 14px 16px;
+  font-size: .82rem;
+  color: #166534;
+  line-height: 1.65;
+  margin-top: 10px;
+}
+.cash-info strong { display: block; margin-bottom: 4px; }
+
+@media(max-width:480px){
+  .pay-method-tabs { grid-template-columns: 1fr; }
+  .bank-cards { gap: 8px; }
+}
+
+
+/* ═══ UBICACIÓN GPS + COSTO ENVÍO ════════════════════════ */
+.location-wrap { position: relative; }
+
+.btn-gps {
+  position: absolute;
+  right: 10px; top: 10px;
+  background: var(--rose);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 7px 12px;
+  font-size: .75rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all .2s;
+  z-index: 2;
+  white-space: nowrap;
+}
+.btn-gps:hover    { background: #a02035; transform: scale(1.04); }
+.btn-gps.loading  { background: var(--muted); cursor: wait; }
+.btn-gps.success  { background: #15803d; }
+
+.location-status {
+  font-size: .72rem;
+  margin-top: 5px;
+  min-height: 16px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.location-status.ok   { color: #15803d; }
+.location-status.err  { color: #dc2626; }
+.location-status.info { color: var(--muted); }
+
+/* Delivery estimate card */
+.delivery-estimate {
+  display: none;
+  background: linear-gradient(135deg, #fff, var(--ivory));
+  border: 1.5px solid var(--border);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-top: 12px;
+  animation: fadeUp .3s ease both;
+}
+.delivery-estimate.visible { display: block; }
+.delivery-est-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+.delivery-est-title {
+  font-weight: 700;
+  font-size: .9rem;
+  color: var(--dark);
+}
+.delivery-est-dist {
+  font-size: .74rem;
+  color: var(--muted);
+  margin-left: auto;
+}
+.delivery-tiers {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+}
+.delivery-tier {
+  border: 2px solid rgba(0,0,0,.07);
+  border-radius: 12px;
+  padding: 10px 8px;
+  text-align: center;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.delivery-tier:hover   { border-color: var(--rose); }
+.delivery-tier.sel     { border-color: var(--rose); background: rgba(192,57,75,.04); }
+.delivery-tier.sel::after {
+  content: "✓";
+  position: absolute;
+  top: 5px; right: 7px;
+  font-size: .65rem;
+  font-weight: 700;
+  color: var(--rose);
+}
+.tier-icon  { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+.tier-name  { font-size: .7rem; font-weight: 700; color: var(--dark); }
+.tier-time  { font-size: .65rem; color: var(--muted); margin-top: 1px; }
+.tier-price {
+  font-family: var(--ff-head);
+  font-size: .95rem;
+  font-weight: 700;
+  color: var(--rose);
+  margin-top: 5px;
+}
+.delivery-note {
+  font-size: .7rem;
+  color: var(--muted);
+  text-align: center;
+  margin-top: 10px;
+  font-style: italic;
+}
+.no-delivery-zone {
+  display: none;
+  background: rgba(239,68,68,.07);
+  border: 1px solid rgba(239,68,68,.2);
+  border-radius: 12px;
+  padding: 12px 14px;
+  font-size: .8rem;
+  color: #dc2626;
+  margin-top: 10px;
+  text-align: center;
+}
+
+@media(max-width:400px){
+  .delivery-tiers { grid-template-columns: 1fr 1fr; }
+}
+
+
+/* ═══ PANTALLA DE CONFIRMACIÓN ════════════════════════════ */
+.confirm-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: rgba(10,0,5,.85);
+  backdrop-filter: blur(8px);
+  z-index: 9000;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.confirm-overlay.open { display: flex; }
+.confirm-box {
+  background: #fff;
+  border-radius: 32px;
+  padding: 48px 36px;
+  max-width: 440px;
+  width: 100%;
+  text-align: center;
+  animation: fadeUp .4s cubic-bezier(.22,.68,0,1.2) both;
+  position: relative;
+  overflow: hidden;
+}
+.confirm-box::before {
+  content: "";
+  position: absolute; top: 0; left: 0; right: 0; height: 5px;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+}
+.confirm-check {
+  width: 88px; height: 88px;
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem;
+  margin: 0 auto 24px;
+  box-shadow: 0 12px 32px rgba(22,163,74,.35);
+  animation: pulse 2s ease infinite;
+}
+.confirm-title {
+  font-family: var(--ff-head);
+  font-size: 1.8rem;
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 8px;
+}
+.confirm-subtitle {
+  color: var(--muted);
+  font-size: .9rem;
+  margin-bottom: 28px;
+  line-height: 1.6;
+}
+.confirm-pedido-num {
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--ff-head);
+  font-size: 2.8rem;
+  font-weight: 900;
+  display: block;
+  margin-bottom: 6px;
+}
+.confirm-details {
+  background: var(--cream);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin: 20px 0 28px;
+  text-align: left;
+}
+.confirm-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .84rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--mid);
+}
+.confirm-detail-row:last-child { border-bottom: none; }
+.confirm-detail-row span:last-child {
+  font-weight: 600;
+  color: var(--dark);
+  text-align: right;
+  max-width: 55%;
+}
+.confirm-total-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0 0;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--dark);
+}
+.confirm-total-row span:last-child {
+  font-family: var(--ff-head);
+  font-size: 1.4rem;
+  color: var(--rose);
+}
+.confirm-wa-btn {
+  width: 100%;
+  padding: 15px;
+  background: #25d366;
+  color: #fff;
+  border: none;
+  border-radius: 14px;
+  font-family: var(--ff-body);
+  font-weight: 700;
+  font-size: .95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 10px;
+  transition: all .2s;
+  box-shadow: 0 6px 20px rgba(37,211,102,.35);
+}
+.confirm-wa-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,211,102,.4); }
+.confirm-close-btn {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  font-family: var(--ff-body);
+  font-weight: 600;
+  font-size: .88rem;
+  cursor: pointer;
+  color: var(--mid);
+  transition: all .2s;
+}
+.confirm-close-btn:hover { border-color: var(--rose); color: var(--rose); }
+
+
+/* ═══ PANTALLA CONFIRMACIÓN DE PEDIDO ════════════════════════ */
+#m-confirm .modal-box { max-width: 420px; text-align: center; }
+.confirm-anim {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, #16a34a, #4ade80);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 2.8rem;
+  box-shadow: 0 8px 32px rgba(22,163,74,.3);
+  animation: confirmPop .5s cubic-bezier(.22,.68,0,1.5) both;
+}
+@keyframes confirmPop {
+  from { transform: scale(0); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+.confirm-title {
+  font-family: var(--ff-head);
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: var(--dark);
+  margin-bottom: 6px;
+}
+.confirm-subtitle {
+  color: var(--muted);
+  font-size: .88rem;
+  margin-bottom: 24px;
+}
+.confirm-order-box {
+  background: var(--cream);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.confirm-order-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: .84rem;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--mid);
+}
+.confirm-order-row:last-child { border-bottom: none; }
+.confirm-order-row strong { color: var(--dark); }
+.confirm-order-total {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 12px 0 0;
+  margin-top: 4px;
+  border-top: 2px solid var(--border);
+}
+.confirm-order-total span:last-child {
+  font-family: var(--ff-head);
+  color: var(--rose);
+  font-size: 1.3rem;
+}
+.confirm-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+  text-align: left;
+}
+.confirm-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: .82rem;
+  color: var(--mid);
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+.confirm-step-num {
+  width: 22px; height: 22px;
+  background: var(--rose);
+  color: #fff;
+  border-radius: 50%;
+  font-size: .7rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+
+
+/* ═══ PAGO EN TIENDA ══════════════════════════════════════ */
+.store-info {
+  background: linear-gradient(135deg, rgba(201,150,58,.08), rgba(192,57,75,.05));
+  border: 1px solid rgba(201,150,58,.25);
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  font-size: .82rem;
+  color: var(--mid);
+  line-height: 1.65;
+}
+.store-info strong { display: block; margin-bottom: 6px; font-size: .86rem; color: var(--dark); }
+.store-info .store-hours {
+  display: flex; flex-direction: column; gap: 3px; margin-top: 8px;
+}
+.store-hours span {
+  font-size: .76rem; color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+}
+.delivery-hidden { display: none !important; }
+
+
+/* Sub-opciones pago en tienda */
+.store-pay-opt {
+  border: 2px solid rgba(0,0,0,.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .2s;
+  background: #fff;
+}
+.store-pay-opt:hover   { border-color: var(--rose); }
+.store-pay-opt.selected { border-color: var(--rose); background: rgba(192,57,75,.04); }
+/* ── ESTADÍSTICAS ── */
+.stats-section { margin-bottom: 36px; }
+.stats-title {
+  font-family: var(--ff-head);
+  font-size: 1.5rem; font-weight: 700;
+  margin-bottom: 20px; color: var(--dark);
+  display: flex; align-items: center; gap: 10px;
+}
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+@media(max-width:640px){ .stats-grid { grid-template-columns: 1fr; } }
+ 
+/* Números resumen arriba */
+.stats-numbers {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px; margin-bottom: 24px;
+}
+@media(max-width:768px){ .stats-numbers { grid-template-columns: repeat(2,1fr); } }
+.stat-box {
+  background: #fff; border-radius: 16px;
+  padding: 20px; border: 1px solid var(--border);
+  text-align: center;
+}
+.stat-box-num {
+  font-family: var(--ff-head);
+  font-size: 1.9rem; font-weight: 700;
+  color: var(--rose); display: block;
+}
+.stat-box-lbl {
+  font-size: .74rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .06em;
+  margin-top: 4px; display: block;
+}
+ 
+/* Cards producto más/menos vendido */
+.prod-stat-card {
+  background: #fff; border-radius: 20px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: box-shadow .3s;
+}
+.prod-stat-card:hover { box-shadow: var(--shadow); }
+.prod-stat-header {
+  padding: 14px 18px 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.prod-stat-badge {
+  font-size: .72rem; font-weight: 700;
+  padding: 4px 12px; border-radius: 999px;
+  letter-spacing: .05em; text-transform: uppercase;
+}
+.badge-top    { background: rgba(201,150,58,.15); color: var(--gold); }
+.badge-bottom { background: rgba(107,114,128,.12); color: #6b7280; }
+.prod-stat-img {
+  width: 100%; height: 180px;
+  object-fit: cover; display: block;
+  margin-top: 14px;
+  background: var(--cream);
+}
+.prod-stat-img-placeholder {
+  width: 100%; height: 180px;
+  background: linear-gradient(135deg, var(--cream), #f0e8e0);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 4rem; margin-top: 14px;
+}
+.prod-stat-body { padding: 18px; }
+.prod-stat-name {
+  font-family: var(--ff-head);
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--dark); margin-bottom: 4px;
+}
+.prod-stat-price {
+  color: var(--rose); font-weight: 700;
+  font-size: .9rem; margin-bottom: 14px;
+}
+.prod-stat-rows { display: flex; flex-direction: column; gap: 10px; }
+.prod-stat-row {
+  display: flex; justify-content: space-between;
+  align-items: center; padding: 10px 14px;
+  background: var(--cream); border-radius: 10px;
+}
+.prod-stat-row-lbl { font-size: .78rem; color: var(--muted); }
+.prod-stat-row-val { font-weight: 700; font-size: .9rem; color: var(--dark); }
+.prod-stat-row-val.highlight { color: var(--rose); }
+.prod-stat-row-val.gold      { color: var(--gold); }
+ 
+/* Barra de progreso de ventas */
+.sales-bar-wrap { margin-top: 14px; }
+.sales-bar-lbl {
+  display: flex; justify-content: space-between;
+  font-size: .74rem; color: var(--muted); margin-bottom: 6px;
+}
+.sales-bar-bg {
+  height: 8px; background: rgba(0,0,0,.06);
+  border-radius: 999px; overflow: hidden;
+}
+.sales-bar-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  transition: width 1s cubic-bezier(.22,.68,0,1.2);
+}
+ 
+/* Sin datos */
+.no-stats {
+  text-align: center; padding: 48px 20px;
+  color: var(--muted); font-size: .9rem;
+}
+.no-stats-icon { font-size: 3rem; display: block; margin-bottom: 10px; opacity: .4; }
+
 </style>
 </head>
 <body>
+
+<!-- ════ SPLASH SCREEN ════════════════════════════════ -->
+<div id="splash">
+  <div class="splash-logo">🍭</div>
+  <div class="splash-title">Dulce Inspiración</div>
+  <div class="splash-sub">Cargando tu experiencia dulce...</div>
+  <div class="splash-bar"><div class="splash-fill"></div></div>
+</div>
+
+<!-- ════ BOTÓN CERRAR SESIÓN FLOTANTE ════════════════ -->
+<button id="btn-logout-float" onclick="doLogout()">
+  <i class="fa-solid fa-right-from-bracket"></i> Cerrar Sesión
+</button>
+
 
 <!-- ════════════════════════════════════════════
      NAV
@@ -816,7 +1938,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           Suplidora
           <span class="hl">Dulce Inspiración</span>
         </h1>
-        <p class="hero-desc fade-up delay-2">“Ingredientes, herramientas y decoración para hacer realidad tus mejores creaciones de repostería.”.</p>
+        <p class="hero-desc fade-up delay-2" style="text-align:justify">Encuentra insumos de repostería, materiales para bizcochos y artículos para decorar cumpleaños y eventos. Calidad, variedad y entrega rápida para tus celebraciones.</p>
         <div style="display:flex;gap:14px;flex-wrap:wrap" class="hero-btns fade-up delay-3">
           <button class="btn btn-primary" onclick="goTo('productos')">
             Ver catálogo <i class="fa-solid fa-arrow-right"></i>
@@ -853,8 +1975,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           <h2 class="section-title">Nuestros Dulces</h2>
         </div>
         <div class="search-wrap">
-          <input class="search-input" type="text" id="search-input"
-                 placeholder="Buscar dulces..." oninput="filterProducts()">
+          <input class="search-input" type="text" id="search-input" placeholder="Buscar dulces..." oninput="filterProducts()" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
           <i class="fa-solid fa-magnifying-glass search-icon"></i>
         </div>
       </div>
@@ -882,17 +2003,17 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <div class="about-card">
           <div class="about-icon-wrap">🎯</div>
           <h3>Nuestro Objetivo</h3>
-          <p>En Dulce Inspiración nuestro objetivo es ofrecer a reposteros, emprendedores y amantes de la repostería todos los productos, ingredientes y herramientas necesarias para la elaboración de bizcochos, postres y dulces de la más alta calidad. Buscamos inspirar la creatividad en cada cliente, brindando variedad, buenos precios y un servicio confiable que facilite la preparación de cada creación dulce.</p>
+          <p style="text-align:justify">Satisfacer las necesidades de reposteros y elaboración de bizcochos y decoración de eventos.</p>
         </div>
         <div class="about-card">
           <div class="about-icon-wrap">❤️</div>
           <h3>Nuestra Misión</h3>
-          <p>Brindar a nuestros clientes una amplia variedad de productos, ingredientes y herramientas de repostería de alta calidad, que les permitan elaborar bizcochos, postres y dulces con creatividad, excelencia y confianza. En Dulce Inspiración trabajamos para ser el apoyo de reposteros, emprendedores y amantes de la repostería, ofreciendo buen servicio, precios accesibles y productos que inspiren cada creación.</p>
+          <p style="text-align:justify">Proveer productos de repostería y decoración de calidad, variedad y buen servicio para cada ocasión especial.</p>
         </div>
         <div class="about-card">
           <div class="about-icon-wrap">🌟</div>
           <h3>Nuestra Visión</h3>
-          <p>Ser una suplidora de repostería reconocida por su calidad, variedad y servicio, convirtiéndonos en el lugar preferido por quienes buscan todo lo necesario para crear dulces momentos y emprender en el mundo de la repostería.</p>
+          <p style="text-align:justify">Convertirnos en una suplidora confiable de insumos de repostería y artículos para celebraciones en República Dominicana.</p>
         </div>
       </div>
     </div>
@@ -908,7 +2029,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       <div class="testi-grid">
         <div class="testi-card">
           <div class="testi-stars">★★★★★</div>
-          <p class="testi-text">"Excelente atenciones, alexandra es un amor!"</p>
+          <p class="testi-text">"Los mejores bombones que he probado. Llegaron perfectos y frescos. ¡Recomendadísimos a todo el mundo!"</p>
           <div class="testi-author">
             <div class="testi-avatar">ML</div>
             <div><div class="testi-name">María López</div><div class="testi-city">Bávaro, La Altagracia</div></div>
@@ -934,6 +2055,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
     </div>
   </section>
 
+
   <!-- FOOTER -->
   <footer id="contacto">
     <div class="container">
@@ -943,7 +2065,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
             <div class="footer-logo-icon">🍭</div>
             <span class="footer-brand-name">Dulce Inspiración</span>
           </div>
-          <p class="footer-desc">Suplidora de reposteria en Santo Domingo Este y todo el país. Calidad con entrega rápida.</p>
+          <p class="footer-desc" style="text-align:justify">Insumos de repostería, materiales para bizcochos y artículos para decorar cumpleaños y eventos. Calidad y variedad para cada celebración.</p>
         </div>
         <div class="footer-col">
           <h4>Navegación</h4>
@@ -953,9 +2075,9 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         </div>
         <div class="footer-col">
           <h4>Contacto</h4>
-          <p>📍 Santo Domingo Este, Rep. Dom.</p>
-          <a href="https://wa.me/18297635185" target="_blank">📱 +1 (829) 471-0003</a>
-          <p>✉️ suplidoradulceinspiracion@gmail.com</p>
+          <p>📍 La Altagracia, Rep. Dom.</p>
+          <a href="https://wa.me/18295551234" target="_blank">📱 +1 (829) 555-1234</a>
+          <p>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0c65626a634c6879606f6965627f7c657e6d6f656362226f6361">[email&#160;protected]</a></p>
         </div>
         <div class="footer-col">
           <h4>Horario</h4>
@@ -996,6 +2118,12 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           <i class="fa-solid fa-clock" style="color:var(--gold2)"></i>
           <span id="session-timer-lbl">Sesión activa</span>
         </div>
+        <div class="notif-wrap">
+          <button class="btn-notif" onclick="checkNewOrders()" title="Verificar pedidos nuevos">
+            <i class="fa-solid fa-bell"></i> <span id="notif-count"></span>
+          </button>
+          <span class="notif-dot" id="notif-dot"></span>
+        </div>
         <button class="btn-logout" onclick="doLogout()">
           <i class="fa-solid fa-right-from-bracket"></i> Cerrar sesión
         </button>
@@ -1004,9 +2132,162 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   </div>
 
   <div class="admin-content">
+    <!-- ESTADÍSTICAS -->
+<div class="stats-section" id="stats-section">
+ 
+  <!-- Números resumen -->
+  <div class="stats-numbers" id="stats-numbers">
+    <div class="stat-box">
+      <span class="stat-box-num" id="st-pedidos">—</span>
+      <span class="stat-box-lbl">Total pedidos</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-box-num" id="st-ingresos">—</span>
+      <span class="stat-box-lbl">Ingresos totales</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-box-num" id="st-pendientes">—</span>
+      <span class="stat-box-lbl">Pendientes</span>
+    </div>
+    <div class="stat-box">
+      <span class="stat-box-num" id="st-entregados">—</span>
+      <span class="stat-box-lbl">Entregados</span>
+    </div>
+  </div>
+ 
+  <!-- Título -->
+  <div class="stats-title">
+    📊 Rendimiento de Productos
+  </div>
+ 
+  <!-- Cards más/menos vendido -->
+  <div class="stats-grid">
+ 
+    <!-- MÁS VENDIDO -->
+    <div class="prod-stat-card" id="card-mas">
+      <div class="prod-stat-header">
+        <span class="prod-stat-badge badge-top">🏆 Más vendido</span>
+      </div>
+      <div class="no-stats" id="mas-empty">
+        <span class="no-stats-icon">📦</span>
+        Aún no hay ventas registradas
+      </div>
+      <div id="mas-content" style="display:none">
+        <div id="mas-img-wrap"></div>
+        <div class="prod-stat-body">
+          <div class="prod-stat-name"  id="mas-nombre">—</div>
+          <div class="prod-stat-price" id="mas-precio">—</div>
+          <div class="prod-stat-rows">
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">🛒 Unidades vendidas</span>
+              <span class="prod-stat-row-val highlight" id="mas-vendido">—</span>
+            </div>
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">💵 Ingresos generados</span>
+              <span class="prod-stat-row-val gold" id="mas-ingresos">—</span>
+            </div>
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">📋 Número de pedidos</span>
+              <span class="prod-stat-row-val" id="mas-pedidos">—</span>
+            </div>
+          </div>
+          <div class="sales-bar-wrap">
+            <div class="sales-bar-lbl">
+              <span>Participación en ventas</span>
+              <span id="mas-pct">—</span>
+            </div>
+            <div class="sales-bar-bg">
+              <div class="sales-bar-fill" id="mas-bar" style="width:0%"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+    <!-- MENOS VENDIDO -->
+    <div class="prod-stat-card" id="card-menos">
+      <div class="prod-stat-header">
+        <span class="prod-stat-badge badge-bottom">📉 Menos vendido</span>
+      </div>
+      <div class="no-stats" id="menos-empty">
+        <span class="no-stats-icon">📦</span>
+        Aún no hay datos suficientes
+      </div>
+      <div id="menos-content" style="display:none">
+        <div id="menos-img-wrap"></div>
+        <div class="prod-stat-body">
+          <div class="prod-stat-name"  id="menos-nombre">—</div>
+          <div class="prod-stat-price" id="menos-precio">—</div>
+          <div class="prod-stat-rows">
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">🛒 Unidades vendidas</span>
+              <span class="prod-stat-row-val" id="menos-vendido">—</span>
+            </div>
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">📅 Días en inventario</span>
+              <span class="prod-stat-row-val highlight" id="menos-dias">—</span>
+            </div>
+            <div class="prod-stat-row">
+              <span class="prod-stat-row-lbl">💵 Ingresos generados</span>
+              <span class="prod-stat-row-val gold" id="menos-ingresos">—</span>
+            </div>
+          </div>
+          <div class="sales-bar-wrap">
+            <div class="sales-bar-lbl">
+              <span>Participación en ventas</span>
+              <span id="menos-pct">—</span>
+            </div>
+            <div class="sales-bar-bg">
+              <div class="sales-bar-fill" id="menos-bar"
+                   style="width:0%; background: linear-gradient(90deg,#9ca3af,#6b7280)">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+ 
+  </div>
+</div><!-- /stats-section -->
     <div class="admin-tabs">
+      <button class="tab-btn" id="tbtn-d" onclick="switchTab('d')">🏠 Dashboard</button>
       <button class="tab-btn active" id="tbtn-p" onclick="switchTab('p')">🍬 Productos</button>
       <button class="tab-btn" id="tbtn-o" onclick="switchTab('o')">📦 Pedidos</button>
+      <button class="tab-btn" id="tbtn-s" onclick="switchTab('s')">📊 Estadísticas</button>
+      <button class="tab-btn" id="tbtn-u" onclick="switchTab('u')">👥 Usuarios</button>
+    </div>
+
+    <!-- Tab Dashboard -->
+    <div id="tab-d" style="display:none">
+      <div class="dashboard-greeting" id="dash-greeting">Buenos días 👋</div>
+      <div class="dashboard-date" id="dash-date"></div>
+      <div class="dash-grid">
+        <div class="dash-card rose">
+          <span class="dash-card-icon">💰</span>
+          <div class="dash-card-val" id="dash-hoy-ingresos">RD$ 0</div>
+          <div class="dash-card-lbl">Ingresos hoy (confirmados+entregados)</div>
+          <span class="dash-card-trend trend-up" id="dash-hoy-trend">Hoy</span>
+        </div>
+        <div class="dash-card gold">
+          <span class="dash-card-icon">📦</span>
+          <div class="dash-card-val" id="dash-hoy-pedidos">0</div>
+          <div class="dash-card-lbl">Pedidos de hoy</div>
+        </div>
+        <div class="dash-card green">
+          <span class="dash-card-icon">⏳</span>
+          <div class="dash-card-val" id="dash-pendientes">0</div>
+          <div class="dash-card-lbl">Pendientes de atender</div>
+          <span class="dash-card-trend trend-pend" id="dash-pend-lbl"></span>
+        </div>
+        <div class="dash-card blue">
+          <span class="dash-card-icon">💵</span>
+          <div class="dash-card-val" id="dash-total-ingresos">RD$ 0</div>
+          <div class="dash-card-lbl">Ingresos totales (confirmados+entregados)</div>
+        </div>
+      </div>
+      <div id="dash-estados-resumen"></div>
+      <div class="dash-recent-title">📋 Últimos pedidos recibidos</div>
+      <div class="dash-recent-list" id="dash-recent"></div>
     </div>
 
     <!-- Tab Productos -->
@@ -1021,7 +2302,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <div id="admin-load" class="loading-wrap"><div class="spinner"></div></div>
         <table id="admin-tbl" style="display:none">
           <thead>
-            <tr><th>Imagen</th><th>Producto</th><th>Precio</th><th>Estado</th><th>Acciones</th></tr>
+            <tr><th>Imagen</th><th>Producto</th><th>Precio</th><th>Stock</th><th>Estado</th><th>Acciones</th></tr>
           </thead>
           <tbody id="admin-tbody"></tbody>
         </table>
@@ -1032,13 +2313,29 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
     <div id="tab-o" style="display:none">
       <div class="sec-hdr">
         <h2>Pedidos recibidos</h2>
-        <select class="ord-filter" id="ord-filter" onchange="filterOrders()">
-          <option value="all">Todos</option>
-          <option value="pendiente">⏳ Pendiente</option>
-          <option value="confirmado">✅ Confirmado</option>
-          <option value="entregado">🚚 Entregado</option>
-          <option value="cancelado">❌ Cancelado</option>
-        </select>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <div class="search-wrap">
+            <input class="search-input" type="text" id="ord-search"
+              placeholder="Buscar por nombre o teléfono..."
+              oninput="filterOrders()"
+              autocomplete="off"
+              style="width:220px;padding:9px 36px 9px 14px;border-radius:10px">
+            <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          </div>
+          <select class="ord-filter" id="ord-filter" onchange="filterOrders()">
+            <option value="all">Todos los estados</option>
+            <option value="pendiente">⏳ Pendiente</option>
+            <option value="confirmado">✅ Confirmado</option>
+            <option value="entregado">🚚 Entregado</option>
+            <option value="cancelado">❌ Cancelado</option>
+          </select>
+          <select class="ord-filter" id="ord-date-filter" onchange="filterOrders()">
+            <option value="all">Todas las fechas</option>
+            <option value="today">Hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="month">Este mes</option>
+          </select>
+        </div>
       </div>
       <div id="ord-load" class="loading-wrap"><div class="spinner"></div></div>
       <div id="ord-list" style="display:none"></div>
@@ -1047,6 +2344,118 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <p style="color:var(--muted)">No hay pedidos todavía</p>
       </div>
     </div>
+
+    <!-- Tab Estadísticas -->
+    <div id="tab-s" style="display:none">
+      <div class="sec-hdr">
+        <h2>Estadísticas de Ventas</h2>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <select class="ord-filter" id="stats-period" onchange="loadStats()">
+            <option value="all">Todo el tiempo</option>
+            <option value="today">Hoy</option>
+            <option value="week">Esta semana</option>
+            <option value="month">Este mes</option>
+            <option value="year">Este año</option>
+          </select>
+          <button class="btn btn-primary" onclick="exportExcel()">
+            <i class="fa-solid fa-file-excel"></i> Exportar Excel
+          </button>
+        </div>
+      </div>
+
+      <!-- KPI Cards Row 1 -->
+      <div class="stats-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr))">
+        <div class="stat-card">
+          <div class="stat-icon rose">💰</div>
+          <div>
+            <div class="stat-val" id="stat-ingresos">—</div>
+            <div class="stat-lbl">Ingresos Totales</div>
+            <div class="stat-sublbl" id="stat-ingresos-sub"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gold">🛒</div>
+          <div>
+            <div class="stat-val" id="stat-pedidos">—</div>
+            <div class="stat-lbl">Número de Ventas</div>
+            <div class="stat-sublbl" id="stat-pedidos-sub"></div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon green">🎯</div>
+          <div>
+            <div class="stat-val" id="stat-ticket">—</div>
+            <div class="stat-lbl">Ticket Promedio</div>
+            <div class="stat-sublbl">Por cliente</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">📈</div>
+          <div>
+            <div class="stat-val" id="stat-crecimiento">—</div>
+            <div class="stat-lbl">Crecimiento</div>
+            <div class="stat-sublbl" id="stat-crecimiento-sub">vs período anterior</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(139,92,246,.1)">💜</div>
+          <div>
+            <div class="stat-val" id="stat-conversion">—</div>
+            <div class="stat-lbl">Tasa Conversión</div>
+            <div class="stat-sublbl">Pedidos completados</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(236,72,153,.1)">💎</div>
+          <div>
+            <div class="stat-val" id="stat-margen">—</div>
+            <div class="stat-lbl">Ventas Exitosas</div>
+            <div class="stat-sublbl">Confirmadas + entregadas</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:20px" id="charts-row">
+        <div class="chart-wrap" style="margin-bottom:0">
+          <div class="chart-title">📊 Ventas por estado</div>
+          <div class="bar-chart" id="bar-chart"></div>
+        </div>
+        <div class="chart-wrap" style="margin-bottom:0">
+          <div class="chart-title">📅 Ingresos por día (últimos 7 días)</div>
+          <div class="bar-chart" id="bar-chart-daily"></div>
+        </div>
+      </div>
+
+      <!-- Top Products -->
+      <div class="chart-wrap">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+          <div class="chart-title" style="margin-bottom:0">🏆 Productos más vendidos</div>
+          <span style="font-size:.74rem;color:var(--muted)">Por unidades vendidas</span>
+        </div>
+        <div id="top-products"></div>
+      </div>
+
+      <!-- Growth comparison -->
+      <div class="chart-wrap">
+        <div class="chart-title">📈 Comparativa de ventas — Últimas 4 semanas</div>
+        <div id="weekly-comparison"></div>
+      </div>
+
+    </div>
+    <!-- Tab Usuarios -->
+    <div id="tab-u" style="display:none">
+      <div class="sec-hdr">
+        <h2>Usuarios Administradores</h2>
+        <button class="btn btn-primary" onclick="openAddUser()">
+          <i class="fa-solid fa-user-plus"></i> Nuevo Usuario
+        </button>
+      </div>
+      <div class="users-grid" id="users-grid">
+        <div class="loading-wrap"><div class="spinner"></div></div>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -1066,11 +2475,20 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <span class="total-num" id="cart-total-num">RD$ 0</span>
       </div>
     </div>
-    <div class="modal-foot">
-      <button class="btn btn-secondary" style="flex:1" onclick="closeCart()">Cerrar</button>
-      <button class="btn btn-primary" style="flex:1" onclick="goCheckout()">
-        Proceder al pago <i class="fa-solid fa-arrow-right"></i>
-      </button>
+    <div class="modal-foot" style="flex-direction:column;gap:10px">
+      <div id="cart-summary-box" class="cart-summary-box" style="display:none;width:100%">
+        <div class="cart-summary-row"><span>Subtotal</span><span id="cart-sub-num">RD$ 0</span></div>
+        <div class="cart-summary-row" id="cart-delivery-row" style="display:none"><span>Envío</span><span style="color:#15803d">—</span></div>
+        <div class="cart-summary-row total"><span>Total</span><span id="cart-total-num2">RD$ 0</span></div>
+      </div>
+      <div style="display:flex;gap:10px;width:100%">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeCart()">
+          <i class="fa-solid fa-xmark"></i> Cerrar
+        </button>
+        <button class="btn btn-primary" style="flex:2" onclick="goCheckout()">
+          Pagar ahora <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -1084,24 +2502,204 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
     </div>
     <div class="modal-body">
       <div class="form-2col">
-        <div class="fg"><label>Nombre</label><input class="fi" id="f-nombre" type="text" placeholder="Juan"></div>
-        <div class="fg"><label>Apellido</label><input class="fi" id="f-apellido" type="text" placeholder="Pérez"></div>
+        <div class="fg"><label>Nombre</label><input class="fi" id="f-nombre" type="text" placeholder="Juan" autocomplete="given-name"></div>
+        <div class="fg"><label>Apellido</label><input class="fi" id="f-apellido" type="text" placeholder="Pérez" autocomplete="family-name"></div>
       </div>
-      <div class="fg"><label>Teléfono (WhatsApp)</label><input class="fi" id="f-tel" type="tel" placeholder="+1 (829) 000-0000"></div>
-      <div class="fg"><label>Dirección de entrega</label><textarea class="fi" id="f-dir" rows="3" placeholder="Calle, sector, ciudad..." style="resize:none"></textarea></div>
+      <div class="fg"><label>Teléfono (WhatsApp)</label><input class="fi" id="f-tel" type="tel" placeholder="+1 (829) 000-0000" autocomplete="tel"></div>
+<!-- dirección movida al panel de envío -->
+
+      <!-- MÉTODO DE PAGO -->
       <div class="fg">
-        <label>Método de pago</label>
-        <div class="pay-grid">
-          <div class="pay-opt sel" id="po-ef" onclick="selPay('Efectivo')">
-            <span class="pay-emoji">💵</span>
-            <div><div class="pay-lbl">Efectivo</div><div class="pay-sub">Al recibir</div></div>
+        <label>¿Cómo deseas recibir tu pedido?</label>
+
+        <!-- Nivel 1: Tienda vs Envío -->
+        <div class="pay-method-tabs" style="grid-template-columns:1fr 1fr;margin-bottom:0">
+          <div class="pay-method-tab" id="tab-tienda" onclick="selModo('tienda')">
+            <span class="pay-emoji">🏪</span>
+            <div>
+              <div class="pay-lbl">Recoger en tienda</div>
+              <div class="pay-sub">Sin costo de envío</div>
+            </div>
           </div>
-          <div class="pay-opt" id="po-tr" onclick="selPay('Transferencia')">
-            <span class="pay-emoji">🏦</span>
-            <div><div class="pay-lbl">Transferencia</div><div class="pay-sub">Banco Popular</div></div>
+          <div class="pay-method-tab active" id="tab-envio" onclick="selModo('envio')">
+            <span class="pay-emoji">🛵</span>
+            <div>
+              <div class="pay-lbl">Envío a domicilio</div>
+              <div class="pay-sub">Te lo llevamos</div>
+            </div>
           </div>
         </div>
-      </div>
+
+        <!-- ══ PANEL: EN TIENDA ══ -->
+        <div id="panel-tienda" style="display:none">
+
+          <!-- Info tienda -->
+          <div class="store-info" style="margin-top:12px">
+            <strong>🏪 Retiro en nuestra tienda</strong>
+            Pasa directamente a buscar tu pedido. No aplica costo de envío.
+            <div class="store-hours" style="margin-top:8px">
+              <span>📍 Santo Domingo Este, República Dominicana</span>
+              <span>🕗 Lunes–Sábado: 8:00 am – 8:00 pm</span>
+              <span>🕗 Domingos: 9:00 am – 3:00 pm</span>
+            </div>
+          </div>
+
+          <!-- Forma de pago en tienda -->
+          <div style="margin-top:14px">
+            <label style="display:block;font-size:.76rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">
+              Forma de pago en tienda
+            </label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="store-pay-opt selected" id="st-ef" onclick="selStorePay('Efectivo en tienda')">
+                <span style="font-size:1.4rem">💵</span>
+                <div>
+                  <div style="font-weight:700;font-size:.82rem">Efectivo</div>
+                  <div style="font-size:.68rem;color:var(--muted)">Al recoger</div>
+                </div>
+              </div>
+              <div class="store-pay-opt" id="st-tr" onclick="selStorePay('Transferencia en tienda')">
+                <span style="font-size:1.4rem">🏦</span>
+                <div>
+                  <div style="font-weight:700;font-size:.82rem">Transferencia</div>
+                  <div style="font-size:.68rem;color:var(--muted)">En el momento</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bancos tienda — aparecen al elegir Transferencia -->
+          <div id="panel-tienda-bancos" style="display:none;margin-top:12px">
+            <div class="transfer-note">
+              <strong>⚠️ Transferencia en tienda</strong>
+              Realiza la transferencia al momento de recoger tu pedido.
+            </div>
+            <div class="bank-cards" style="margin-top:10px">
+              <div class="bank-card" id="bank-popular-st" onclick="selBankStore('popular')">
+                <div class="bank-logo popular">BPD</div>
+                <div class="bank-info">
+                  <div class="bank-name">Banco Popular Dominicano</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+              <div class="bank-card" id="bank-reservas-st" onclick="selBankStore('reservas')">
+                <div class="bank-logo reservas">BR</div>
+                <div class="bank-info">
+                  <div class="bank-name">Banco de Reservas</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+              <div class="bank-card" id="bank-bhd-st" onclick="selBankStore('bhd')">
+                <div class="bank-logo bhd">BHD</div>
+                <div class="bank-info">
+                  <div class="bank-name">BHD León</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div><!-- /panel-tienda -->
+
+        <!-- ══ PANEL: ENVÍO A DOMICILIO ══ -->
+        <div class="pay-details-panel" id="panel-envio" style="display:block">
+
+          <!-- Ubicación + GPS -->
+          <div style="margin-top:14px">
+            <label style="display:block;font-size:.76rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">📍 Dirección de entrega</label>
+            <div class="location-wrap">
+              <textarea class="fi" id="f-dir" rows="3"
+                placeholder="Escribe tu dirección o usa el GPS 📍"
+                style="resize:none;padding-right:130px"
+                autocomplete="street-address"
+                oninput="onAddressChange()"></textarea>
+              <button type="button" class="btn-gps" id="btn-gps" onclick="getGPSLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i> Usar GPS
+              </button>
+            </div>
+            <div class="location-status info" id="location-status">
+              <i class="fa-solid fa-circle-info" style="font-size:.65rem"></i>
+              Escribe tu dirección o presiona GPS para detectarla automáticamente
+            </div>
+            <!-- Delivery estimate -->
+            <div class="delivery-estimate" id="delivery-estimate">
+              <div class="delivery-est-header">
+                <span style="font-size:1.3rem">🛵</span>
+                <div><div class="delivery-est-title">Opciones de envío</div></div>
+                <span class="delivery-est-dist" id="delivery-dist-lbl"></span>
+              </div>
+              <div class="delivery-tiers" id="delivery-tiers"></div>
+              <p class="delivery-note">El costo de envío se suma al total del pedido</p>
+            </div>
+            <div class="no-delivery-zone" id="no-delivery-zone">
+              📍 Tu ubicación está fuera de nuestra zona de entrega. Contáctanos para coordinar.
+            </div>
+          </div>
+
+          <!-- Sub: método de pago envío -->
+          <div style="margin-top:14px">
+            <label style="display:block;font-size:.76rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">Forma de pago</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="store-pay-opt selected" id="env-ef" onclick="selEnvioPay('Efectivo')">
+                <span style="font-size:1.4rem">💵</span>
+                <div><div style="font-weight:700;font-size:.82rem">Efectivo</div><div style="font-size:.68rem;color:var(--muted)">Al recibir</div></div>
+              </div>
+              <div class="store-pay-opt" id="env-tr" onclick="selEnvioPay('Transferencia')">
+                <span style="font-size:1.4rem">🏦</span>
+                <div><div style="font-weight:700;font-size:.82rem">Transferencia</div><div style="font-size:.68rem;color:var(--muted)">Antes del envío</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bancos (solo cuando elige transferencia en envío) -->
+          <div id="panel-envio-bancos" style="display:none;margin-top:12px">
+            <div class="transfer-note">
+              <strong>⚠️ Importante — Pago al instante</strong>
+              La transferencia debe realizarse <strong>antes del despacho</strong>. Adjunta el comprobante para confirmar.
+            </div>
+            <div class="bank-cards" style="margin-top:12px">
+              <div class="bank-card" id="bank-popular" onclick="selBank('popular')">
+                <div class="bank-logo popular">BPD</div>
+                <div class="bank-info">
+                  <div class="bank-name">Banco Popular Dominicano</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+              <div class="bank-card" id="bank-reservas" onclick="selBank('reservas')">
+                <div class="bank-logo reservas">BR</div>
+                <div class="bank-info">
+                  <div class="bank-name">Banco de Reservas</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+              <div class="bank-card" id="bank-bhd" onclick="selBank('bhd')">
+                <div class="bank-logo bhd">BHD</div>
+                <div class="bank-info">
+                  <div class="bank-name">BHD León</div>
+                  <div class="bank-acct">Cta: 000-000000-0</div>
+                  <div class="bank-owner">Nombre Titular · Cédula: 000-0000000-0</div>
+                </div>
+              </div>
+            </div>
+            <div class="upload-comprobante" id="upload-comp-zone" onclick="document.getElementById('comp-file').click()">
+              <input type="file" id="comp-file" accept="image/*" style="display:none" onchange="previewComprobante(event)">
+              <span class="upload-comp-icon">📸</span>
+              <div class="upload-comp-text">Toca aquí para adjuntar foto del comprobante</div>
+              <div class="upload-comp-filename" id="comp-filename"></div>
+            </div>
+            <p style="font-size:.7rem;color:var(--muted);text-align:center;margin-top:8px">
+              También puedes enviar la foto por WhatsApp al confirmar el pedido
+            </p>
+          </div>
+
+
+
+        </div><!-- /panel-envio -->
+      </div><!-- /fg método de pago -->
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeCheckout()">Volver</button>
@@ -1122,12 +2720,14 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
     <div class="modal-body" style="text-align:center">
       <div class="login-header-icon">🔐</div>
       <p style="color:var(--muted);font-size:.86rem;margin-bottom:22px">Autenticación segura con SQL Server</p>
-      <div class="fg"><input class="fi" id="li-email" type="email" placeholder="Email de administrador" style="text-align:center"></div>
-      <div class="fg"><input class="fi" id="li-pass" type="password" placeholder="Contraseña" style="text-align:center"></div>
-      <div class="err-msg" id="li-err"></div>
-      <button class="btn btn-primary" style="width:100%;justify-content:center;padding:14px" id="li-btn" onclick="submitLogin()">
-        <i class="fa-solid fa-lock-open"></i> Entrar al panel
-      </button>
+      <form onsubmit="submitLogin(); return false;" autocomplete="on">
+        <div class="fg"><input class="fi" id="li-email" type="email" placeholder="Email de administrador" style="text-align:center" autocomplete="username"></div>
+        <div class="fg"><input class="fi" id="li-pass" type="password" placeholder="Contraseña" style="text-align:center" autocomplete="current-password"></div>
+        <div class="err-msg" id="li-err"></div>
+        <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:14px" id="li-btn">
+          <i class="fa-solid fa-lock-open"></i> Entrar al panel
+        </button>
+      </form>
       <p style="font-size:.7rem;color:var(--muted);margin-top:16px">
         Credenciales creadas en la base de datos SQL Server
       </p>
@@ -1158,13 +2758,17 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       <div class="fg"><label>Nombre del producto</label><input class="fi" id="p-name" type="text" placeholder="Ej: Caja de Bombones Premium"></div>
       <div class="form-2col">
         <div class="fg"><label>Precio (RD$)</label><input class="fi" id="p-price" type="number" placeholder="350"></div>
-        <div class="fg">
-          <label>Estado</label>
-          <select class="fi" id="p-status">
-            <option value="activo">✅ Activo</option>
-            <option value="inactivo">⛔ Inactivo</option>
-          </select>
+        <div class="fg"><label>Cantidad en inventario</label>
+          <input class="fi" id="p-stock" type="number" placeholder="0" min="0">
+          <p class="stock-hint">⚠️ Si llega a 0 el producto no se podrá agregar al carrito</p>
         </div>
+      </div>
+      <div class="fg">
+        <label>Estado</label>
+        <select class="fi" id="p-status">
+          <option value="activo">✅ Activo</option>
+          <option value="inactivo">⛔ Inactivo</option>
+        </select>
       </div>
       <div class="fg"><label>Descripción</label><textarea class="fi" id="p-desc" rows="4" placeholder="Describe el producto..." style="resize:none"></textarea></div>
     </div>
@@ -1182,7 +2786,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 <!-- ════════════════════════════════════════════
      JAVASCRIPT — Toda la lógica de la app
 ════════════════════════════════════════════ -->
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 /* ─────────────────────────────────────────────────────────
    CONFIGURACIÓN
    Cambia API_URL a la URL donde corre tu backend Node.js
@@ -1194,8 +2798,8 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 // ║  API_URL: URL de tu backend en Render               ║
 // ║  WA_NUM:  Tu número WhatsApp sin + ni espacios      ║
 // ╚══════════════════════════════════════════════════════╝
-const API_URL = "https://dulce-inspiracion.onrender.com";  // ✅ Backend en Render
-const WA_NUM  = "18297635185";                       // ← tu número sin +
+const API_URL = "https://dulce-inspiracion.onrender.com"; // ✅ Backend en Render
+const WA_NUM  = "18295551234";                       // ← tu número sin +
 
 // Tiempo de inactividad antes de cerrar sesión (30 min)
 const SESSION_TIMEOUT_MS = 30 * 60 * 1000;
@@ -1242,6 +2846,15 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === "Escape")
       document.querySelectorAll(".modal-overlay.open")
               .forEach(el => el.classList.remove("open"));
+  });
+  // Limpiar campo de búsqueda al abrir/cerrar modales
+  document.querySelectorAll(".modal-overlay").forEach(el => {
+    el.addEventListener("click", e => {
+      if (e.target === el) {
+        const s = document.getElementById("search-input");
+        if (s) s.blur();
+      }
+    });
   });
   // Reiniciar timer de sesión con cualquier interacción del admin
   ["mousemove","keydown","click","scroll","touchstart"].forEach(ev => {
@@ -1321,20 +2934,7 @@ async function submitLogin() {
   }
 }
 
-function doLogout(isAuto = false) {
-  authToken = null;
-  localStorage.removeItem("di_token");
-  localStorage.removeItem("di_token_time");
-  localStorage.removeItem("di_token_email");
-  clearTimeout(sessionTimer);
-  g("admin-view").style.display = "none";
-  g("user-view").style.display  = "block";
-  if (isAuto) {
-    toast("⏰ Sesión cerrada por inactividad");
-  } else {
-    toast("👋 Sesión cerrada correctamente");
-  }
-}
+// doLogout early — removed duplicate (see version below)
 
 function startSessionTimer() {
   clearTimeout(sessionTimer);
@@ -1368,21 +2968,9 @@ function resetSessionTimer() {
 /* ══════════════════════════════════════════════════════
    VISTA ADMIN
 ══════════════════════════════════════════════════════ */
-function showAdmin() {
-  g("user-view").style.display  = "none";
-  g("admin-view").style.display = "block";
-  window.scrollTo(0, 0);
-  loadAdminProducts();
-  startSessionTimer();
-}
+// showAdmin — definida más abajo (versión completa)
 
-function switchTab(t) {
-  g("tab-p").style.display = t === "p" ? "block" : "none";
-  g("tab-o").style.display = t === "o" ? "block" : "none";
-  g("tbtn-p").className = "tab-btn" + (t === "p" ? " active" : "");
-  g("tbtn-o").className = "tab-btn" + (t === "o" ? " active" : "");
-  if (t === "o") loadOrders();
-}
+// switchTab — definida más abajo (versión completa)
 
 /* ══════════════════════════════════════════════════════
    PRODUCTOS — Vista pública
@@ -1419,19 +3007,31 @@ function renderProds() {
     const card = document.createElement("div");
     card.className = "product-card";
     card.style.animationDelay = (i * 0.07) + "s";
-    // Si la imagen es base64 la usamos directamente
     const imgSrc = p.imagen || "https://placehold.co/400x220/fdf6ee/c0394b?text=Sin+imagen";
+    const stockVal = p.stock !== undefined ? Number(p.stock) : null;
+    const isOut    = stockVal !== null && stockVal <= 0;
+    const isLow    = stockVal !== null && stockVal > 0 && stockVal <= 5;
+    const stockBadgeHtml = stockVal !== null
+      ? isOut
+        ? '<span class="stock-badge stock-out">🔴 Agotado</span>'
+        : isLow
+          ? `<span class="stock-badge stock-low">⚠️ Últimas ${stockVal}</span>`
+          : `<span class="stock-badge stock-ok">✅ Disponible</span>`
+      : "";
     card.innerHTML = `
       <div class="card-img-wrap">
         <img src="${imgSrc}" alt="${p.nombre}" loading="lazy">
         <div class="card-overlay"></div>
         <span class="price-chip">RD$ ${Number(p.precio).toLocaleString()}</span>
+        ${stockBadgeHtml}
       </div>
       <div class="card-body">
         <div class="card-name">${p.nombre}</div>
         <div class="card-desc">${p.descripcion}</div>
-        <button class="btn-add" onclick="addToCart(${p.id})">
-          <i class="fa-solid fa-cart-plus"></i> Agregar al carrito
+        <button class="btn-add" onclick="addToCart(${p.id})" ${isOut ? "disabled" : ""}>
+          ${isOut
+            ? '<i class="fa-solid fa-ban"></i> Agotado'
+            : '<i class="fa-solid fa-cart-plus"></i> Agregar al carrito'}
         </button>
       </div>`;
     grid.appendChild(card);
@@ -1470,6 +3070,9 @@ function renderAdminTable() {
       ? '<span class="status-badge sb-inactivo">⛔ Inactivo</span>'
       : '<span class="status-badge sb-activo">✅ Activo</span>';
     const imgSrc = p.imagen || "https://placehold.co/52x52/fdf6ee/c0394b?text=?";
+    const stock  = p.stock !== undefined ? Number(p.stock) : "—";
+    const stockClass = stock === 0 ? "out" : stock !== "—" && stock <= 5 ? "low" : "ok";
+    const stockLbl   = stock === 0 ? "🔴 Agotado" : stock !== "—" && stock <= 5 ? `⚠️ ${stock}` : stock;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td><img src="${imgSrc}" alt="${p.nombre}"></td>
@@ -1478,6 +3081,7 @@ function renderAdminTable() {
         <div class="td-desc">${p.descripcion}</div>
       </td>
       <td class="td-price">RD$ ${Number(p.precio).toLocaleString()}</td>
+      <td><span class="stock-num ${stockClass}">${stockLbl}</span></td>
       <td>${badge}</td>
       <td>
         <button class="btn-ed" onclick="openEditProd(${p.id})">✏️ Editar</button>
@@ -1493,6 +3097,7 @@ function openAddProd() {
   g("prod-modal-title").textContent = "Nuevo Producto";
   g("p-name").value = ""; g("p-price").value = "";
   g("p-desc").value = ""; g("p-status").value = "activo";
+  g("p-stock").value = "0";
   g("img-preview").innerHTML = "Clic para subir imagen";
   g("prog-wrap").style.display = "none";
   openModal("m-prod");
@@ -1508,6 +3113,7 @@ function openEditProd(id) {
   g("p-price").value  = p.precio;
   g("p-desc").value   = p.descripcion;
   g("p-status").value = p.estado || "activo";
+  g("p-stock").value  = p.stock !== undefined ? p.stock : 0;
   if (p.imagen)
     g("img-preview").innerHTML = `<img src="${p.imagen}" style="width:100%;height:100%;object-fit:cover">`;
   else
@@ -1550,6 +3156,7 @@ async function saveProduct() {
   const precio      = parseFloat(g("p-price").value);
   const descripcion = g("p-desc").value.trim();
   const estado      = g("p-status").value;
+  const stock       = parseInt(g("p-stock").value) || 0;
 
   if (!nombre || !precio || !descripcion) { toast("⚠️ Completa todos los campos"); return; }
   if (!imgData) { toast("⚠️ Agrega una imagen"); return; }
@@ -1559,7 +3166,7 @@ async function saveProduct() {
   btn.disabled  = true;
 
   try {
-    const body = { nombre, precio, descripcion, estado, imagen: imgData };
+    const body = { nombre, precio, descripcion, estado, imagen: imgData, stock };
     if (editId) {
       // PUT /api/admin/productos/:id → UPDATE en SQL Server
       await api("PUT", `/api/admin/productos/${editId}`, body);
@@ -1621,6 +3228,8 @@ function renderCart() {
       <p class="cart-empty-text">Tu carrito está vacío</p>
     </div>`;
     tbar.style.display = "none";
+    const sb2 = document.getElementById("cart-summary-box");
+    if (sb2) sb2.style.display = "none";
     return;
   }
   let sum = 0;
@@ -1643,77 +3252,125 @@ function renderCart() {
       </div>`;
     body.appendChild(row);
   });
-  g("cart-total-num").textContent = "RD$ " + Number(sum).toLocaleString();
   tbar.style.display = "flex";
+  // Update summary box
+  const sb = document.getElementById("cart-summary-box");
+  if (sb) sb.style.display = "block";
+  updateCartTotals();
 }
 
 function chQty(i, d)  { cart[i].qty = Math.max(1, cart[i].qty + d); saveCart(); updateBadge(); renderCart(); }
 function rmItem(i)    { cart.splice(i, 1); saveCart(); updateBadge(); renderCart(); }
 function goCheckout() {
   if (!cart.length) { toast("⚠️ Tu carrito está vacío"); return; }
-  closeCart(); openModal("m-checkout");
+  closeCart();
+  openModal("m-checkout");
+  // Always start checkout in envío mode with efectivo selected
+  setTimeout(() => selModo("envio"), 50);
 }
 function closeCheckout() { closeModal("m-checkout"); }
-function selPay(m) {
-  payMethod = m;
-  g("po-ef").className = "pay-opt" + (m === "Efectivo"      ? " sel" : "");
-  g("po-tr").className = "pay-opt" + (m === "Transferencia" ? " sel" : "");
-}
+let selectedBank = null;
+let comprobanteData = null;
 
-async function submitCheckout() {
-  const nombre   = g("f-nombre").value.trim();
-  const apellido = g("f-apellido").value.trim();
-  const tel      = g("f-tel").value.trim();
-  const dir      = g("f-dir").value.trim();
-
-  if (!nombre || !apellido || !tel || !dir) { toast("⚠️ Completa todos los campos"); return; }
-
-  const btn = g("checkout-btn");
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
-  btn.disabled  = true;
-
-  let total = 0, txtItems = "";
-  const items = cart.map(i => {
-    const sub = i.precio * i.qty;
-    total += sub;
-    txtItems += `${i.qty}× ${i.nombre} = RD$${sub.toLocaleString()}\n`;
-    return { id: i.id, nombre: i.nombre, precio: i.precio, cantidad: i.qty };
-  });
-
+function selModo(modo) {
   try {
-    // POST /api/pedidos → INSERT en Pedidos + DetallePedido (SQL Server)
-    const resp = await api("POST", "/api/pedidos", {
-      nombre, apellido, telefono: tel, ubicacion: dir,
-      items, total, metodo_pago: payMethod
-    });
+    // Tabs
+    const tTienda = document.getElementById("tab-tienda");
+    const tEnvio  = document.getElementById("tab-envio");
+    if (tTienda) tTienda.className = "pay-method-tab" + (modo === "tienda" ? " active" : "");
+    if (tEnvio)  tEnvio.className  = "pay-method-tab" + (modo === "envio"  ? " active" : "");
 
-    // Abrir WhatsApp con resumen del pedido
-    const fecha = new Date().toLocaleString("es-DO", { dateStyle:"short", timeStyle:"short" });
-    const msg =
-      `🍭 *NUEVO PEDIDO — Dulce Inspiración*\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `🆔 *Pedido #${resp.pedidoId}*  |  🕐 ${fecha}\n\n` +
-      `👤 *Cliente:* ${nombre} ${apellido}\n` +
-      `📱 *WhatsApp:* ${tel}\n` +
-      `📍 *Dirección:* ${dir}\n` +
-      `💳 *Pago:* ${payMethod}\n\n` +
-      `📋 *Detalle del pedido:*\n${txtItems}\n` +
-      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
-      `💵 *TOTAL: RD$ ${total.toLocaleString()}*\n\n` +
-      `_Pedido registrado en el sistema ✅_`;
+    // Panels — use style.display directly
+    const pTienda = document.getElementById("panel-tienda");
+    const pEnvio  = document.getElementById("panel-envio");
+    if (pTienda) pTienda.style.display = modo === "tienda" ? "block" : "none";
+    if (pEnvio)  pEnvio.style.display  = modo === "envio"  ? "block" : "none";
 
-    window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(msg)}`, "_blank");
-    cart = []; saveCart(); updateBadge(); closeCheckout();
-    ["f-nombre", "f-apellido", "f-tel", "f-dir"].forEach(id => g(id).value = "");
-    toast("🎉 ¡Pedido enviado y registrado!");
-  } catch (e) {
-    toast("❌ Error: " + e.message);
-    console.error(e);
-  } finally {
-    btn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Enviar pedido';
-    btn.disabled  = false;
+    if (modo === "tienda") {
+      deliveryCost  = 0;
+      selectedTier  = null;
+      updateCartTotals();
+      selStorePay("Efectivo en tienda");
+    } else {
+      selectedBank     = null;
+      comprobanteData  = null;
+      selEnvioPay("Efectivo");
+    }
+  } catch(err) {
+    console.error("selModo error:", err);
   }
 }
+
+function selStorePay(method) {
+  try {
+    payMethod = method;
+
+    const efEl = document.getElementById("st-ef");
+    const trEl = document.getElementById("st-tr");
+    if (efEl) efEl.className = "store-pay-opt" + (method === "Efectivo en tienda"      ? " selected" : "");
+    if (trEl) trEl.className = "store-pay-opt" + (method === "Transferencia en tienda" ? " selected" : "");
+
+    const bancosEl = document.getElementById("panel-tienda-bancos");
+    if (bancosEl) {
+      bancosEl.style.display = (method === "Transferencia en tienda") ? "block" : "none";
+    }
+  } catch(err) {
+    console.error("selStorePay error:", err);
+  }
+}
+
+function selEnvioPay(method) {
+  try {
+    payMethod = method;
+
+    const efEl = document.getElementById("env-ef");
+    const trEl = document.getElementById("env-tr");
+    if (efEl) efEl.className = "store-pay-opt" + (method === "Efectivo"       ? " selected" : "");
+    if (trEl) trEl.className = "store-pay-opt" + (method === "Transferencia"   ? " selected" : "");
+
+    const bancosEl = document.getElementById("panel-envio-bancos");
+    if (bancosEl) {
+      bancosEl.style.display = (method === "Transferencia") ? "block" : "none";
+    }
+  } catch(err) {
+    console.error("selEnvioPay error:", err);
+  }
+}
+
+function selBankStore(bank) {
+  ["popular","reservas","bhd"].forEach(b => {
+    const el = document.getElementById("bank-" + b + "-st");
+    if (el) el.className = "bank-card" + (b === bank ? " selected" : "");
+  });
+}
+
+// Legacy selPay kept for compatibility
+function selPay(m) { selEnvioPay(m); }
+
+
+function selBank(bank) {
+  selectedBank = bank;
+  ["popular","reservas","bhd"].forEach(b => {
+    const el = document.getElementById("bank-" + b);
+    if (el) el.className = "bank-card" + (b === bank ? " selected" : "");
+  });
+}
+
+function previewComprobante(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    comprobanteData = ev.target.result;
+    const zone = document.getElementById("upload-comp-zone");
+    const fname = document.getElementById("comp-filename");
+    if (zone) zone.className = "upload-comprobante has-file";
+    if (fname) fname.textContent = "✅ " + file.name;
+  };
+  reader.readAsDataURL(file);
+}
+
+// submitCheckout — removed early version, see complete version below
 
 /* ══════════════════════════════════════════════════════
    PEDIDOS — Admin
@@ -1734,58 +3391,62 @@ async function loadOrders() {
 }
 
 function filterOrders() {
-  const v = g("ord-filter").value;
-  renderOrders(v === "all" ? orders : orders.filter(o => o.estado === v));
+  const estado    = g("ord-filter").value;
+  const dateRange = document.getElementById("ord-date-filter")?.value || "all";
+  const search    = (document.getElementById("ord-search")?.value || "").toLowerCase().trim();
+
+  let list = estado === "all" ? orders : orders.filter(o => o.estado === estado);
+
+  // Search filter
+  if (search) {
+    list = list.filter(o =>
+      (o.nombre   || "").toLowerCase().includes(search) ||
+      (o.apellido || "").toLowerCase().includes(search) ||
+      (o.telefono || "").toLowerCase().includes(search) ||
+      String(o.id).includes(search)
+    );
+  }
+
+  // Filter by date range
+  if (dateRange !== "all") {
+    const now   = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    list = list.filter(o => {
+      if (!o.fecha_creacion) return false;
+      const d = new Date(o.fecha_creacion);
+      if (dateRange === "today") {
+        return d >= today;
+      } else if (dateRange === "week") {
+        const weekAgo = new Date(today); weekAgo.setDate(weekAgo.getDate() - 7);
+        return d >= weekAgo;
+      } else if (dateRange === "month") {
+        const monthAgo = new Date(today); monthAgo.setMonth(monthAgo.getMonth() - 1);
+        return d >= monthAgo;
+      }
+      return true;
+    });
+  }
+
+  renderOrders(list);
 }
 
-function renderOrders(list) {
-  const c = g("ord-list"), e = g("ord-empty");
-  if (!list.length) { c.style.display = "none"; e.style.display = "block"; return; }
-  e.style.display = "none"; c.style.display = "block"; c.innerHTML = "";
-
-  const ESTADOS = { pendiente:"⏳ Pendiente", confirmado:"✅ Confirmado", entregado:"🚚 Entregado", cancelado:"❌ Cancelado" };
-
-  list.forEach(o => {
-    const cls   = "os-" + (o.estado || "pendiente");
-    const lbl   = ESTADOS[o.estado] || "⏳ Pendiente";
-    const fecha = o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO") : "—";
-    const chips = (o.items || []).map(i => `<span class="item-chip">${i.cantidad}× ${i.nombre_producto}</span>`).join("");
-    const acts  = Object.entries(ESTADOS)
-      .filter(([k]) => k !== o.estado)
-      .map(([k, v]) => `<button class="btn-os" onclick="updOrder(${o.id},'${k}')">${v}</button>`)
-      .join("");
-    const waNum = (o.telefono || "").replace(/\D/g, "");
-
-    const card = document.createElement("div");
-    card.className = "order-card";
-    card.innerHTML = `
-      <div class="order-top">
-        <div>
-          <div class="order-name">${o.nombre} ${o.apellido}<span class="order-id">#${o.id}</span></div>
-          <div class="order-contact">📱 ${o.telefono} · 📍 ${o.ubicacion}</div>
-          <div class="order-date">${fecha}</div>
-        </div>
-        <div style="text-align:right">
-          <div class="order-amount">RD$ ${Number(o.total).toLocaleString()}</div>
-          <div class="order-pay-lbl">${o.metodo_pago}</div>
-        </div>
-      </div>
-      <div class="order-items">${chips}</div>
-      <div class="order-actions">
-        <span class="os-badge ${cls}">${lbl}</span>
-        ${acts}
-        ${waNum ? `<a class="wa-link" href="https://wa.me/${waNum}" target="_blank"><i class="fa-brands fa-whatsapp"></i> Contactar</a>` : ""}
-      </div>`;
-    c.appendChild(card);
-  });
-}
+// renderOrders — definida más abajo (versión completa con agrupación por fecha)
 
 async function updOrder(id, estado) {
   try {
-    // PUT /api/admin/pedidos/:id/estado → UPDATE en SQL Server
     await api("PUT", `/api/admin/pedidos/${id}/estado`, { estado });
-    toast("✅ Estado actualizado");
-    loadOrders();
+    const msgs = {
+      cancelado:  "❌ Pedido cancelado — stock restaurado",
+      confirmado: "✅ Pedido confirmado",
+      entregado:  "🚚 Pedido marcado como entregado",
+      pendiente:  "⏳ Pedido vuelto a pendiente"
+    };
+    toast(msgs[estado] || "✅ Estado actualizado");
+    // Recargar pedidos Y productos para reflejar cambio de stock
+    await loadOrders();
+    await loadPublicProducts();
+    // Si el dashboard está activo, actualizarlo también
+    if (document.getElementById("tab-d")?.style.display === "block") loadDashboard();
   } catch (e) {
     toast("❌ " + e.message);
   }
@@ -1796,7 +3457,16 @@ async function updOrder(id, estado) {
 ══════════════════════════════════════════════════════ */
 function g(id)            { return document.getElementById(id); }
 function openModal(id)    { g(id).classList.add("open"); }
-function closeModal(id)   { g(id).classList.remove("open"); }
+function closeModal(id) {
+  g(id).classList.remove("open");
+  // Clear login fields when closing login modal
+  if (id === "m-login") {
+    const em = g("li-email"), ps = g("li-pass"), er = g("li-err");
+    if (em) em.value = "";
+    if (ps) ps.value = "";
+    if (er) { er.style.display = "none"; er.textContent = ""; }
+  }
+}
 function showErr(el, msg) { el.textContent = msg; el.style.display = "block"; }
 function toast(msg) {
   const t = g("toast");
@@ -1821,6 +3491,1143 @@ function goTo(id) {
   }
 }
 
+
+
+/* ══════════════════════════════════════════════════════
+   SPLASH SCREEN
+══════════════════════════════════════════════════════ */
+window.addEventListener("load", () => {
+  setTimeout(() => {
+    const splash = document.getElementById("splash");
+    if (splash) splash.classList.add("hidden");
+  }, 2000);
+});
+
+
+/* ══════════════════════════════════════════════════════
+   ESTADÍSTICAS
+══════════════════════════════════════════════════════ */
+function loadStats() {
+  if (!orders.length) return;
+
+  // ── Filter by selected period ──
+  const period = document.getElementById("stats-period")?.value || "all";
+  const now    = new Date();
+
+  function inPeriod(dateStr) {
+    if (period === "all") return true;
+    const d = new Date(dateStr);
+    if (period === "today") {
+      return d.toDateString() === now.toDateString();
+    }
+    if (period === "week") {
+      const w = new Date(now); w.setDate(w.getDate() - 7);
+      return d >= w;
+    }
+    if (period === "month") {
+      return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+    }
+    if (period === "year") {
+      return d.getFullYear() === now.getFullYear();
+    }
+    return true;
+  }
+
+  const filtered    = orders.filter(o => inPeriod(o.fecha_creacion));
+  const exitosos    = filtered.filter(o => o.estado === "confirmado" || o.estado === "entregado");
+  const cancelados  = filtered.filter(o => o.estado === "cancelado");
+  const pendientes  = filtered.filter(o => o.estado === "pendiente");
+
+  // ── 1. Ingresos Totales (solo exitosos) ──
+  const totalIngresos = exitosos.reduce((s,o) => s + Number(o.total), 0);
+  const setEl = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
+  setEl("stat-ingresos", "RD$ " + totalIngresos.toLocaleString());
+  setEl("stat-ingresos-sub", `${exitosos.length} pedido${exitosos.length!==1?"s":""} exitoso${exitosos.length!==1?"s":""}`);
+
+  // ── 2. Número de Ventas ──
+  setEl("stat-pedidos", filtered.length);
+  setEl("stat-pedidos-sub", `${cancelados.length} cancelado${cancelados.length!==1?"s":""}`);
+
+  // ── 3. Ticket Promedio ──
+  const ticketProm = exitosos.length > 0
+    ? Math.round(totalIngresos / exitosos.length)
+    : 0;
+  setEl("stat-ticket", "RD$ " + ticketProm.toLocaleString());
+
+  // ── 4. Crecimiento vs período anterior ──
+  function getPrevPeriodOrders() {
+    return orders.filter(o => {
+      const d = new Date(o.fecha_creacion);
+      if (period === "today") {
+        const yd = new Date(now); yd.setDate(yd.getDate()-1);
+        return d.toDateString() === yd.toDateString();
+      }
+      if (period === "week") {
+        const w1 = new Date(now); w1.setDate(w1.getDate()-14);
+        const w2 = new Date(now); w2.setDate(w2.getDate()-7);
+        return d >= w1 && d < w2;
+      }
+      if (period === "month") {
+        const pm = new Date(now); pm.setMonth(pm.getMonth()-1);
+        return d.getMonth() === pm.getMonth() && d.getFullYear() === pm.getFullYear();
+      }
+      if (period === "year") {
+        return d.getFullYear() === now.getFullYear()-1;
+      }
+      return false;
+    });
+  }
+  const prevOrders  = getPrevPeriodOrders();
+  const prevExit    = prevOrders.filter(o => o.estado === "confirmado" || o.estado === "entregado");
+  const prevIngresos = prevExit.reduce((s,o) => s + Number(o.total), 0);
+  let crecimientoText = "—";
+  let crecimientoSub  = "Sin datos previos";
+  if (prevIngresos > 0 && period !== "all") {
+    const pct = Math.round(((totalIngresos - prevIngresos) / prevIngresos) * 100);
+    crecimientoText = (pct >= 0 ? "+" : "") + pct + "%";
+    crecimientoSub  = pct >= 0
+      ? `▲ vs período anterior`
+      : `▼ vs período anterior`;
+    const el = document.getElementById("stat-crecimiento");
+    if (el) el.style.color = pct >= 0 ? "#15803d" : "#dc2626";
+  } else if (period === "all") {
+    crecimientoText = filtered.length + " total";
+    crecimientoSub  = "Todos los períodos";
+  }
+  setEl("stat-crecimiento", crecimientoText);
+  setEl("stat-crecimiento-sub", crecimientoSub);
+
+  // ── 5. Tasa de Conversión ──
+  const conversion = filtered.length > 0
+    ? Math.round((exitosos.length / filtered.length) * 100)
+    : 0;
+  setEl("stat-conversion", conversion + "%");
+
+  // ── 6. Ventas Exitosas (margen) ──
+  setEl("stat-margen", exitosos.length + " / " + filtered.length);
+
+  // ── Bar chart by estado ──
+  const estados = { pendiente:0, confirmado:0, entregado:0, cancelado:0 };
+  filtered.forEach(o => { if (estados[o.estado] !== undefined) estados[o.estado]++; });
+  const maxVal = Math.max(...Object.values(estados), 1);
+  const COLORS = { pendiente:"#f59e0b", confirmado:"#3b82f6", entregado:"#22c55e", cancelado:"#ef4444" };
+  const LABELS = { pendiente:"Pendiente", confirmado:"Confirmado", entregado:"Entregado", cancelado:"Cancelado" };
+  const chart = document.getElementById("bar-chart");
+  if (chart) {
+    chart.innerHTML = "";
+    Object.entries(estados).forEach(([k, v]) => {
+      const pct = Math.round((v / maxVal) * 100);
+      const col = document.createElement("div");
+      col.className = "bar-col";
+      col.innerHTML = `
+        <span class="bar-val">${v}</span>
+        <div class="bar" style="height:${Math.max(pct,4)}%;background:linear-gradient(to top,${COLORS[k]},${COLORS[k]}99)"></div>
+        <span class="bar-lbl">${LABELS[k]}</span>`;
+      chart.appendChild(col);
+    });
+  }
+
+  // ── Daily chart — last 7 days ──
+  const dailyChart = document.getElementById("bar-chart-daily");
+  if (dailyChart) {
+    dailyChart.innerHTML = "";
+    const days = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push(d);
+    }
+    const dailyTotals = days.map(d => {
+      const dayOrders = orders.filter(o => {
+        if (!o.fecha_creacion) return false;
+        const od = new Date(o.fecha_creacion);
+        return od.toDateString() === d.toDateString() &&
+               (o.estado === "confirmado" || o.estado === "entregado");
+      });
+      return { d, total: dayOrders.reduce((s,o) => s + Number(o.total), 0) };
+    });
+    const maxDay = Math.max(...dailyTotals.map(x => x.total), 1);
+    dailyTotals.forEach(({ d, total }) => {
+      const pct = Math.round((total / maxDay) * 100);
+      const lbl = d.toLocaleDateString("es-DO", { weekday:"short", day:"numeric" });
+      const isToday = d.toDateString() === now.toDateString();
+      const col = document.createElement("div");
+      col.className = "bar-col";
+      col.innerHTML = `
+        <span class="bar-val" style="font-size:.62rem">${total > 0 ? "RD$" + (total/1000).toFixed(1)+"k" : "0"}</span>
+        <div class="bar" style="height:${Math.max(pct,4)}%;background:${isToday
+          ? "linear-gradient(to top,var(--rose),var(--rose2))"
+          : "linear-gradient(to top,var(--gold),var(--gold2))"}">
+        </div>
+        <span class="bar-lbl" style="${isToday ? "color:var(--rose);font-weight:700" : ""}">${lbl}</span>`;
+      dailyChart.appendChild(col);
+    });
+  }
+
+  // ── Top Products ──
+  const prodCount = {};
+  const prodIngresos = {};
+  orders.filter(o => inPeriod(o.fecha_creacion) && (o.estado === "confirmado" || o.estado === "entregado"))
+    .forEach(o => {
+      (o.items || []).forEach(item => {
+        const n = item.nombre_producto || item.nombre;
+        const qty = item.cantidad || 1;
+        prodCount[n]    = (prodCount[n]    || 0) + qty;
+        prodIngresos[n] = (prodIngresos[n] || 0) + (Number(item.precio) * qty);
+      });
+    });
+  const sorted  = Object.entries(prodCount).sort((a,b) => b[1]-a[1]).slice(0,6);
+  const tp      = document.getElementById("top-products");
+  if (tp) {
+    if (!sorted.length) {
+      tp.innerHTML = '<p style="color:var(--muted);text-align:center;padding:20px">No hay datos de ventas todavía</p>';
+    } else {
+      const maxProd = sorted[0][1];
+      tp.innerHTML = sorted.map(([name, qty], i) => {
+        const ing = prodIngresos[name] || 0;
+        const medals = ["🥇","🥈","🥉"];
+        return `
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+          <span style="font-size:1.1rem;width:24px;text-align:center">${medals[i] || (i+1)}</span>
+          <div style="flex:1">
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+              <span style="font-size:.86rem;font-weight:600">${name}</span>
+              <span style="font-size:.78rem;color:var(--muted)">${qty} uds · RD$ ${ing.toLocaleString()}</span>
+            </div>
+            <div style="background:rgba(0,0,0,.06);border-radius:999px;height:8px;overflow:hidden">
+              <div style="height:100%;width:${Math.round(qty/maxProd*100)}%;background:linear-gradient(90deg,var(--rose),var(--gold));border-radius:999px;transition:width .7s"></div>
+            </div>
+          </div>
+        </div>`;
+      }).join("");
+    }
+  }
+
+  // ── Weekly Comparison (last 4 weeks) ──
+  const wc = document.getElementById("weekly-comparison");
+  if (wc) {
+    const weeks = [];
+    for (let w = 3; w >= 0; w--) {
+      const wStart = new Date(now);
+      wStart.setDate(wStart.getDate() - (w+1)*7);
+      const wEnd = new Date(now);
+      wEnd.setDate(wEnd.getDate() - w*7);
+      const wOrders = orders.filter(o => {
+        if (!o.fecha_creacion) return false;
+        const d = new Date(o.fecha_creacion);
+        return d >= wStart && d < wEnd &&
+               (o.estado === "confirmado" || o.estado === "entregado");
+      });
+      const wTotal = wOrders.reduce((s,o) => s + Number(o.total), 0);
+      const wLabel = w === 0 ? "Esta semana" :
+                     w === 1 ? "Semana pasada" :
+                     `Hace ${w+1} semanas`;
+      weeks.push({ label: wLabel, total: wTotal, count: wOrders.length });
+    }
+    const maxWeek = Math.max(...weeks.map(w => w.total), 1);
+    wc.innerHTML = weeks.map((w, i) => {
+      const prev = weeks[i-1];
+      let growthHtml = "";
+      if (prev && prev.total > 0) {
+        const pct = Math.round(((w.total - prev.total) / prev.total) * 100);
+        growthHtml = `<span class="${pct >= 0 ? 'kpi-trend-up' : 'kpi-trend-down'} weekly-growth">
+          ${pct >= 0 ? "▲" : "▼"} ${Math.abs(pct)}%
+        </span>`;
+      }
+      return `
+      <div class="weekly-row">
+        <span class="weekly-label">${w.label}</span>
+        <div class="weekly-bar-wrap">
+          <div class="weekly-bar-fill" style="width:${Math.round(w.total/maxWeek*100)}%"></div>
+        </div>
+        <span class="weekly-val">RD$ ${w.total.toLocaleString()}</span>
+        ${growthHtml || '<span class="weekly-growth kpi-trend-flat">—</span>'}
+      </div>`;
+    }).join("");
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   EXPORTAR A EXCEL (CSV)
+══════════════════════════════════════════════════════ */
+function exportExcel() {
+  if (!orders.length) { toast("⚠️ No hay pedidos para exportar"); return; }
+  const rows = [
+    ["#ID","Cliente","Teléfono","Dirección","Total RD$","Pago","Estado","Fecha","Productos"]
+  ];
+  orders.forEach(o => {
+    const items = (o.items||[]).map(i=>`${i.cantidad||1}x ${i.nombre_producto||i.nombre}`).join(" | ");
+    const fecha = o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO") : "";
+    rows.push([o.id, `${o.nombre} ${o.apellido}`, o.telefono, o.ubicacion,
+               Number(o.total).toFixed(2), o.metodo_pago, o.estado, fecha, items]);
+  });
+  const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g,'""')}"`).join(",")).join("\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8;" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "pedidos-dulce-inspiracion.csv";
+  a.click(); URL.revokeObjectURL(url);
+  toast("📊 Excel exportado correctamente");
+}
+
+/* ══════════════════════════════════════════════════════
+   NOTIFICACIONES DE PEDIDOS EN TIEMPO REAL
+══════════════════════════════════════════════════════ */
+let lastOrderCount = 0;
+let notifInterval  = null;
+
+function startNotifPolling() {
+  if (notifInterval) return;
+  notifInterval = setInterval(checkNewOrders, 30000); // cada 30s
+}
+
+async function checkNewOrders() {
+  if (!authToken) return;
+  try {
+    const fresh = await api("GET", "/api/admin/pedidos");
+    const newPending = fresh.filter(o => o.estado === "pendiente").length;
+    const dot = g("notif-dot");
+    const cnt = g("notif-count");
+    if (newPending > lastOrderCount && lastOrderCount > 0) {
+      toast("🔔 ¡Nuevo pedido recibido!");
+      if (dot) dot.classList.add("active");
+    }
+    lastOrderCount = newPending;
+    if (cnt) cnt.textContent = newPending > 0 ? `(${newPending})` : "";
+    if (dot) dot.classList.toggle("active", newPending > 0);
+    // Update orders list silently
+    orders = fresh;
+  } catch(e) { /* silent fail */ }
+}
+
+/* ══════════════════════════════════════════════════════
+   OVERRIDE switchTab to load stats & coupons
+// switchTab early — removed duplicate (see version below)
+
+/* ══════════════════════════════════════════════════════
+   OVERRIDE showAdmin to start notifications
+══════════════════════════════════════════════════════ */
+// showAdmin early — removed duplicate (see version below)
+
+/* ══════════════════════════════════════════════════════
+   FLOATING LOGOUT BUTTON
+══════════════════════════════════════════════════════ */
+function showLogoutBtn(visible) {
+  const btn = document.getElementById("btn-logout-float");
+  if (btn) btn.classList.toggle("visible", visible);
+}
+
+/* ══════════════════════════════════════════════════════
+   DASHBOARD
+══════════════════════════════════════════════════════ */
+function loadDashboard() {
+  const h = new Date().getHours();
+  const greeting = h < 12 ? "Buenos días" : h < 18 ? "Buenas tardes" : "Buenas noches";
+  const el = document.getElementById("dash-greeting");
+  if (el) el.textContent = greeting + " 👋";
+  const dateEl = document.getElementById("dash-date");
+  if (dateEl) dateEl.textContent = new Date().toLocaleDateString("es-DO", {
+    weekday:"long", year:"numeric", month:"long", day:"numeric"
+  });
+  if (!orders.length) return;
+
+  const today = new Date().toDateString();
+  const todayOrders = orders.filter(o => new Date(o.fecha_creacion).toDateString() === today);
+
+  // ── Ingresos solo de pedidos confirmados o entregados ──
+  const pedidosValidos   = orders.filter(o => o.estado === "confirmado" || o.estado === "entregado");
+  const pedidosHoyValidos = todayOrders.filter(o => o.estado === "confirmado" || o.estado === "entregado");
+
+  const totalIngresos = pedidosValidos.reduce((s, o) => s + Number(o.total), 0);
+  const hoyIngresos   = pedidosHoyValidos.reduce((s, o) => s + Number(o.total), 0);
+
+  // ── Conteos por estado ──
+  const pendientes  = orders.filter(o => o.estado === "pendiente");
+  const confirmados = orders.filter(o => o.estado === "confirmado");
+  const entregados  = orders.filter(o => o.estado === "entregado");
+  const cancelados  = orders.filter(o => o.estado === "cancelado");
+
+  // ── Pedidos de hoy (todos, para mostrar actividad) ──
+  const pedidosHoyTotal = todayOrders.length;
+
+  const setEl = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+
+  setEl("dash-hoy-ingresos",   hoyIngresos > 0 ? "RD$ " + hoyIngresos.toLocaleString() : "RD$ 0");
+  setEl("dash-hoy-pedidos",    pedidosHoyTotal);
+  setEl("dash-pendientes",     pendientes.length);
+  setEl("dash-total-ingresos", totalIngresos > 0 ? "RD$ " + totalIngresos.toLocaleString() : "RD$ 0");
+
+  // ── Tarjeta extra: entregados vs cancelados ──
+  const pendLbl = document.getElementById("dash-pend-lbl");
+  if (pendLbl) {
+    pendLbl.textContent = pendientes.length > 0 ? `¡${pendientes.length} sin atender!` : "Al día ✅";
+    pendLbl.className   = "dash-card-trend " + (pendientes.length > 0 ? "trend-pend" : "trend-up");
+  }
+
+  // ── Mini resumen de estados ──
+  const resumenEl = document.getElementById("dash-estados-resumen");
+  if (resumenEl) {
+    resumenEl.innerHTML = `
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
+        <span style="background:rgba(59,130,246,.1);color:#1d4ed8;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600">✅ Confirmados: ${confirmados.length}</span>
+        <span style="background:rgba(22,163,74,.1);color:#15803d;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600">🚚 Entregados: ${entregados.length}</span>
+        <span style="background:rgba(251,191,36,.1);color:#b45309;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600">⏳ Pendientes: ${pendientes.length}</span>
+        <span style="background:rgba(239,68,68,.1);color:#dc2626;padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600">❌ Cancelados: ${cancelados.length}</span>
+      </div>`;
+  }
+
+  // ── Últimos pedidos ──
+  const recent = document.getElementById("dash-recent");
+  if (!recent) return;
+  const last5 = [...orders].slice(0, 5);
+  const EICONS = { pendiente:"⏳", confirmado:"✅", entregado:"🚚", cancelado:"❌" };
+  recent.innerHTML = last5.length ? last5.map(o => {
+    const fecha = o.fecha_creacion
+      ? new Date(o.fecha_creacion).toLocaleString("es-DO", { dateStyle:"short", timeStyle:"short" })
+      : "—";
+    const isCanceled = o.estado === "cancelado";
+    return `<div class="dash-recent-item" style="${isCanceled ? "opacity:.6" : ""}">
+      <div>
+        <div class="dash-client">${EICONS[o.estado]||"⏳"} ${o.nombre} ${o.apellido}
+          <span style="font-size:.72rem;color:var(--muted)">#${o.id}</span>
+          ${isCanceled ? '<span style="font-size:.68rem;background:rgba(239,68,68,.1);color:#dc2626;padding:2px 8px;border-radius:999px;margin-left:4px">Cancelado</span>' : ""}
+        </div>
+        <div class="dash-time">${fecha} · ${o.metodo_pago}</div>
+      </div>
+      <div class="dash-total" style="${isCanceled ? "text-decoration:line-through;color:var(--muted)" : ""}">
+        RD$ ${Number(o.total).toLocaleString()}
+      </div>
+    </div>`;
+  }).join("") : '<p style="color:var(--muted);text-align:center;padding:20px">No hay pedidos todavía</p>';
+}
+
+/* ══════════════════════════════════════════════════════
+   USUARIOS ADMIN
+══════════════════════════════════════════════════════ */
+async function loadUsers() {
+  const grid = document.getElementById("users-grid");
+  if (!grid) return;
+  grid.innerHTML = '<div class="loading-wrap"><div class="spinner"></div></div>';
+  try {
+    const users = await api("GET", "/api/admin/usuarios");
+    renderUsers(users);
+  } catch(e) {
+    grid.innerHTML = `<div class="user-card"><div class="user-avatar">A</div><div class="user-info"><div class="user-name">Administrador</div><div class="user-email">admin@dulceinspiracion.com</div><span class="user-you">Tú</span></div></div><p style="color:var(--muted);font-size:.82rem;grid-column:1/-1;padding:8px">⚠️ Actualiza el backend para ver todos los usuarios.</p>`;
+  }
+}
+
+function renderUsers(users) {
+  const grid = document.getElementById("users-grid");
+  if (!grid || !users) return;
+  if (!users.length) { grid.innerHTML = '<p style="color:var(--muted);padding:20px">No hay usuarios.</p>'; return; }
+  grid.innerHTML = "";
+  const myEmail = (localStorage.getItem("di_token_email") || "").split(" · ")[1] || "";
+  users.forEach(u => {
+    const initials = (u.nombre||"?").split(" ").map(w=>w[0]).join("").toUpperCase().slice(0,2);
+    const isMe = u.email === myEmail;
+    const card = document.createElement("div");
+    card.className = "user-card";
+    card.innerHTML = `<div class="user-avatar">${initials}</div>
+      <div class="user-info"><div class="user-name">${u.nombre}</div><div class="user-email">${u.email}</div>${isMe?'<span class="user-you">Tú</span>':""}</div>
+      ${!isMe?`<button class="btn-del-user" onclick="deleteUser(${u.id},'${u.nombre}')"><i class="fa-solid fa-trash-can"></i></button>`:""}`;
+    grid.appendChild(card);
+  });
+}
+
+async function openAddUser() {
+  const nombre   = prompt("Nombre completo:");
+  if (!nombre?.trim()) return;
+  const email    = prompt("Email:");
+  if (!email?.trim()) return;
+  const password = prompt("Contraseña (mínimo 8 caracteres):");
+  if (!password || password.length < 8) { toast("⚠️ Contraseña muy corta"); return; }
+  try {
+    await api("POST", "/api/admin/usuarios", { nombre:nombre.trim(), email:email.trim(), password });
+    toast("✅ Usuario creado correctamente");
+    loadUsers();
+  } catch(e) { toast("❌ " + e.message); }
+}
+
+async function deleteUser(id, nombre) {
+  if (!confirm(`¿Eliminar a "${nombre}"?`)) return;
+  try {
+    await api("DELETE", `/api/admin/usuarios/${id}`);
+    toast("🗑️ Usuario eliminado");
+    loadUsers();
+  } catch(e) { toast("❌ " + e.message); }
+}
+
+/* ══════════════════════════════════════════════════════
+   IMPRIMIR COMPROBANTE
+══════════════════════════════════════════════════════ */
+function printOrder(id) {
+  const o = orders.find(x => x.id === id);
+  if (!o) return;
+  const fecha = o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO",{dateStyle:"long",timeStyle:"short"}) : "—";
+  const ESTADOS = {pendiente:"⏳ Pendiente",confirmado:"✅ Confirmado",entregado:"🚚 Entregado",cancelado:"❌ Cancelado"};
+  const itemsHtml = (o.items||[]).map(i=>`<div class="print-item"><span>${i.cantidad||1}× ${i.nombre_producto||i.nombre}</span><span>RD$ ${(Number(i.precio)*(i.cantidad||1)).toLocaleString()}</span></div>`).join("");
+  document.getElementById("print-area").innerHTML = `
+    <div class="print-header"><div class="print-logo">🍭</div><div class="print-title">Suplidora Dulce Inspiración</div><div class="print-sub">La Altagracia, República Dominicana</div></div>
+    <div class="print-body">
+      <div class="print-row"><span class="print-label">N° Pedido</span><span>#${o.id}</span></div>
+      <div class="print-row"><span class="print-label">Fecha</span><span>${fecha}</span></div>
+      <div class="print-row"><span class="print-label">Cliente</span><span>${o.nombre} ${o.apellido}</span></div>
+      <div class="print-row"><span class="print-label">Teléfono</span><span>${o.telefono}</span></div>
+      <div class="print-row"><span class="print-label">Dirección</span><span>${o.ubicacion}</span></div>
+      <div class="print-row"><span class="print-label">Pago</span><span>${o.metodo_pago}</span></div>
+      <div class="print-row"><span class="print-label">Estado</span><span>${ESTADOS[o.estado]||o.estado}</span></div>
+    </div>
+    <div class="print-items"><div style="font-weight:700;margin-bottom:10px">Productos:</div>${itemsHtml}</div>
+    <div class="print-total-row"><span>TOTAL</span><span>RD$ ${Number(o.total).toLocaleString()}</span></div>
+    <div class="print-footer">Gracias por confiar en Dulce Inspiración 💖<br>Comprobante generado el ${new Date().toLocaleString("es-DO")}</div>`;
+  window.print();
+}
+
+/* ══════════════════════════════════════════════════════
+   OVERRIDE: switchTab con todos los tabs
+══════════════════════════════════════════════════════ */
+function switchTab(t) {
+  ["d","p","o","s","u"].forEach(x => {
+    const tab = document.getElementById("tab-"+x), btn = document.getElementById("tbtn-"+x);
+    if (tab) tab.style.display = t===x?"block":"none";
+    if (btn) btn.className = "tab-btn"+(t===x?" active":"");
+  });
+  if (t==="d") { if (!orders.length) loadOrders().then(loadDashboard); else loadDashboard(); loadEstadisticas(); }
+  if (t==="o") loadOrders();
+  if (t==="s") { if (!orders.length) loadOrders().then(loadStats); else loadStats(); loadEstadisticas(); }
+  if (t==="u") loadUsers();
+}
+
+/* ══════════════════════════════════════════════════════
+   OVERRIDE: renderOrders con botón imprimir
+══════════════════════════════════════════════════════ */
+function renderOrders(list) {
+  const cont  = document.getElementById("ord-list");
+  const empty = document.getElementById("ord-empty");
+  if (!list.length) { cont.style.display="none"; empty.style.display="block"; return; }
+  empty.style.display="none"; cont.style.display="block"; cont.innerHTML="";
+
+  const ESTADOS = { pendiente:"⏳ Pendiente", confirmado:"✅ Confirmado", entregado:"🚚 Entregado", cancelado:"❌ Cancelado" };
+
+  // ── Group by date ──
+  const groups = {};
+  list.forEach(o => {
+    const d = o.fecha_creacion ? new Date(o.fecha_creacion) : new Date();
+    const key = d.toLocaleDateString("es-DO", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+    const dayKey = d.toDateString(); // for comparison
+    if (!groups[dayKey]) groups[dayKey] = { label: key, items: [] };
+    groups[dayKey].items.push(o);
+  });
+
+  // ── Render each group ──
+  Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dayKey => {
+    const { label, items } = groups[dayKey];
+
+    // Daily total (only confirmed + delivered)
+    const dayTotal = items
+      .filter(o => o.estado === "confirmado" || o.estado === "entregado")
+      .reduce((s, o) => s + Number(o.total), 0);
+
+    // Group header
+    const header = document.createElement("div");
+    header.className = "orders-date-group";
+
+    const isToday = new Date().toDateString() === dayKey;
+    const headerLabel = isToday ? "📅 Hoy — " + label : "📅 " + label;
+
+    header.innerHTML = `<div class="orders-date-header">
+      <span class="orders-date-label">${headerLabel}</span>
+      <span class="orders-date-count">${items.length} pedido${items.length !== 1 ? "s" : ""}</span>
+      ${dayTotal > 0 ? `<span class="orders-date-total">RD$ ${dayTotal.toLocaleString()}</span>` : ""}
+    </div>`;
+
+    // Render orders in this group with daily #1, #2, #3...
+    items.forEach((o, dailyIdx) => {
+      const cls   = `os-${o.estado||"pendiente"}`;
+      const lbl   = ESTADOS[o.estado] || "⏳ Pendiente";
+      const fecha = o.fecha_creacion
+        ? new Date(o.fecha_creacion).toLocaleString("es-DO", { timeStyle:"short" })
+        : "—";
+      const chips = (o.items||[]).map(i =>
+        `<span class="item-chip">${i.cantidad||1}× ${i.nombre_producto||i.nombre}</span>`
+      ).join("");
+      const acts = Object.entries(ESTADOS)
+        .filter(([k]) => k !== o.estado)
+        .map(([k,v]) => `<button class="btn-os" onclick="updOrder(${o.id},'${k}')">${v}</button>`)
+        .join("");
+      const waNum = (o.telefono||"").replace(/\D/g,"");
+
+      const card = document.createElement("div");
+      card.className = "order-card";
+      card.innerHTML = `
+        <div class="order-top">
+          <div>
+            <div class="order-name">
+              <span class="order-daily-num">#${dailyIdx + 1}</span>
+              ${o.nombre} ${o.apellido}
+              <span class="order-id" style="font-size:.68rem;color:var(--muted)">ID:${o.id}</span>
+            </div>
+            <div class="order-contact">📱 ${o.telefono} · 📍 ${o.ubicacion}</div>
+            <div class="order-date">🕐 ${fecha}</div>
+          </div>
+          <div style="text-align:right">
+            <div class="order-amount">RD$ ${Number(o.total).toLocaleString()}</div>
+            <div class="order-pay-lbl">${o.metodo_pago}</div>
+          </div>
+        </div>
+        <div class="order-items">${chips}</div>
+        <div class="order-actions">
+          <span class="os-badge ${cls}">${lbl}</span>${acts}
+          ${waNum ? `<a class="wa-link" href="https://wa.me/${waNum}" target="_blank"><i class="fa-brands fa-whatsapp"></i> Contactar</a>` : ""}
+          <button class="btn-os" onclick="printOrder(${o.id})" style="background:rgba(59,130,246,.1);color:#1d4ed8">
+            <i class="fa-solid fa-print"></i> Imprimir
+          </button>
+        </div>`;
+      header.appendChild(card);
+    });
+
+    cont.appendChild(header);
+  });
+}
+
+/* ══════════════════════════════════════════════════════
+   OVERRIDE: showAdmin + doLogout con botón flotante
+══════════════════════════════════════════════════════ */
+function showAdmin() {
+  document.getElementById("user-view").style.display  = "none";
+  document.getElementById("admin-view").style.display = "block";
+  // Limpiar búsqueda para que el email no aparezca en productos
+  const si = document.getElementById("search-input");
+  if (si) { si.value = ""; si.blur(); }
+  window.scrollTo(0,0);
+  showLogoutBtn(true);
+  switchTab("d");
+  loadEstadisticas();
+  loadAdminProducts();
+  startSessionTimer();
+  startNotifPolling();
+  checkNewOrders();
+}
+
+function doLogout(isAuto=false) {
+  authToken=null;
+  localStorage.removeItem("di_token");
+  localStorage.removeItem("di_token_time");
+  localStorage.removeItem("di_token_email");
+  clearTimeout(sessionTimer);
+  if (notifInterval) { clearInterval(notifInterval); notifInterval=null; }
+  clearInterval(_sessionCountInterval);
+  showLogoutBtn(false);
+  document.getElementById("admin-view").style.display="none";
+  document.getElementById("user-view").style.display="block";
+  // Limpiar búsqueda al volver a la tienda
+  const si2 = document.getElementById("search-input");
+  if (si2) { si2.value = ""; }
+  filterProducts();
+  toast(isAuto?"⏰ Sesión cerrada por inactividad":"👋 Sesión cerrada correctamente");
+}
+
+
+
+/* ══════════════════════════════════════════════════════
+   UBICACIÓN GPS + ESTIMACIÓN DE COSTO DE ENVÍO
+══════════════════════════════════════════════════════ */
+
+// ── Tienda ubicada en Santo Domingo Este ──
+const STORE_LAT = 18.4861;
+const STORE_LNG = -69.8475;
+
+// ── Tarifas de envío por distancia (como Uber/InDrive) ──
+const DELIVERY_TIERS = [
+  {
+    id:    "express",
+    icon:  "⚡",
+    name:  "Express",
+    time:  "30–45 min",
+    baseKm: 5,        // hasta 5 km
+    baseCost: 150,    // RD$ 150 base
+    perKm: 30,        // RD$ 30 por km adicional
+    maxKm: 10
+  },
+  {
+    id:    "standard",
+    icon:  "🛵",
+    name:  "Estándar",
+    time:  "45–90 min",
+    baseKm: 10,
+    baseCost: 200,
+    perKm: 25,
+    maxKm: 20
+  },
+  {
+    id:    "scheduled",
+    icon:  "📅",
+    name:  "Programado",
+    time:  "Acordar hora",
+    baseKm: 20,
+    baseCost: 250,
+    perKm: 20,
+    maxKm: 40
+  }
+];
+
+let userLat        = null;
+let userLng        = null;
+let deliveryCost   = 0;
+let selectedTier   = null;
+let userCoords     = null;
+
+// Haversine formula — distance between two coords in km
+function calcDistance(lat1, lng1, lat2, lng2) {
+  const R    = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a    = Math.sin(dLat/2) * Math.sin(dLat/2) +
+               Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
+               Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Calculate cost for a tier given distance
+function calcTierCost(tier, distKm) {
+  if (distKm > tier.maxKm) return null; // out of range for this tier
+  const extra = Math.max(0, distKm - tier.baseKm);
+  return Math.round(tier.baseCost + extra * tier.perKm);
+}
+
+// Show delivery estimate cards
+function showDeliveryEstimate(distKm) {
+  const estDiv  = document.getElementById("delivery-estimate");
+  const noZone  = document.getElementById("no-delivery-zone");
+  const distLbl = document.getElementById("delivery-dist-lbl");
+  const tiersEl = document.getElementById("delivery-tiers");
+
+  if (!estDiv) return;
+
+  distLbl.textContent = `📍 ${distKm.toFixed(1)} km de la tienda`;
+
+  // Check if any tier covers this distance
+  const available = DELIVERY_TIERS.map(tier => ({
+    ...tier,
+    cost: calcTierCost(tier, distKm)
+  })).filter(t => t.cost !== null);
+
+  if (!available.length) {
+    estDiv.classList.remove("visible");
+    noZone.style.display = "block";
+    deliveryCost = 0;
+    selectedTier = null;
+    return;
+  }
+
+  noZone.style.display = "none";
+  estDiv.classList.add("visible");
+
+  tiersEl.innerHTML = available.map(tier => `
+    <div class="delivery-tier" id="tier-${tier.id}" onclick="selectTier('${tier.id}', ${tier.cost})">
+      <span class="tier-icon">${tier.icon}</span>
+      <div class="tier-name">${tier.name}</div>
+      <div class="tier-time">${tier.time}</div>
+      <div class="tier-price">RD$ ${tier.cost.toLocaleString()}</div>
+    </div>
+  `).join("");
+
+  // Auto-select cheapest option
+  if (available.length > 0) {
+    selectTier(available[0].id, available[0].cost);
+  }
+}
+
+function selectTier(tierId, cost) {
+  selectedTier = tierId;
+  deliveryCost = cost;
+  // Update UI
+  document.querySelectorAll(".delivery-tier").forEach(el => el.classList.remove("sel"));
+  const sel = document.getElementById("tier-" + tierId);
+  if (sel) sel.classList.add("sel");
+  // Update cart totals
+  updateCartTotals();
+  toast(`🛵 Envío ${tierId === "express" ? "express" : tierId === "standard" ? "estándar" : "programado"}: RD$ ${cost.toLocaleString()}`);
+}
+
+function updateCartTotals() {
+  const subtotal  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const total     = subtotal + deliveryCost;
+  const sub       = document.getElementById("cart-sub-num");
+  const tot       = document.getElementById("cart-total-num");
+  const tot2      = document.getElementById("cart-total-num2");
+  const delivRow  = document.getElementById("cart-delivery-row");
+
+  if (sub)  sub.textContent  = "RD$ " + subtotal.toLocaleString();
+
+  if (selectedTier && deliveryCost > 0) {
+    // Tier selected — show delivery cost and full total
+    if (delivRow) {
+      delivRow.style.display = "flex";
+      delivRow.innerHTML = `<span>🛵 Envío</span><span style="color:var(--rose);font-weight:700">RD$ ${deliveryCost.toLocaleString()}</span>`;
+    }
+    if (tot)  tot.textContent  = "RD$ " + total.toLocaleString();
+    if (tot2) tot2.textContent = "RD$ " + total.toLocaleString();
+  } else {
+    // No tier yet — hide delivery row, show only subtotal as total
+    if (delivRow) delivRow.style.display = "none";
+    if (tot)  tot.textContent  = "RD$ " + subtotal.toLocaleString();
+    if (tot2) tot2.textContent = "RD$ " + subtotal.toLocaleString();
+  }
+}
+
+// GPS location
+async function getGPSLocation() {
+  const btn    = document.getElementById("btn-gps");
+  const status = document.getElementById("location-status");
+
+  if (!navigator.geolocation) {
+    setLocationStatus("Tu navegador no soporta GPS", "err");
+    return;
+  }
+
+  btn.className = "btn-gps loading";
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
+  setLocationStatus("Detectando tu ubicación...", "info");
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      userLat = pos.coords.latitude;
+      userLng = pos.coords.longitude;
+      userCoords = { lat: userLat, lng: userLng };
+
+      // Reverse geocode using free API
+      try {
+        const resp = await fetch(
+          `https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json&accept-language=es`
+        );
+        const data = await resp.json();
+        const addr = data.display_name || `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+        // Format nicely
+        const parts = [];
+        if (data.address) {
+          if (data.address.road)        parts.push(data.address.road);
+          if (data.address.suburb)      parts.push(data.address.suburb);
+          if (data.address.city || data.address.town) parts.push(data.address.city || data.address.town);
+        }
+        const formatted = parts.length ? parts.join(", ") : addr.split(",").slice(0,3).join(",");
+        const dirEl = document.getElementById("f-dir");
+        if (dirEl) dirEl.value = formatted;
+        setLocationStatus("✅ Ubicación detectada correctamente", "ok");
+      } catch(e) {
+        const dirEl = document.getElementById("f-dir");
+        if (dirEl) dirEl.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
+        setLocationStatus("✅ Coordenadas obtenidas", "ok");
+      }
+
+      btn.className = "btn-gps success";
+      btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS activo';
+
+      // Calculate distance and show estimate
+      const dist = calcDistance(userLat, userLng, STORE_LAT, STORE_LNG);
+      showDeliveryEstimate(dist);
+    },
+    (err) => {
+      btn.className = "btn-gps";
+      btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Usar GPS';
+      const msgs = {
+        1: "Permiso de ubicación denegado. Actívalo en tu navegador.",
+        2: "No se pudo obtener tu ubicación.",
+        3: "Tiempo de espera agotado. Intenta de nuevo."
+      };
+      setLocationStatus(msgs[err.code] || "Error de GPS", "err");
+    },
+    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+  );
+}
+
+function setLocationStatus(msg, type) {
+  const el = document.getElementById("location-status");
+  if (!el) return;
+  const icons = { ok: "fa-check-circle", err: "fa-circle-exclamation", info: "fa-circle-info" };
+  el.className = "location-status " + type;
+  el.innerHTML = `<i class="fa-solid ${icons[type]||"fa-circle-info"}" style="font-size:.65rem"></i> ${msg}`;
+}
+
+// When user types address manually, hide GPS estimate (they typed it themselves)
+function onAddressChange() {
+  if (!userCoords) {
+    const est = document.getElementById("delivery-estimate");
+    if (est) est.classList.remove("visible");
+    deliveryCost = 0;
+    selectedTier = null;
+  }
+}
+
+// ── submitCheckout — versión final con GPS, transferencia y confirmación ──
+async function submitCheckout() {
+  const nombre   = g("f-nombre").value.trim();
+  const apellido = g("f-apellido").value.trim();
+  const tel      = g("f-tel").value.trim();
+  const dir      = g("f-dir").value.trim();
+
+  const isStorePay = payMethod === "Efectivo en tienda" || payMethod === "Transferencia en tienda";
+  if (!nombre || !apellido || !tel || (!isStorePay && !dir)) {
+    toast("⚠️ Completa todos los campos");
+    return;
+  }
+
+  if (payMethod === "Transferencia") {
+    if (!selectedBank) { toast("⚠️ Selecciona un banco para la transferencia"); return; }
+    if (!comprobanteData) {
+      const ok = confirm("No adjuntaste foto del comprobante.\n\n¿Deseas continuar y enviarla por WhatsApp?");
+      if (!ok) return;
+    }
+  }
+
+  const btn = g("checkout-btn");
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+  btn.disabled  = true;
+
+  const subtotal = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const total    = subtotal + deliveryCost;
+  let txtItems   = "";
+  const items    = cart.map(i => {
+    txtItems += `${i.qty}× ${i.nombre} = RD$${(i.precio * i.qty).toLocaleString()}\n`;
+    return { id: i.id, nombre: i.nombre, precio: i.precio, cantidad: i.qty };
+  });
+
+  const bankNames  = { popular:"Banco Popular", reservas:"Banco de Reservas", bhd:"BHD León" };
+  const tierNames  = { express:"⚡ Express", standard:"🛵 Estándar", scheduled:"📅 Programado" };
+  const fecha      = new Date().toLocaleString("es-DO", { dateStyle:"short", timeStyle:"short" });
+
+  try {
+    const resp = await api("POST", "/api/pedidos", {
+      nombre, apellido, telefono: tel, ubicacion: dir,
+      items, total, metodo_pago: payMethod
+    });
+
+    // Build WhatsApp message
+    const waMsg =
+      `🍭 *NUEVO PEDIDO — Dulce Inspiración*\n` +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
+      `🆔 *Pedido #${resp.pedidoId}*  |  🕐 ${fecha}\n\n` +
+      `👤 *Cliente:* ${nombre} ${apellido}\n` +
+      `📱 *WhatsApp:* ${tel}\n` +
+      `📍 *Dirección:* ${dir}\n` +
+      (userCoords ? `🗺️ *GPS:* https://maps.google.com/?q=${userCoords.lat},${userCoords.lng}\n` : "") +
+      `💳 *Pago:* ${payMethod}${payMethod==="Transferencia"&&selectedBank?" — "+bankNames[selectedBank]:""}\n` +
+      (payMethod==="Transferencia" ? `📸 *Comprobante:* ${comprobanteData?"Adjunto ✅":"Pendiente ⚠️"}\n` : "") +
+      `\n📋 *Detalle:*\n${txtItems}` +
+      (deliveryCost > 0 ? `🛵 *Envío (${tierNames[selectedTier]||""}):* RD$ ${deliveryCost.toLocaleString()}\n` : "") +
+      `━━━━━━━━━━━━━━━━━━━━━━━\n` +
+      (deliveryCost > 0 ? `📦 Subtotal: RD$ ${subtotal.toLocaleString()}\n🛵 Envío: RD$ ${deliveryCost.toLocaleString()}\n` : "") +
+      `💵 *TOTAL: RD$ ${total.toLocaleString()}*\n\n` +
+      `_Pedido registrado en el sistema ✅_`;
+
+    // Close checkout and show confirmation screen
+    closeCheckout();
+    showConfirm(
+      resp.pedidoId,
+      { nombre, apellido, telefono: tel, ubicacion: dir, metodo_pago: payMethod },
+      items, total, deliveryCost, waMsg
+    );
+
+    // Reset everything
+    cart = []; saveCart(); updateBadge();
+    ["f-nombre","f-apellido","f-tel","f-dir"].forEach(id => { const e=g(id); if(e) e.value=""; });
+    selectedBank=null; comprobanteData=null; deliveryCost=0; selectedTier=null;
+    userLat=null; userLng=null; userCoords=null;
+    ["bank-popular","bank-reservas","bank-bhd"].forEach(id => {
+      const el=document.getElementById(id); if(el) el.className="bank-card";
+    });
+    const zone=document.getElementById("upload-comp-zone");
+    const fname=document.getElementById("comp-filename");
+    if(zone) zone.className="upload-comprobante";
+    if(fname) fname.textContent="";
+    const cf=document.getElementById("comp-file"); if(cf) cf.value="";
+    const gpsBtn=document.getElementById("btn-gps");
+    if(gpsBtn){ gpsBtn.className="btn-gps"; gpsBtn.innerHTML='<i class="fa-solid fa-location-crosshairs"></i> Usar GPS'; }
+    // Reset payment mode — selModo handles everything internally
+    selModo("envio");
+    // Restore location section visibility
+    const locSection = document.querySelector(".location-wrap")?.closest(".fg");
+    if (locSection) locSection.classList.remove("delivery-hidden");
+    const est=document.getElementById("delivery-estimate");
+    if(est) est.classList.remove("visible");
+    setLocationStatus("Escribe tu dirección o presiona GPS para detectarla automáticamente","info");
+    selPay("Efectivo");
+    // Show confirmation screen
+    openModal("m-confirm");
+
+  } catch(e) {
+    toast("❌ Error: " + e.message);
+  } finally {
+    btn.innerHTML = '<i class="fa-brands fa-whatsapp"></i> Enviar pedido';
+    btn.disabled  = false;
+  }
+}
+
+
+/* ══════════════════════════════════════════════════════
+   PANTALLA DE CONFIRMACIÓN DE PEDIDO
+══════════════════════════════════════════════════════ */
+let pendingWAMsg = "";
+
+function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg) {
+  pendingWAMsg = waMsg;
+  const numEl = document.getElementById("confirm-num");
+  if (numEl) numEl.textContent = "#" + String(pedidoId).padStart(4, "0");
+  const det = document.getElementById("confirm-details");
+  if (det) {
+    det.innerHTML = `
+      <div class="confirm-detail-row"><span>👤 Cliente</span><span>${clienteData.nombre} ${clienteData.apellido}</span></div>
+      <div class="confirm-detail-row"><span>📱 WhatsApp</span><span>${clienteData.telefono}</span></div>
+      <div class="confirm-detail-row"><span>📍 Dirección</span><span>${clienteData.ubicacion}</span></div>
+      <div class="confirm-detail-row"><span>💳 Pago</span><span>${clienteData.metodo_pago}</span></div>
+      <div class="confirm-detail-row"><span>📦 Productos</span><span>${itemsData.length} artículo${itemsData.length!==1?"s":""}</span></div>
+      ${envio > 0 ? `<div class="confirm-detail-row"><span>🛵 Envío</span><span>RD$ ${envio.toLocaleString()}</span></div>` : ""}
+      <div class="confirm-total-row"><span>Total a pagar</span><span>RD$ ${total.toLocaleString()}</span></div>`;
+  }
+  const waBtn = document.getElementById("confirm-wa-btn");
+  if (waBtn) waBtn.onclick = () => window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(pendingWAMsg)}`, "_blank");
+  document.getElementById("m-confirm").classList.add("open");
+}
+
+function closeConfirm() {
+  document.getElementById("m-confirm").classList.remove("open");
+  pendingWAMsg = "";
+}
+
+/* ══ ESTADÍSTICAS ══ */
+async function loadEstadisticas() {
+  try {
+    // Llama a GET /api/admin/estadisticas → SQL Server
+    const data = await api("GET", "/api/admin/estadisticas");
+ 
+    // ── Números resumen ──
+    const t = data.totales || {};
+    g("st-pedidos").textContent   = t.total_pedidos    || 0;
+    g("st-ingresos").textContent  = "RD$ " + Number(t.ingresos_totales || 0).toLocaleString();
+    g("st-pendientes").textContent = t.pendientes       || 0;
+    g("st-entregados").textContent = t.entregados       || 0;
+ 
+    // ── Producto MÁS vendido ──
+    const mas = data.masVendido;
+    if (mas) {
+      g("mas-empty").style.display   = "none";
+      g("mas-content").style.display = "block";
+      // Imagen
+      g("mas-img-wrap").innerHTML = mas.imagen
+        ? `<img class="prod-stat-img" src="${mas.imagen}" alt="${mas.nombre}">`
+        : `<div class="prod-stat-img-placeholder">🍭</div>`;
+      // Datos
+      g("mas-nombre").textContent   = mas.nombre;
+      g("mas-precio").textContent   = "RD$ " + Number(mas.precio).toLocaleString();
+      g("mas-vendido").textContent  = mas.total_vendido + " uds.";
+      g("mas-ingresos").textContent = "RD$ " + Number(mas.ingresos_total).toLocaleString();
+      g("mas-pedidos").textContent  = mas.num_pedidos + " pedidos";
+      // Barra — el más vendido siempre al 100%
+      setTimeout(() => {
+        g("mas-bar").style.width = "100%";
+        g("mas-pct").textContent = "100%";
+      }, 300);
+    }
+ 
+    // ── Producto MENOS vendido ──
+    const menos = data.menosVendido;
+    if (menos) {
+      g("menos-empty").style.display   = "none";
+      g("menos-content").style.display = "block";
+      // Imagen
+      g("menos-img-wrap").innerHTML = menos.imagen
+        ? `<img class="prod-stat-img" src="${menos.imagen}" alt="${menos.nombre}">`
+        : `<div class="prod-stat-img-placeholder">🍬</div>`;
+      // Datos
+      g("menos-nombre").textContent   = menos.nombre;
+      g("menos-precio").textContent   = "RD$ " + Number(menos.precio).toLocaleString();
+      g("menos-vendido").textContent  = menos.total_vendido + " uds.";
+      g("menos-dias").textContent     = menos.dias_en_inventario + " días";
+      g("menos-ingresos").textContent = "RD$ " + Number(menos.ingresos_total).toLocaleString();
+      // Barra — porcentaje relativo al más vendido
+      const pct = mas && mas.total_vendido > 0
+        ? Math.round((menos.total_vendido / mas.total_vendido) * 100)
+        : 0;
+      setTimeout(() => {
+        g("menos-bar").style.width = pct + "%";
+        g("menos-pct").textContent = pct + "%";
+      }, 300);
+    }
+ 
+  } catch (e) {
+    console.error("Error estadísticas:", e.message);
+  }
+}
+// selStorePay — definida arriba con lógica completa de bancos
+
+
 </script>
-</body>
-</html>
+
+
+<!-- ════ PANTALLA DE CONFIRMACIÓN ════════════════════════ -->
+<div class="confirm-overlay" id="m-confirm">
+  <div class="confirm-box">
+    <div class="confirm-check">✓</div>
+    <div class="confirm-title">¡Pedido recibido!</div>
+    <p class="confirm-subtitle">Tu pedido ha sido registrado exitosamente.<br>Nos pondremos en contacto contigo pronto.</p>
+    <span class="confirm-pedido-num" id="confirm-num">#000</span>
+    <div class="confirm-details" id="confirm-details"></div>
+    <button class="confirm-wa-btn" id="confirm-wa-btn">
+      <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp para confirmar
+    </button>
+    <button class="confirm-close-btn" onclick="closeConfirm()">
+      Volver a la tienda
+    </button>
+  </div>
+</div>
+
+
+<!-- Confirmación de pedido -->
+<div class="modal-overlay" id="m-confirm">
+  <div class="modal-box">
+    <div class="modal-body" style="padding:32px 28px">
+      <div class="confirm-anim">✅</div>
+      <div class="confirm-title">¡Pedido registrado!</div>
+      <div class="confirm-subtitle">Tu pedido fue enviado correctamente</div>
+
+      <div class="confirm-order-box">
+        <div class="confirm-order-row">
+          <span>Número de pedido</span>
+          <strong id="conf-id">—</strong>
+        </div>
+        <div class="confirm-order-row">
+          <span>Cliente</span>
+          <strong id="conf-cliente">—</strong>
+        </div>
+        <div class="confirm-order-row">
+          <span>Método de pago</span>
+          <strong id="conf-pago">—</strong>
+        </div>
+        <div class="confirm-order-row">
+          <span>Envío</span>
+          <strong id="conf-envio">—</strong>
+        </div>
+        <div class="confirm-order-total">
+          <span>Total</span>
+          <span id="conf-total">—</span>
+        </div>
+      </div>
+
+      <div class="confirm-steps">
+        <div class="confirm-step">
+          <span class="confirm-step-num">1</span>
+          <span>WhatsApp abierto con el resumen — envíalo para confirmar</span>
+        </div>
+        <div class="confirm-step" id="conf-step-comp" style="display:none">
+          <span class="confirm-step-num">2</span>
+          <span>Envía la foto del comprobante por WhatsApp</span>
+        </div>
+        <div class="confirm-step">
+          <span class="confirm-step-num" id="conf-step-num-last">2</span>
+          <span>Estaremos en contacto para coordinar la entrega</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" style="width:100%;justify-content:center"
+        onclick="closeModal('m-confirm')">
+        <i class="fa-solid fa-
