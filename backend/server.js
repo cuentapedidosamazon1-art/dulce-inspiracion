@@ -1,126 +1,25 @@
-const express  = require("express");
-const cors     = require("cors");
+const express = require("express");
+const cors    = require("cors");
 const { Pool } = require("pg");
-const bcrypt   = require("bcryptjs");
-const jwt      = require("jsonwebtoken");
+const bcrypt  = require("bcryptjs");
+const jwt     = require("jsonwebtoken");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+const JWT_SECRET = process.env.JWT_SECRET || "DulceInspiracion2026";
 
-// ── JWT Secret — MUST be set in environment variables ──────────
-const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET || JWT_SECRET.length < 32) {
-  console.error("❌ JWT_SECRET no configurado o muy corto. Mínimo 32 caracteres.");
-  process.exit(1);
-}
-
-// ── CORS ───────────────────────────────────────────────────────
 app.use(cors({
   origin: "*",
-  methods: ["GET","POST","PUT","DELETE","OPTIONS"],
-  allowedHeaders: ["Content-Type","Authorization"]
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"]
 }));
 app.options("*", cors());
 app.use(express.json({ limit: "20mb" }));
 
-// ── FORCE HTTPS in production ──────────────────────────────────
-if (process.env.NODE_ENV === "production") {
-  app.use((req, res, next) => {
-    if (req.headers["x-forwarded-proto"] !== "https") {
-      return res.redirect(301, "https://" + req.headers.host + req.url);
-    }
-    next();
-  });
-}
-
-// ══════════════════════════════════════════════════════════════
-//  RATE LIMITING — sin dependencias externas
-// ══════════════════════════════════════════════════════════════
-const rateLimitStore = new Map();
-
-function rateLimit({ windowMs, max, message }) {
-  return (req, res, next) => {
-    const key  = req.ip + ":" + req.path;
-    const now  = Date.now();
-    const data = rateLimitStore.get(key) || { count: 0, start: now };
-
-    // Reset window if expired
-    if (now - data.start > windowMs) {
-      data.count = 0;
-      data.start = now;
-    }
-
-    data.count++;
-    rateLimitStore.set(key, data);
-
-    // Cleanup old entries every 10 min
-    if (rateLimitStore.size > 10000) {
-      for (const [k, v] of rateLimitStore) {
-        if (now - v.start > windowMs) rateLimitStore.delete(k);
-      }
-    }
-
-    if (data.count > max) {
-      const retryAfter = Math.ceil((data.start + windowMs - now) / 1000);
-      res.setHeader("Retry-After", retryAfter);
-      return res.status(429).json({ error: message || "Demasiadas solicitudes. Intenta más tarde." });
-    }
-    next();
-  };
-}
-
-// Specific limiters
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,  // 15 minutes
-  max: 10,                    // 10 attempts per 15 min per IP
-  message: "Demasiados intentos de login. Espera 15 minutos."
-});
-
-const apiLimiter = rateLimit({
-  windowMs: 60 * 1000,        // 1 minute
-  max: 60,                    // 60 requests per minute
-  message: "Demasiadas solicitudes. Intenta más tarde."
-});
-
-const orderLimiter = rateLimit({
-  windowMs: 60 * 1000,        // 1 minute
-  max: 5,                     // max 5 orders per minute per IP
-  message: "Demasiados pedidos. Espera un momento."
-});
-
-// ══════════════════════════════════════════════════════════════
-//  INPUT VALIDATION HELPERS
-// ══════════════════════════════════════════════════════════════
-function validateEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function sanitizeStr(val, maxLen = 200) {
-  if (typeof val !== "string") return "";
-  return val.trim().slice(0, maxLen);
-}
-
-function validatePositiveNum(val) {
-  const n = parseFloat(val);
-  return !isNaN(n) && n >= 0;
-}
-
-function validatePedidoItems(items) {
-  if (!Array.isArray(items) || items.length === 0 || items.length > 50) return false;
-  return items.every(i =>
-    typeof i.nombre === "string" && i.nombre.trim() &&
-    validatePositiveNum(i.precio) &&
-    Number.isInteger(Number(i.cantidad)) && Number(i.cantidad) >= 1 && Number(i.cantidad) <= 999
-  );
-}
-
-// ── POSTGRESQL ─────────────────────────────────────────────────
+// ── CONEXIÓN POSTGRESQL ─────────────────────────────────────────
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 2000,
+  ssl: process.env.NODE_ENV === "production" ? { rejectUnauthorized: false } : false
 });
 
 async function connectDB() {
@@ -129,19 +28,19 @@ async function connectDB() {
     console.log("✅ Conectado a PostgreSQL");
     client.release();
   } catch (err) {
-    console.error("❌ Error de conexión:", err.message);
+    console.log("❌ Error de conexión:", err.message);
     process.exit(1);
   }
 }
 
-// ── INIT DATABASE ──────────────────────────────────────────────
+// ── CREAR TABLAS + DATOS INICIALES ──────────────────────────────
 async function initDB() {
   const client = await pool.connect();
   try {
-    // Migration: add stock column if missing
-    await client.query(
-      "ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0"
-    ).catch(() => {});
+    // Agregar columna stock si no existe (migración)
+    await client.query(`
+      ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;
+    `).catch(() => {});
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS usuarios (
@@ -157,9 +56,9 @@ async function initDB() {
         id             SERIAL PRIMARY KEY,
         nombre         VARCHAR(200) NOT NULL,
         descripcion    TEXT NOT NULL,
-        precio         DECIMAL(10,2) NOT NULL CHECK (precio >= 0),
+        precio         DECIMAL(10,2) NOT NULL,
         imagen         TEXT NULL,
-        stock          INT NOT NULL DEFAULT 0 CHECK (stock >= 0),
+        stock          INT NOT NULL DEFAULT 0,
         estado         VARCHAR(20) NOT NULL DEFAULT 'activo'
                        CHECK (estado IN ('activo','inactivo')),
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
@@ -171,7 +70,7 @@ async function initDB() {
         apellido       VARCHAR(100) NOT NULL,
         telefono       VARCHAR(30)  NOT NULL,
         ubicacion      VARCHAR(500) NOT NULL,
-        total          DECIMAL(10,2) NOT NULL CHECK (total >= 0),
+        total          DECIMAL(10,2) NOT NULL,
         metodo_pago    VARCHAR(50)  NOT NULL,
         estado         VARCHAR(20)  NOT NULL DEFAULT 'pendiente'
                        CHECK (estado IN ('pendiente','confirmado','entregado','cancelado')),
@@ -183,8 +82,8 @@ async function initDB() {
         pedido_id       INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
         producto_id     INT NULL REFERENCES productos(id) ON DELETE SET NULL,
         nombre_producto VARCHAR(200) NOT NULL,
-        precio          DECIMAL(10,2) NOT NULL CHECK (precio >= 0),
-        cantidad        INT NOT NULL DEFAULT 1 CHECK (cantidad > 0)
+        precio          DECIMAL(10,2) NOT NULL,
+        cantidad        INT NOT NULL DEFAULT 1
       );
     `);
 
@@ -193,7 +92,7 @@ async function initDB() {
       "SELECT id FROM usuarios WHERE email = 'admin@dulceinspiracion.com'"
     );
     if (adminCheck.rows.length === 0) {
-      const hash = await bcrypt.hash("Admin123!", 12); // rounds=12 más seguro
+      const hash = await bcrypt.hash("Admin123!", 10);
       await client.query(
         "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3)",
         ["Administrador", "admin@dulceinspiracion.com", hash]
@@ -229,83 +128,54 @@ function authMiddleware(req, res, next) {
   try {
     req.user = jwt.verify(token, JWT_SECRET);
     next();
-  } catch(e) {
-    const msg = e.name === "TokenExpiredError"
-      ? "La sesión expiró. Inicia sesión de nuevo."
-      : "Token inválido.";
-    res.status(401).json({ error: msg });
+  } catch {
+    res.status(401).json({ error: "Token inválido o expirado" });
   }
 }
 
 // ══════════════════════════════════════════════════════════════
-//  ROUTES
+//  RUTAS
 // ══════════════════════════════════════════════════════════════
 
-// ── Health check ───────────────────────────────────────────────
+// ── HEALTH CHECK ────────────────────────────────────────────────
 app.get("/api/health", (req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-// ── Login — with rate limiting ─────────────────────────────────
-app.post("/api/login", loginLimiter, async (req, res) => {
-  const email    = sanitizeStr(req.body.email, 200).toLowerCase();
-  const password = sanitizeStr(req.body.password, 100);
-
-  if (!email || !password)
-    return res.status(400).json({ error: "Email y contraseña requeridos" });
-  if (!validateEmail(email))
-    return res.status(400).json({ error: "Email inválido" });
-
+// ── LOGIN ───────────────────────────────────────────────────────
+app.post("/api/login", async (req, res) => {
+  const { email, password } = req.body;
   try {
     const result = await pool.query(
       "SELECT * FROM usuarios WHERE email=$1 AND activo=true", [email]
     );
     const user = result.rows[0];
-    // Always compare hash even if user not found (prevent timing attacks)
-    const fakeHash = "$2a$12$invalidhashtopreventtimingattacks00000000000000000000000";
-    const hash = user ? user.password_hash : fakeHash;
-    const ok   = await bcrypt.compare(password, hash);
-
-    if (!user || !ok)
-      return res.status(401).json({ error: "Credenciales incorrectas" });
-
-    const token = jwt.sign(
-      { id: user.id, email: user.email },
-      JWT_SECRET,
-      { expiresIn: "8h" }
-    );
+    if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
+    const ok = await bcrypt.compare(password, user.password_hash);
+    if (!ok) return res.status(401).json({ error: "Contraseña incorrecta" });
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "8h" });
     res.json({ token, nombre: user.nombre, email: user.email });
-  } catch (err) {
-    res.status(500).json({ error: "Error del servidor" });
-  }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── Usuarios Admin ─────────────────────────────────────────────
+// ── USUARIOS ADMIN ──────────────────────────────────────────────
 app.get("/api/admin/usuarios", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
       "SELECT id, nombre, email, activo, fecha_creacion FROM usuarios ORDER BY fecha_creacion ASC"
     );
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
-  const nombre   = sanitizeStr(req.body.nombre, 100);
-  const email    = sanitizeStr(req.body.email, 200).toLowerCase();
-  const password = sanitizeStr(req.body.password, 100);
-
+  const { nombre, email, password } = req.body;
   if (!nombre || !email || !password)
     return res.status(400).json({ error: "Todos los campos son requeridos" });
-  if (!validateEmail(email))
-    return res.status(400).json({ error: "Email inválido" });
   if (password.length < 8)
     return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres" });
-  if (password.length > 72)
-    return res.status(400).json({ error: "Contraseña demasiado larga" });
-
   try {
-    const hash   = await bcrypt.hash(password, 12);
+    const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3) RETURNING id, nombre, email",
       [nombre, email, hash]
@@ -313,136 +183,92 @@ app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
     res.status(201).json(result.rows[0]);
   } catch (err) {
     if (err.code === "23505") return res.status(400).json({ error: "Ese email ya está registrado" });
-    res.status(500).json({ error: "Error del servidor" });
+    res.status(500).json({ error: err.message });
   }
 });
 
 app.delete("/api/admin/usuarios/:id", authMiddleware, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
-  if (id === req.user.id)
+  if (parseInt(req.params.id) === req.user.id)
     return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
   try {
-    await pool.query("DELETE FROM usuarios WHERE id=$1", [id]);
+    await pool.query("DELETE FROM usuarios WHERE id=$1", [req.params.id]);
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── Productos públicos ──────────────────────────────────────────
-app.get("/api/productos", apiLimiter, async (req, res) => {
+// ── PRODUCTOS PÚBLICOS ──────────────────────────────────────────
+app.get("/api/productos", async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, nombre, descripcion, precio, imagen, stock, estado, fecha_creacion FROM productos WHERE estado='activo' ORDER BY fecha_creacion DESC"
+      "SELECT * FROM productos WHERE estado='activo' ORDER BY fecha_creacion DESC"
     );
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── Productos Admin ─────────────────────────────────────────────
+// ── PRODUCTOS ADMIN ─────────────────────────────────────────────
 app.get("/api/admin/productos", authMiddleware, async (req, res) => {
   try {
-    const result = await pool.query(
-      "SELECT * FROM productos ORDER BY fecha_creacion DESC"
-    );
+    const result = await pool.query("SELECT * FROM productos ORDER BY fecha_creacion DESC");
     res.json(result.rows);
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post("/api/admin/productos", authMiddleware, async (req, res) => {
-  const nombre      = sanitizeStr(req.body.nombre, 200);
-  const descripcion = sanitizeStr(req.body.descripcion, 2000);
-  const precio      = parseFloat(req.body.precio);
-  const imagen      = req.body.imagen || null;
-  const estado      = ["activo","inactivo"].includes(req.body.estado) ? req.body.estado : "activo";
-  const stock       = Math.max(0, parseInt(req.body.stock) || 0);
-
-  if (!nombre || !descripcion)
-    return res.status(400).json({ error: "Nombre y descripción son requeridos" });
-  if (!validatePositiveNum(precio))
-    return res.status(400).json({ error: "Precio inválido" });
-
+  const { nombre, descripcion, precio, imagen, estado, stock } = req.body;
   try {
     const result = await pool.query(
       `INSERT INTO productos (nombre, descripcion, precio, imagen, stock, estado, fecha_creacion)
        VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *`,
-      [nombre, descripcion, precio, imagen, stock, estado]
+      [nombre, descripcion, precio, imagen, stock || 0, estado || "activo"]
     );
     res.status(201).json(result.rows[0]);
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put("/api/admin/productos/:id", authMiddleware, async (req, res) => {
-  const id          = parseInt(req.params.id);
-  const nombre      = sanitizeStr(req.body.nombre, 200);
-  const descripcion = sanitizeStr(req.body.descripcion, 2000);
-  const precio      = parseFloat(req.body.precio);
-  const imagen      = req.body.imagen || null;
-  const estado      = ["activo","inactivo"].includes(req.body.estado) ? req.body.estado : "activo";
-  const stock       = Math.max(0, parseInt(req.body.stock) || 0);
-
-  if (isNaN(id) || !nombre || !descripcion || !validatePositiveNum(precio))
-    return res.status(400).json({ error: "Datos inválidos" });
-
+  const { nombre, descripcion, precio, imagen, estado, stock } = req.body;
   try {
     await pool.query(
       `UPDATE productos SET nombre=$1, descripcion=$2, precio=$3, imagen=$4, estado=$5, stock=$6 WHERE id=$7`,
-      [nombre, descripcion, precio, imagen, estado, stock, id]
+      [nombre, descripcion, precio, imagen, estado, stock !== undefined ? stock : 0, req.params.id]
     );
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete("/api/admin/productos/:id", authMiddleware, async (req, res) => {
-  const id = parseInt(req.params.id);
-  if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
   try {
-    await pool.query("DELETE FROM productos WHERE id=$1", [id]);
+    await pool.query("DELETE FROM productos WHERE id=$1", [req.params.id]);
     res.json({ ok: true });
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// ── Pedidos ─────────────────────────────────────────────────────
-app.post("/api/pedidos", orderLimiter, async (req, res) => {
-  const nombre     = sanitizeStr(req.body.nombre, 100);
-  const apellido   = sanitizeStr(req.body.apellido, 100);
-  const telefono   = sanitizeStr(req.body.telefono, 30);
-  const ubicacion  = sanitizeStr(req.body.ubicacion, 500);
-  const metodo     = sanitizeStr(req.body.metodo_pago, 50);
-  const items      = req.body.items;
-  const total      = parseFloat(req.body.total);
-
-  // Validate all fields
-  if (!nombre || !apellido || !telefono || !ubicacion || !metodo)
-    return res.status(400).json({ error: "Todos los campos del cliente son requeridos" });
-  if (!validatePedidoItems(items))
-    return res.status(400).json({ error: "Items del pedido inválidos" });
-  if (!validatePositiveNum(total) || total > 999999)
-    return res.status(400).json({ error: "Total inválido" });
-
+// ── PEDIDOS ─────────────────────────────────────────────────────
+app.post("/api/pedidos", async (req, res) => {
+  const { nombre, apellido, telefono, ubicacion, items, total, metodo_pago } = req.body;
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Deduct stock with validation
+    // Verificar y rebajar stock
     for (const item of items) {
-      const itemId  = parseInt(item.id);
-      const itemQty = parseInt(item.cantidad);
-      if (isNaN(itemId) || itemId <= 0) continue;
-
+      if (!item.id || typeof item.id !== "number") continue;
       const prod = await client.query(
-        "SELECT stock, nombre FROM productos WHERE id=$1 FOR UPDATE", [itemId]
+        "SELECT stock, nombre FROM productos WHERE id=$1 FOR UPDATE", [item.id]
       );
       if (!prod.rows.length) continue;
       const { stock, nombre: nomProd } = prod.rows[0];
-      if (stock !== null && stock < itemQty) {
+      if (stock !== null && stock < item.cantidad) {
         await client.query("ROLLBACK");
         return res.status(400).json({
-          error: `Stock insuficiente para "${nomProd}". Disponible: ${stock}, solicitado: ${itemQty}`
+          error: `Stock insuficiente para "${nomProd}". Disponible: ${stock}, solicitado: ${item.cantidad}`
         });
       }
       if (stock !== null) {
         await client.query(
-          "UPDATE productos SET stock = stock - $1 WHERE id=$2", [itemQty, itemId]
+          "UPDATE productos SET stock = stock - $1 WHERE id=$2",
+          [item.cantidad, item.id]
         );
       }
     }
@@ -450,19 +276,15 @@ app.post("/api/pedidos", orderLimiter, async (req, res) => {
     const ped = await client.query(
       `INSERT INTO pedidos (nombre, apellido, telefono, ubicacion, total, metodo_pago, estado, fecha_creacion)
        VALUES ($1,$2,$3,$4,$5,$6,'pendiente',NOW()) RETURNING id`,
-      [nombre, apellido, telefono, ubicacion, total, metodo]
+      [nombre, apellido, telefono, ubicacion, total, metodo_pago]
     );
     const pedidoId = ped.rows[0].id;
 
     for (const item of items) {
-      const itemId    = parseInt(item.id) > 0 ? parseInt(item.id) : null;
-      const itemNom   = sanitizeStr(item.nombre, 200);
-      const itemPrecio = parseFloat(item.precio);
-      const itemCant  = parseInt(item.cantidad);
       await client.query(
         `INSERT INTO detalle_pedido (pedido_id, producto_id, nombre_producto, precio, cantidad)
          VALUES ($1,$2,$3,$4,$5)`,
-        [pedidoId, itemId, itemNom, itemPrecio, itemCant]
+        [pedidoId, item.id || null, item.nombre, item.precio, item.cantidad]
       );
     }
 
@@ -470,7 +292,7 @@ app.post("/api/pedidos", orderLimiter, async (req, res) => {
     res.status(201).json({ ok: true, pedidoId });
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Error del servidor" });
+    res.status(500).json({ error: err.message });
   } finally {
     client.release();
   }
@@ -478,15 +300,8 @@ app.post("/api/pedidos", orderLimiter, async (req, res) => {
 
 app.get("/api/admin/pedidos", authMiddleware, async (req, res) => {
   try {
-    // Support search by name or phone
-    const search = req.query.search ? `%${req.query.search}%` : null;
-    const query  = search
-      ? `SELECT * FROM pedidos WHERE nombre ILIKE $1 OR apellido ILIKE $1 OR telefono ILIKE $1 ORDER BY fecha_creacion DESC`
-      : `SELECT * FROM pedidos ORDER BY fecha_creacion DESC`;
-    const params = search ? [search] : [];
-
-    const pedidos = await pool.query(query, params);
-    const result  = await Promise.all(pedidos.rows.map(async p => {
+    const pedidos = await pool.query("SELECT * FROM pedidos ORDER BY fecha_creacion DESC");
+    const result  = await Promise.all(pedidos.rows.map(async (p) => {
       const items = await pool.query(
         "SELECT nombre_producto, precio, cantidad, producto_id FROM detalle_pedido WHERE pedido_id=$1",
         [p.id]
@@ -494,70 +309,118 @@ app.get("/api/admin/pedidos", authMiddleware, async (req, res) => {
       return { ...p, items: items.rows };
     }));
     res.json(result);
-  } catch (err) { res.status(500).json({ error: "Error del servidor" }); }
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
-  const id         = parseInt(req.params.id);
-  const estadoNuevo = req.body.estado;
-
-  if (isNaN(id)) return res.status(400).json({ error: "ID inválido" });
-  if (!["pendiente","confirmado","entregado","cancelado"].includes(estadoNuevo))
-    return res.status(400).json({ error: "Estado inválido" });
-
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    const current      = await client.query("SELECT estado FROM pedidos WHERE id=$1", [id]);
+    const current = await client.query(
+      "SELECT estado FROM pedidos WHERE id=$1", [req.params.id]
+    );
     const estadoAnterior = current.rows[0]?.estado;
+    const estadoNuevo    = req.body.estado;
 
-    // Restore stock on cancel
+    // Cancelar → restaurar stock
     if (estadoNuevo === "cancelado" && estadoAnterior !== "cancelado") {
       const detalles = await client.query(
-        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL", [id]
+        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL",
+        [req.params.id]
       );
       for (const row of detalles.rows) {
         await client.query(
-          "UPDATE productos SET stock = stock + $1 WHERE id=$2", [row.cantidad, row.producto_id]
+          "UPDATE productos SET stock = stock + $1 WHERE id=$2",
+          [row.cantidad, row.producto_id]
         );
       }
     }
 
-    // Re-deduct if un-cancelling
+    // Reactivar desde cancelado → rebajar stock de nuevo
     if (estadoAnterior === "cancelado" && estadoNuevo !== "cancelado") {
       const detalles = await client.query(
-        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL", [id]
+        "SELECT producto_id, cantidad FROM detalle_pedido WHERE pedido_id=$1 AND producto_id IS NOT NULL",
+        [req.params.id]
       );
       for (const row of detalles.rows) {
         await client.query(
-          "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id=$2", [row.cantidad, row.producto_id]
+          "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id=$2",
+          [row.cantidad, row.producto_id]
         );
       }
     }
 
-    await client.query("UPDATE pedidos SET estado=$1 WHERE id=$2", [estadoNuevo, id]);
+    await client.query("UPDATE pedidos SET estado=$1 WHERE id=$2", [estadoNuevo, req.params.id]);
     await client.query("COMMIT");
     res.json({ ok: true });
   } catch (err) {
     await client.query("ROLLBACK");
-    res.status(500).json({ error: "Error del servidor" });
+    res.status(500).json({ error: err.message });
   } finally {
     client.release();
   }
 });
 
-// ── Keep-alive (Render free tier) ──────────────────────────────
-const http  = require("http");
-const https = require("https");
-const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+// ── ESTADÍSTICAS ADMIN ─────────────────────────────────────────
+app.get("/api/admin/estadisticas", authMiddleware, async (req, res) => {
+  try {
+    const totalesRes = await pool.query(`
+      SELECT
+        COUNT(*)::int                                             AS total_pedidos,
+        COALESCE(SUM(total), 0)::float                           AS ingresos_totales,
+        COUNT(*) FILTER (WHERE estado = 'pendiente')::int        AS pendientes,
+        COUNT(*) FILTER (WHERE estado = 'entregado')::int        AS entregados
+      FROM pedidos
+      WHERE estado != 'cancelado'
+    `);
 
+    const masRes = await pool.query(`
+      SELECT p.id, p.nombre, p.precio::float, p.imagen,
+        SUM(dp.cantidad)::int                    AS total_vendido,
+        SUM(dp.cantidad * dp.precio)::float      AS ingresos_total,
+        COUNT(DISTINCT dp.pedido_id)::int        AS num_pedidos
+      FROM productos p
+      JOIN detalle_pedido dp ON dp.producto_id = p.id
+      JOIN pedidos pe        ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+      GROUP BY p.id, p.nombre, p.precio, p.imagen
+      ORDER BY total_vendido DESC
+      LIMIT 1
+    `);
+
+    const menosRes = await pool.query(`
+      SELECT p.id, p.nombre, p.precio::float, p.imagen,
+        SUM(dp.cantidad)::int                              AS total_vendido,
+        SUM(dp.cantidad * dp.precio)::float                AS ingresos_total,
+        EXTRACT(DAY FROM NOW() - p.fecha_creacion)::int    AS dias_en_inventario
+      FROM productos p
+      JOIN detalle_pedido dp ON dp.producto_id = p.id
+      JOIN pedidos pe        ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+      GROUP BY p.id, p.nombre, p.precio, p.imagen, p.fecha_creacion
+      ORDER BY total_vendido ASC
+      LIMIT 1
+    `);
+
+    res.json({
+      totales:      totalesRes.rows[0] || { total_pedidos:0, ingresos_totales:0, pendientes:0, entregados:0 },
+      masVendido:   masRes.rows[0]     || null,
+      menosVendido: menosRes.rows[0]   || null,
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// ── KEEP-ALIVE (evita que Render se duerma) ─────────────────────
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 setInterval(() => {
-  const lib = SELF_URL.startsWith("https") ? https : http;
-  lib.get(SELF_URL + "/api/health", () => {}).on("error", () => {});
+  try {
+    const lib = SELF_URL.startsWith("https") ? require("https") : require("http");
+    lib.get(SELF_URL + "/api/health", () => {}).on("error", () => {});
+  } catch(e) {}
 }, 10 * 60 * 1000);
 
-// ── Start ───────────────────────────────────────────────────────
+// ── INICIAR ─────────────────────────────────────────────────────
 connectDB().then(initDB).then(() => {
-  app.listen(PORT, () => console.log(`🚀 Servidor en puerto ${PORT}`));
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
+  });
 });
