@@ -1767,103 +1767,139 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 .store-pay-opt:hover   { border-color: var(--rose); }
 .store-pay-opt.selected { border-color: var(--rose); background: rgba(192,57,75,.04); }
 /* ── ESTADÍSTICAS ── */
-.stats-section { margin-bottom: 36px; }
-.stats-title {
-  font-family: var(--ff-head);
-  font-size: 1.5rem; font-weight: 700;
-  margin-bottom: 20px; color: var(--dark);
-  display: flex; align-items: center; gap: 10px;
-}
-.stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-@media(max-width:640px){ .stats-grid { grid-template-columns: 1fr; } }
- 
-/* Números resumen arriba */
+.stats-section { margin-bottom: 0; }
+
+/* ── KPI cards (totales) ── */
 .stats-numbers {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 14px; margin-bottom: 24px;
+  gap: 14px; margin-bottom: 28px;
 }
-@media(max-width:768px){ .stats-numbers { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:900px){ .stats-numbers { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:480px){ .stats-numbers { grid-template-columns: 1fr; } }
+
 .stat-box {
-  background: #fff; border-radius: 16px;
-  padding: 20px; border: 1px solid var(--border);
-  text-align: center;
+  background: #fff;
+  border-radius: 18px;
+  border: 1px solid var(--border);
+  padding: 20px 18px 18px;
+  display: flex; align-items: center; gap: 14px;
+  transition: box-shadow .25s, transform .2s;
 }
+.stat-box:hover { box-shadow: 0 8px 28px rgba(26,10,14,.1); transform: translateY(-2px); }
+
+.stat-box-icon {
+  width: 48px; height: 48px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.4rem; flex-shrink: 0;
+}
+.stat-box-icon.rose  { background: rgba(192,57,75,.1); }
+.stat-box-icon.gold  { background: rgba(201,150,58,.1); }
+.stat-box-icon.amber { background: rgba(245,158,11,.1); }
+.stat-box-icon.green { background: rgba(34,197,94,.1);  }
+
+.stat-box-info { flex: 1; min-width: 0; }
 .stat-box-num {
   font-family: var(--ff-head);
-  font-size: 1.9rem; font-weight: 700;
-  color: var(--rose); display: block;
+  font-size: 1.55rem; font-weight: 700;
+  color: var(--dark); display: block;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
+.stat-box-num.rose  { color: var(--rose); }
+.stat-box-num.gold  { color: var(--gold); }
+.stat-box-num.amber { color: #d97706; }
+.stat-box-num.green { color: #16a34a; }
+
 .stat-box-lbl {
-  font-size: .74rem; color: var(--muted);
-  text-transform: uppercase; letter-spacing: .06em;
-  margin-top: 4px; display: block;
+  font-size: .72rem; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .07em;
+  margin-top: 3px; display: block;
 }
- 
-/* Cards producto más/menos vendido */
+
+/* ── Sección rendimiento productos ── */
+.perf-section-title {
+  font-family: var(--ff-head);
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--dark);
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media(max-width:640px){ .stats-grid { grid-template-columns: 1fr; } }
+
+/* Cards producto más/menos vendido — diseño compacto horizontal */
 .prod-stat-card {
-  background: #fff; border-radius: 20px;
+  background: #fff; border-radius: 16px;
   border: 1px solid var(--border);
   overflow: hidden;
   transition: box-shadow .3s;
 }
-.prod-stat-card:hover { box-shadow: var(--shadow); }
+.prod-stat-card:hover { box-shadow: 0 8px 28px rgba(26,10,14,.08); }
+
 .prod-stat-header {
-  padding: 14px 18px 0;
+  padding: 12px 14px 10px;
   display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--border);
 }
 .prod-stat-badge {
-  font-size: .72rem; font-weight: 700;
-  padding: 4px 12px; border-radius: 999px;
+  font-size: .68rem; font-weight: 700;
+  padding: 3px 10px; border-radius: 999px;
   letter-spacing: .05em; text-transform: uppercase;
 }
 .badge-top    { background: rgba(201,150,58,.15); color: var(--gold); }
 .badge-bottom { background: rgba(107,114,128,.12); color: #6b7280; }
-.prod-stat-img {
-  width: 100%; height: 180px;
-  object-fit: cover; display: block;
-  margin-top: 14px;
-  background: var(--cream);
+
+/* Layout horizontal: thumbnail izquierda + datos derecha */
+.prod-stat-inner {
+  display: flex; gap: 0; align-items: stretch;
 }
-.prod-stat-img-placeholder {
-  width: 100%; height: 180px;
+.prod-stat-thumb {
+  width: 90px; flex-shrink: 0;
   background: linear-gradient(135deg, var(--cream), #f0e8e0);
   display: flex; align-items: center; justify-content: center;
-  font-size: 4rem; margin-top: 14px;
+  font-size: 2.2rem;
+  border-right: 1px solid var(--border);
 }
-.prod-stat-body { padding: 18px; }
+.prod-stat-thumb img {
+  width: 90px; height: 100%;
+  object-fit: cover; display: block;
+}
+.prod-stat-body { padding: 12px 14px; flex: 1; min-width: 0; }
 .prod-stat-name {
-  font-family: var(--ff-head);
-  font-size: 1.1rem; font-weight: 700;
-  color: var(--dark); margin-bottom: 4px;
+  font-weight: 700; font-size: .88rem;
+  color: var(--dark); margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .prod-stat-price {
-  color: var(--rose); font-weight: 700;
-  font-size: .9rem; margin-bottom: 14px;
+  color: var(--rose); font-weight: 600;
+  font-size: .78rem; margin-bottom: 10px;
 }
-.prod-stat-rows { display: flex; flex-direction: column; gap: 10px; }
+.prod-stat-rows { display: flex; flex-direction: column; gap: 6px; }
 .prod-stat-row {
   display: flex; justify-content: space-between;
-  align-items: center; padding: 10px 14px;
-  background: var(--cream); border-radius: 10px;
+  align-items: center; padding: 5px 10px;
+  background: var(--cream); border-radius: 8px;
 }
-.prod-stat-row-lbl { font-size: .78rem; color: var(--muted); }
-.prod-stat-row-val { font-weight: 700; font-size: .9rem; color: var(--dark); }
+.prod-stat-row-lbl { font-size: .72rem; color: var(--muted); }
+.prod-stat-row-val { font-weight: 700; font-size: .78rem; color: var(--dark); }
 .prod-stat-row-val.highlight { color: var(--rose); }
 .prod-stat-row-val.gold      { color: var(--gold); }
- 
-/* Barra de progreso de ventas */
-.sales-bar-wrap { margin-top: 14px; }
+
+/* Barra de progreso */
+.sales-bar-wrap { margin-top: 8px; }
 .sales-bar-lbl {
   display: flex; justify-content: space-between;
-  font-size: .74rem; color: var(--muted); margin-bottom: 6px;
+  font-size: .68rem; color: var(--muted); margin-bottom: 4px;
 }
 .sales-bar-bg {
-  height: 8px; background: rgba(0,0,0,.06);
+  height: 5px; background: rgba(0,0,0,.06);
   border-radius: 999px; overflow: hidden;
 }
 .sales-bar-fill {
@@ -1871,13 +1907,13 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   background: linear-gradient(90deg, var(--rose), var(--gold));
   transition: width 1s cubic-bezier(.22,.68,0,1.2);
 }
- 
+
 /* Sin datos */
 .no-stats {
-  text-align: center; padding: 48px 20px;
-  color: var(--muted); font-size: .9rem;
+  text-align: center; padding: 28px 16px;
+  color: var(--muted); font-size: .85rem;
 }
-.no-stats-icon { font-size: 3rem; display: block; margin-bottom: 10px; opacity: .4; }
+.no-stats-icon { font-size: 2rem; display: block; margin-bottom: 8px; opacity: .4; }
 
 </style>
 </head>
@@ -2077,7 +2113,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           <h4>Contacto</h4>
           <p>📍 La Altagracia, Rep. Dom.</p>
           <a href="https://wa.me/18295551234" target="_blank">📱 +1 (829) 555-1234</a>
-          <p>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="0c65626a634c6879606f6965627f7c657e6d6f656362226f6361">[email&#160;protected]</a></p>
+          <p>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5831363e37183c2d343b3d31362b28312a393b313736763b3735">[email&#160;protected]</a></p>
         </div>
         <div class="footer-col">
           <h4>Horario</h4>
@@ -2132,123 +2168,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   </div>
 
   <div class="admin-content">
-    <!-- ESTADÍSTICAS -->
-<div class="stats-section" id="stats-section">
- 
-  <!-- Números resumen -->
-  <div class="stats-numbers" id="stats-numbers">
-    <div class="stat-box">
-      <span class="stat-box-num" id="st-pedidos">—</span>
-      <span class="stat-box-lbl">Total pedidos</span>
-    </div>
-    <div class="stat-box">
-      <span class="stat-box-num" id="st-ingresos">—</span>
-      <span class="stat-box-lbl">Ingresos totales</span>
-    </div>
-    <div class="stat-box">
-      <span class="stat-box-num" id="st-pendientes">—</span>
-      <span class="stat-box-lbl">Pendientes</span>
-    </div>
-    <div class="stat-box">
-      <span class="stat-box-num" id="st-entregados">—</span>
-      <span class="stat-box-lbl">Entregados</span>
-    </div>
-  </div>
- 
-  <!-- Título -->
-  <div class="stats-title">
-    📊 Rendimiento de Productos
-  </div>
- 
-  <!-- Cards más/menos vendido -->
-  <div class="stats-grid">
- 
-    <!-- MÁS VENDIDO -->
-    <div class="prod-stat-card" id="card-mas">
-      <div class="prod-stat-header">
-        <span class="prod-stat-badge badge-top">🏆 Más vendido</span>
-      </div>
-      <div class="no-stats" id="mas-empty">
-        <span class="no-stats-icon">📦</span>
-        Aún no hay ventas registradas
-      </div>
-      <div id="mas-content" style="display:none">
-        <div id="mas-img-wrap"></div>
-        <div class="prod-stat-body">
-          <div class="prod-stat-name"  id="mas-nombre">—</div>
-          <div class="prod-stat-price" id="mas-precio">—</div>
-          <div class="prod-stat-rows">
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">🛒 Unidades vendidas</span>
-              <span class="prod-stat-row-val highlight" id="mas-vendido">—</span>
-            </div>
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">💵 Ingresos generados</span>
-              <span class="prod-stat-row-val gold" id="mas-ingresos">—</span>
-            </div>
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">📋 Número de pedidos</span>
-              <span class="prod-stat-row-val" id="mas-pedidos">—</span>
-            </div>
-          </div>
-          <div class="sales-bar-wrap">
-            <div class="sales-bar-lbl">
-              <span>Participación en ventas</span>
-              <span id="mas-pct">—</span>
-            </div>
-            <div class="sales-bar-bg">
-              <div class="sales-bar-fill" id="mas-bar" style="width:0%"></div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
- 
-    <!-- MENOS VENDIDO -->
-    <div class="prod-stat-card" id="card-menos">
-      <div class="prod-stat-header">
-        <span class="prod-stat-badge badge-bottom">📉 Menos vendido</span>
-      </div>
-      <div class="no-stats" id="menos-empty">
-        <span class="no-stats-icon">📦</span>
-        Aún no hay datos suficientes
-      </div>
-      <div id="menos-content" style="display:none">
-        <div id="menos-img-wrap"></div>
-        <div class="prod-stat-body">
-          <div class="prod-stat-name"  id="menos-nombre">—</div>
-          <div class="prod-stat-price" id="menos-precio">—</div>
-          <div class="prod-stat-rows">
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">🛒 Unidades vendidas</span>
-              <span class="prod-stat-row-val" id="menos-vendido">—</span>
-            </div>
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">📅 Días en inventario</span>
-              <span class="prod-stat-row-val highlight" id="menos-dias">—</span>
-            </div>
-            <div class="prod-stat-row">
-              <span class="prod-stat-row-lbl">💵 Ingresos generados</span>
-              <span class="prod-stat-row-val gold" id="menos-ingresos">—</span>
-            </div>
-          </div>
-          <div class="sales-bar-wrap">
-            <div class="sales-bar-lbl">
-              <span>Participación en ventas</span>
-              <span id="menos-pct">—</span>
-            </div>
-            <div class="sales-bar-bg">
-              <div class="sales-bar-fill" id="menos-bar"
-                   style="width:0%; background: linear-gradient(90deg,#9ca3af,#6b7280)">
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
- 
-  </div>
-</div><!-- /stats-section -->
+
     <div class="admin-tabs">
       <button class="tab-btn" id="tbtn-d" onclick="switchTab('d')">🏠 Dashboard</button>
       <button class="tab-btn active" id="tbtn-p" onclick="switchTab('p')">🍬 Productos</button>
@@ -2441,6 +2361,135 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <div class="chart-title">📈 Comparativa de ventas — Últimas 4 semanas</div>
         <div id="weekly-comparison"></div>
       </div>
+
+      <!-- ── KPI Totales ── -->
+      <div class="stats-section" id="stats-section" style="margin-top:24px">
+        <div class="perf-section-title">📊 Resumen general</div>
+        <div class="stats-numbers" id="stats-numbers">
+          <div class="stat-box">
+            <div class="stat-box-icon rose">🛒</div>
+            <div class="stat-box-info">
+              <span class="stat-box-num rose" id="st-pedidos">—</span>
+              <span class="stat-box-lbl">Total pedidos</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-icon gold">💰</div>
+            <div class="stat-box-info">
+              <span class="stat-box-num gold" id="st-ingresos">—</span>
+              <span class="stat-box-lbl">Ingresos totales</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-icon amber">⏳</div>
+            <div class="stat-box-info">
+              <span class="stat-box-num amber" id="st-pendientes">—</span>
+              <span class="stat-box-lbl">Pendientes</span>
+            </div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-box-icon green">✅</div>
+            <div class="stat-box-info">
+              <span class="stat-box-num green" id="st-entregados">—</span>
+              <span class="stat-box-lbl">Entregados</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rendimiento de productos -->
+        <div class="perf-section-title">🏆 Rendimiento de productos</div>
+        <div class="stats-grid">
+
+          <!-- MÁS VENDIDO -->
+          <div class="prod-stat-card" id="card-mas">
+            <div class="prod-stat-header">
+              <span class="prod-stat-badge badge-top">🏆 Más vendido</span>
+            </div>
+            <div class="no-stats" id="mas-empty">
+              <span class="no-stats-icon">📦</span>
+              Aún no hay ventas registradas
+            </div>
+            <div id="mas-content" style="display:none">
+              <div class="prod-stat-inner">
+                <div class="prod-stat-thumb" id="mas-img-wrap">🍭</div>
+                <div class="prod-stat-body">
+                  <div class="prod-stat-name" id="mas-nombre">—</div>
+                  <div class="prod-stat-price" id="mas-precio">—</div>
+                  <div class="prod-stat-rows">
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">🛒 Unidades</span>
+                      <span class="prod-stat-row-val highlight" id="mas-vendido">—</span>
+                    </div>
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">💵 Ingresos</span>
+                      <span class="prod-stat-row-val gold" id="mas-ingresos">—</span>
+                    </div>
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">📋 Pedidos</span>
+                      <span class="prod-stat-row-val" id="mas-pedidos">—</span>
+                    </div>
+                  </div>
+                  <div class="sales-bar-wrap">
+                    <div class="sales-bar-lbl">
+                      <span>Participación</span>
+                      <span id="mas-pct">—</span>
+                    </div>
+                    <div class="sales-bar-bg">
+                      <div class="sales-bar-fill" id="mas-bar" style="width:0%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- MENOS VENDIDO -->
+          <div class="prod-stat-card" id="card-menos">
+            <div class="prod-stat-header">
+              <span class="prod-stat-badge badge-bottom">📉 Menos vendido</span>
+            </div>
+            <div class="no-stats" id="menos-empty">
+              <span class="no-stats-icon">📦</span>
+              Aún no hay datos suficientes
+            </div>
+            <div id="menos-content" style="display:none">
+              <div class="prod-stat-inner">
+                <div class="prod-stat-thumb" id="menos-img-wrap">🍬</div>
+                <div class="prod-stat-body">
+                  <div class="prod-stat-name" id="menos-nombre">—</div>
+                  <div class="prod-stat-price" id="menos-precio">—</div>
+                  <div class="prod-stat-rows">
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">🛒 Unidades</span>
+                      <span class="prod-stat-row-val" id="menos-vendido">—</span>
+                    </div>
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">📅 Días en inv.</span>
+                      <span class="prod-stat-row-val highlight" id="menos-dias">—</span>
+                    </div>
+                    <div class="prod-stat-row">
+                      <span class="prod-stat-row-lbl">💵 Ingresos</span>
+                      <span class="prod-stat-row-val gold" id="menos-ingresos">—</span>
+                    </div>
+                  </div>
+                  <div class="sales-bar-wrap">
+                    <div class="sales-bar-lbl">
+                      <span>Participación</span>
+                      <span id="menos-pct">—</span>
+                    </div>
+                    <div class="sales-bar-bg">
+                      <div class="sales-bar-fill" id="menos-bar"
+                           style="width:0%;background:linear-gradient(90deg,#9ca3af,#6b7280)">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /stats-section -->
 
     </div>
     <!-- Tab Usuarios -->
@@ -3992,9 +4041,9 @@ function switchTab(t) {
     if (tab) tab.style.display = t===x?"block":"none";
     if (btn) btn.className = "tab-btn"+(t===x?" active":"");
   });
-  if (t==="d") { if (!orders.length) loadOrders().then(loadDashboard); else loadDashboard(); loadEstadisticas(); }
+  if (t==="d") { if (!orders.length) loadOrders().then(loadDashboard); else loadDashboard(); }
   if (t==="o") loadOrders();
-  if (t==="s") { if (!orders.length) loadOrders().then(loadStats); else loadStats(); loadEstadisticas(); }
+  if (t==="s") { if (!orders.length) loadOrders().then(loadStats); else loadStats(); }
   if (t==="u") loadUsers();
 }
 
@@ -4102,7 +4151,6 @@ function showAdmin() {
   window.scrollTo(0,0);
   showLogoutBtn(true);
   switchTab("d");
-  loadEstadisticas();
   loadAdminProducts();
   startSessionTimer();
   startNotifPolling();
@@ -4496,64 +4544,54 @@ function closeConfirm() {
 
 /* ══ ESTADÍSTICAS ══ */
 async function loadEstadisticas() {
+  const sel = (id) => document.getElementById(id);
+  const txt = (id, val) => { const e = sel(id); if (e) e.textContent = val; };
   try {
-    // Llama a GET /api/admin/estadisticas → SQL Server
     const data = await api("GET", "/api/admin/estadisticas");
- 
-    // ── Números resumen ──
     const t = data.totales || {};
-    g("st-pedidos").textContent   = t.total_pedidos    || 0;
-    g("st-ingresos").textContent  = "RD$ " + Number(t.ingresos_totales || 0).toLocaleString();
-    g("st-pendientes").textContent = t.pendientes       || 0;
-    g("st-entregados").textContent = t.entregados       || 0;
- 
-    // ── Producto MÁS vendido ──
+
+    // ── Totales ──
+    txt("st-pedidos",    t.total_pedidos    ?? "—");
+    txt("st-ingresos",   "RD$ " + Number(t.ingresos_totales || 0).toLocaleString());
+    txt("st-pendientes", t.pendientes       ?? "—");
+    txt("st-entregados", t.entregados       ?? "—");
+
+    // ── Más vendido ──
     const mas = data.masVendido;
     if (mas) {
-      g("mas-empty").style.display   = "none";
-      g("mas-content").style.display = "block";
-      // Imagen
-      g("mas-img-wrap").innerHTML = mas.imagen
-        ? `<img class="prod-stat-img" src="${mas.imagen}" alt="${mas.nombre}">`
-        : `<div class="prod-stat-img-placeholder">🍭</div>`;
-      // Datos
-      g("mas-nombre").textContent   = mas.nombre;
-      g("mas-precio").textContent   = "RD$ " + Number(mas.precio).toLocaleString();
-      g("mas-vendido").textContent  = mas.total_vendido + " uds.";
-      g("mas-ingresos").textContent = "RD$ " + Number(mas.ingresos_total).toLocaleString();
-      g("mas-pedidos").textContent  = mas.num_pedidos + " pedidos";
-      // Barra — el más vendido siempre al 100%
-      setTimeout(() => {
-        g("mas-bar").style.width = "100%";
-        g("mas-pct").textContent = "100%";
-      }, 300);
+      sel("mas-empty").style.display   = "none";
+      sel("mas-content").style.display = "block";
+      const tw = sel("mas-img-wrap");
+      if (tw) tw.innerHTML = mas.imagen
+        ? '<img src="' + mas.imagen + '" alt="' + mas.nombre + '" style="width:90px;height:100%;object-fit:cover;display:block">'
+        : "🍭";
+      txt("mas-nombre",   mas.nombre);
+      txt("mas-precio",   "RD$ " + Number(mas.precio).toLocaleString());
+      txt("mas-vendido",  mas.total_vendido + " uds.");
+      txt("mas-ingresos", "RD$ " + Number(mas.ingresos_total).toLocaleString());
+      txt("mas-pedidos",  mas.num_pedidos + " pedidos");
+      setTimeout(() => { txt("mas-pct","100%"); const b=sel("mas-bar"); if(b) b.style.width="100%"; }, 300);
     }
- 
-    // ── Producto MENOS vendido ──
+
+    // ── Menos vendido ──
     const menos = data.menosVendido;
     if (menos) {
-      g("menos-empty").style.display   = "none";
-      g("menos-content").style.display = "block";
-      // Imagen
-      g("menos-img-wrap").innerHTML = menos.imagen
-        ? `<img class="prod-stat-img" src="${menos.imagen}" alt="${menos.nombre}">`
-        : `<div class="prod-stat-img-placeholder">🍬</div>`;
-      // Datos
-      g("menos-nombre").textContent   = menos.nombre;
-      g("menos-precio").textContent   = "RD$ " + Number(menos.precio).toLocaleString();
-      g("menos-vendido").textContent  = menos.total_vendido + " uds.";
-      g("menos-dias").textContent     = menos.dias_en_inventario + " días";
-      g("menos-ingresos").textContent = "RD$ " + Number(menos.ingresos_total).toLocaleString();
-      // Barra — porcentaje relativo al más vendido
+      sel("menos-empty").style.display   = "none";
+      sel("menos-content").style.display = "block";
+      const tw2 = sel("menos-img-wrap");
+      if (tw2) tw2.innerHTML = menos.imagen
+        ? '<img src="' + menos.imagen + '" alt="' + menos.nombre + '" style="width:90px;height:100%;object-fit:cover;display:block">'
+        : "🍬";
+      txt("menos-nombre",   menos.nombre);
+      txt("menos-precio",   "RD$ " + Number(menos.precio).toLocaleString());
+      txt("menos-vendido",  menos.total_vendido + " uds.");
+      txt("menos-dias",     menos.dias_en_inventario + " días");
+      txt("menos-ingresos", "RD$ " + Number(menos.ingresos_total).toLocaleString());
       const pct = mas && mas.total_vendido > 0
-        ? Math.round((menos.total_vendido / mas.total_vendido) * 100)
-        : 0;
-      setTimeout(() => {
-        g("menos-bar").style.width = pct + "%";
-        g("menos-pct").textContent = pct + "%";
-      }, 300);
+        ? Math.round((menos.total_vendido / mas.total_vendido) * 100) : 0;
+      setTimeout(() => { txt("menos-pct", pct+"%"); const b2=sel("menos-bar"); if(b2) b2.style.width=pct+"%"; }, 300);
     }
- 
+
   } catch (e) {
     console.error("Error estadísticas:", e.message);
   }
