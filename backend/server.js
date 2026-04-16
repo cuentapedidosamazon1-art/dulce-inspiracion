@@ -85,6 +85,18 @@ async function initDB() {
         precio          DECIMAL(10,2) NOT NULL,
         cantidad        INT NOT NULL DEFAULT 1
       );
+
+      CREATE TABLE IF NOT EXISTS entradas_inventario (
+        id            SERIAL PRIMARY KEY,
+        producto_id   INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+        cantidad      INT NOT NULL CHECK (cantidad > 0),
+        precio_compra DECIMAL(10,2) NOT NULL CHECK (precio_compra > 0),
+        proveedor     VARCHAR(200) NULL,
+        factura       VARCHAR(100) NULL,
+        notas         TEXT NULL,
+        fecha         DATE NOT NULL,
+        fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
+      );
     `);
 
     // Admin inicial
@@ -407,6 +419,150 @@ app.get("/api/admin/estadisticas", authMiddleware, async (req, res) => {
       menosVendido: menosRes.rows[0]   || null,
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+// ── ENTRADAS DE INVENTARIO ──────────────────────────────────────
+
+// GET /api/admin/entradas  → historial completo (con nombre de producto)
+app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        e.id,
+        e.producto_id,
+        p.nombre            AS producto_nombre,
+        p.precio            AS precio_venta,
+        e.cantidad,
+        e.precio_compra,
+        e.proveedor,
+        e.factura,
+        e.notas,
+        e.fecha,
+        e.fecha_creacion,
+        ROUND(
+          ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
+        )::float            AS margen_pct
+      FROM entradas_inventario e
+      JOIN productos p ON p.id = e.producto_id
+      ORDER BY e.fecha_creacion DESC
+    `);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/entradas/:id  → una entrada especifica
+app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT e.*, p.nombre AS producto_nombre, p.precio AS precio_venta
+      FROM entradas_inventario e
+      JOIN productos p ON p.id = e.producto_id
+      WHERE e.id = $1
+    `, [req.params.id]);
+    if (!result.rows.length) return res.status(404).json({ error: "Entrada no encontrada" });
+    res.json(result.rows[0]);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/entradas  → registrar entrada y actualizar stock atomicamente
+app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
+  const { producto_id, cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
+
+  if (!producto_id)
+    return res.status(400).json({ error: "producto_id es requerido" });
+  if (!cantidad || parseInt(cantidad) < 1)
+    return res.status(400).json({ error: "La cantidad debe ser mayor a 0" });
+  if (!precio_compra || parseFloat(precio_compra) <= 0)
+    return res.status(400).json({ error: "precio_compra debe ser mayor a 0" });
+  if (!fecha)
+    return res.status(400).json({ error: "La fecha es requerida" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Verificar que el producto existe
+    const prodRes = await client.query(
+      "SELECT id, nombre, stock FROM productos WHERE id = $1", [producto_id]
+    );
+    if (!prodRes.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Producto no encontrado" });
+    }
+
+    // Insertar registro de entrada
+    const entrada = await client.query(`
+      INSERT INTO entradas_inventario
+        (producto_id, cantidad, precio_compra, proveedor, factura, notas, fecha)
+      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *
+    `, [
+      producto_id,
+      parseInt(cantidad),
+      parseFloat(precio_compra),
+      proveedor || null,
+      factura   || null,
+      notas     || null,
+      fecha
+    ]);
+
+    // Actualizar stock del producto atomicamente
+    const stockRes = await client.query(
+      "UPDATE productos SET stock = stock + $1 WHERE id = $2 RETURNING stock",
+      [parseInt(cantidad), producto_id]
+    );
+
+    await client.query("COMMIT");
+
+    res.status(201).json({
+      ok: true,
+      entrada: entrada.rows[0],
+      stock_nuevo: stockRes.rows[0].stock
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// DELETE /api/admin/entradas/:id  → eliminar entrada y revertir stock
+app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Obtener la entrada antes de borrarla
+    const entRes = await client.query(
+      "SELECT producto_id, cantidad FROM entradas_inventario WHERE id = $1",
+      [req.params.id]
+    );
+    if (!entRes.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Entrada no encontrada" });
+    }
+
+    const { producto_id, cantidad } = entRes.rows[0];
+
+    // Revertir el stock (no bajar de 0)
+    await client.query(
+      "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id = $2",
+      [cantidad, producto_id]
+    );
+
+    // Eliminar la entrada
+    await client.query("DELETE FROM entradas_inventario WHERE id = $1", [req.params.id]);
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
 });
 
 // ── KEEP-ALIVE (evita que Render se duerma) ─────────────────────
