@@ -64,19 +64,6 @@ async function initDB() {
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
       );
 
-      CREATE TABLE IF NOT EXISTS entradas_inventario (
-        id              SERIAL PRIMARY KEY,
-        producto_id     INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-        usuario_id      INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
-        cantidad        INT NOT NULL,
-        precio_compra   DECIMAL(10,2) NOT NULL,
-        fecha_entrada   DATE NOT NULL,
-        proveedor       VARCHAR(200),
-        factura         VARCHAR(100),
-        notas           TEXT,
-        fecha_registro  TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-
       CREATE TABLE IF NOT EXISTS pedidos (
         id             SERIAL PRIMARY KEY,
         nombre         VARCHAR(100) NOT NULL,
