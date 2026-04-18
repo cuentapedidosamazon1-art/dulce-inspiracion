@@ -711,42 +711,53 @@ footer {
 .modal-overlay {
   display:none; position:fixed; inset:0;
   background:rgba(10,0,5,.7); backdrop-filter:blur(6px);
-  z-index:300; align-items:center; justify-content:center; padding:12px;
+  z-index:1000; align-items:center; justify-content:center;
+  padding:16px;
+  overflow-y:auto;
 }
 .modal-overlay.open { display:flex; }
 .modal-box {
   background:#fff; border-radius:28px;
-  width:100%; max-width:500px; max-height:90vh;
+  width:100%; max-width:500px;
+  max-height:calc(100vh - 32px);
   display:flex; flex-direction:column;
   overflow:hidden;
   animation:fadeUp .3s cubic-bezier(.22,.68,0,1.2);
   position:relative;
-}
-.modal-body {
-  flex:1; overflow-y:auto;
-  min-height:0;
+  flex-shrink:0;
+  margin:auto;
 }
 .modal-head {
-  padding:24px 28px 20px;
+  padding:22px 26px 18px;
   border-bottom:1px solid rgba(0,0,0,.06);
   display:flex; align-items:center; justify-content:space-between;
-  position:sticky; top:0; background:#fff; z-index:1;
+  flex-shrink:0;
+  background:#fff; z-index:1;
   border-radius:28px 28px 0 0;
 }
-.modal-head h3 { font-family:var(--ff-head); font-size:1.4rem; font-weight:700; }
+.modal-head h3 { font-family:var(--ff-head); font-size:1.35rem; font-weight:700; }
 .modal-x {
   background:rgba(0,0,0,.05); border:none; border-radius:8px;
   width:32px; height:32px; cursor:pointer; font-size:1.2rem;
   display:flex; align-items:center; justify-content:center;
-  color:var(--muted); transition:background .2s;
+  color:var(--muted); transition:background .2s; flex-shrink:0;
 }
 .modal-x:hover { background:rgba(0,0,0,.1); color:var(--dark); }
-.modal-body { padding:24px 28px; overflow-y:auto; }
+/* ── ÚNICO bloque .modal-body ── */
+.modal-body {
+  flex:1;
+  min-height:0;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:22px 26px;
+  -webkit-overflow-scrolling:touch;
+}
 .modal-foot {
-  padding:18px 28px 24px;
+  padding:16px 26px 22px;
   border-top:1px solid rgba(0,0,0,.06);
   display:flex; gap:12px;
-  position:sticky; bottom:0; background:#fff;
+  flex-shrink:0;
+  background:#fff;
   border-radius:0 0 28px 28px;
 }
 
@@ -981,6 +992,21 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   .admin-tabs { overflow-x:auto; }
   table { font-size:.8rem; }
   td,th { padding:10px 12px; }
+  /* Modal fixes on mobile */
+  .modal-overlay { padding:8px; align-items:flex-end; }
+  .modal-box {
+    max-height:92vh;
+    border-radius:24px 24px 0 0;
+    margin:0;
+    width:100%;
+  }
+  .modal-head { border-radius:24px 24px 0 0; }
+  .modal-foot { border-radius:0; padding-bottom:calc(16px + env(safe-area-inset-bottom)); }
+}
+/* Ensure admin modals appear above admin nav (z-index 500) */
+#admin-view ~ .modal-overlay,
+#m-prod, #m-user, #m-del-user {
+  z-index: 1000;
 }
 
 /* ═══ SPLASH SCREEN ════════════════════════════════════════ */
@@ -1637,34 +1663,388 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   .users-grid-v2 { grid-template-columns: 1fr; }
 }
 
-/* ═══ COMPROBANTE PDF ══════════════════════════════════ */
+/* ═══ COMPROBANTE IMPRESO — PREMIUM ═══════════════════ */
 @media print {
   body > *:not(#print-area) { display: none !important; }
   #print-area { display: block !important; }
+  @page {
+    margin: 0;
+    size: A4;
+  }
 }
+
 #print-area {
   display: none;
-  font-family: 'Georgia', serif;
-  max-width: 600px;
+  font-family: 'DM Sans', 'Segoe UI', system-ui, sans-serif;
+  width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  color: #1a0a0e;
+  position: relative;
+}
+
+/* ── Banda superior de color ── */
+.pi-top-bar {
+  height: 8px;
+  background: linear-gradient(90deg, #c0394b 0%, #c9963a 50%, #c0394b 100%);
+  width: 100%;
+}
+
+/* ── Cuerpo principal ── */
+.pi-page {
+  max-width: 680px;
   margin: 0 auto;
-  padding: 40px;
+  padding: 36px 40px 48px;
+  position: relative;
 }
-.print-header {
-  text-align: center;
-  border-bottom: 2px solid #c0394b;
-  padding-bottom: 20px;
-  margin-bottom: 24px;
+
+/* ── Marca de agua diagonal ── */
+.pi-watermark {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%,-50%) rotate(-35deg);
+  font-size: 7rem;
+  font-weight: 900;
+  color: rgba(192,57,75,.04);
+  font-family: 'Playfair Display', Georgia, serif;
+  pointer-events: none;
+  white-space: nowrap;
+  letter-spacing: .1em;
+  user-select: none;
 }
-.print-logo   { font-size: 2.5rem; }
-.print-title  { font-size: 1.5rem; font-weight: 700; color: #1a0a0e; margin: 8px 0 4px; }
-.print-sub    { font-size: .82rem; color: #9b7080; }
-.print-body   { margin-bottom: 24px; }
-.print-row    { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f0e8e0; font-size: .9rem; }
-.print-label  { color: #5c3040; font-weight: 600; }
-.print-items  { margin: 16px 0; }
-.print-item   { display: flex; justify-content: space-between; padding: 6px 0; font-size: .88rem; }
-.print-total-row { display: flex; justify-content: space-between; padding: 14px 0; border-top: 2px solid #c0394b; font-size: 1.1rem; font-weight: 700; color: #c0394b; margin-top: 8px; }
-.print-footer { text-align: center; color: #9b7080; font-size: .78rem; margin-top: 32px; border-top: 1px solid #f0e8e0; padding-top: 16px; }
+
+/* ── Header factura ── */
+.pi-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 32px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #f0e0e4;
+  gap: 24px;
+}
+.pi-brand-col { flex: 1; }
+.pi-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+.pi-brand-icon {
+  width: 48px; height: 48px;
+  background: linear-gradient(135deg, #c0394b, #c9963a);
+  border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+.pi-brand-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.3rem;
+  font-weight: 900;
+  color: #1a0a0e;
+  line-height: 1.1;
+}
+.pi-brand-tagline {
+  font-size: .7rem;
+  color: #c0394b;
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+}
+.pi-brand-address {
+  font-size: .75rem;
+  color: #9b7080;
+  line-height: 1.6;
+  margin-top: 4px;
+}
+
+.pi-invoice-col {
+  text-align: right;
+  flex-shrink: 0;
+}
+.pi-invoice-label {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: #9b7080;
+  margin-bottom: 4px;
+}
+.pi-invoice-number {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #c0394b, #c9963a);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 8px;
+}
+.pi-invoice-date {
+  font-size: .78rem;
+  color: #5c3040;
+  font-weight: 600;
+}
+.pi-invoice-time {
+  font-size: .7rem;
+  color: #9b7080;
+}
+
+/* ── Estado badge ── */
+.pi-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .04em;
+  margin-top: 8px;
+}
+.pi-status-pendiente  { background: #fef9c3; color: #854d0e; border: 1px solid #fde68a; }
+.pi-status-confirmado { background: #dbeafe; color: #1e3a8a; border: 1px solid #bfdbfe; }
+.pi-status-entregado  { background: #dcfce7; color: #14532d; border: 1px solid #bbf7d0; }
+.pi-status-cancelado  { background: #fee2e2; color: #7f1d1d; border: 1px solid #fecaca; }
+
+/* ── Sección cliente / pago ── */
+.pi-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+.pi-meta-card {
+  background: #fdf6ee;
+  border-radius: 14px;
+  padding: 16px 18px;
+  border: 1px solid #f0e0e4;
+}
+.pi-meta-card-title {
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #c0394b;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.pi-meta-row {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 7px;
+}
+.pi-meta-row:last-child { margin-bottom: 0; }
+.pi-meta-lbl {
+  font-size: .66rem;
+  color: #9b7080;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.pi-meta-val {
+  font-size: .84rem;
+  color: #1a0a0e;
+  font-weight: 600;
+  margin-top: 1px;
+}
+
+/* ── Tabla de productos ── */
+.pi-products-title {
+  font-size: .65rem;
+  font-weight: 700;
+  letter-spacing: .16em;
+  text-transform: uppercase;
+  color: #9b7080;
+  margin-bottom: 10px;
+  display: flex; align-items: center; gap: 8px;
+}
+.pi-products-title::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(90deg, #f0e0e4, transparent);
+}
+
+.pi-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 20px;
+}
+.pi-table thead tr {
+  background: linear-gradient(135deg, #1a0a0e, #2d1020);
+  color: #fff;
+}
+.pi-table thead th {
+  padding: 10px 14px;
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  text-align: left;
+}
+.pi-table thead th:last-child { text-align: right; }
+.pi-table thead th:nth-child(2),
+.pi-table thead th:nth-child(3) { text-align: center; }
+.pi-table thead tr th:first-child { border-radius: 10px 0 0 10px; }
+.pi-table thead tr th:last-child  { border-radius: 0 10px 10px 0; }
+
+.pi-table tbody tr {
+  border-bottom: 1px solid #f0e8e0;
+  transition: background .15s;
+}
+.pi-table tbody tr:last-child { border-bottom: none; }
+.pi-table tbody tr:nth-child(even) { background: #fdf9f5; }
+.pi-table tbody td {
+  padding: 11px 14px;
+  font-size: .84rem;
+  color: #1a0a0e;
+  vertical-align: middle;
+}
+.pi-table tbody td:nth-child(2) { text-align: center; color: #5c3040; font-weight: 600; }
+.pi-table tbody td:nth-child(3) { text-align: center; color: #9b7080; }
+.pi-table tbody td:last-child    { text-align: right; font-weight: 700; font-family: 'Playfair Display', serif; color: #c0394b; }
+
+.pi-prod-name { font-weight: 700; color: #1a0a0e; }
+.pi-prod-id   { font-size: .68rem; color: #9b7080; font-weight: 400; margin-top: 1px; font-family: monospace; }
+
+/* ── Totales ── */
+.pi-totals-wrap {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 28px;
+}
+.pi-totals {
+  width: 260px;
+  background: #fdf6ee;
+  border-radius: 16px;
+  padding: 16px 20px;
+  border: 1px solid #f0e0e4;
+}
+.pi-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  font-size: .82rem;
+  color: #5c3040;
+  border-bottom: 1px dashed #f0e0e4;
+}
+.pi-total-row:last-child { border-bottom: none; }
+.pi-total-row.grand {
+  border-top: 2px solid #c0394b;
+  border-bottom: none;
+  padding-top: 12px;
+  margin-top: 6px;
+}
+.pi-total-row.grand .pi-total-lbl {
+  font-size: .82rem;
+  font-weight: 700;
+  color: #1a0a0e;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+.pi-total-row.grand .pi-total-val {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #c0394b;
+}
+.pi-total-lbl { font-weight: 600; }
+.pi-total-val { font-weight: 700; color: #1a0a0e; }
+
+/* ── Notas / Gracias ── */
+.pi-notes {
+  background: linear-gradient(135deg, #fff8f0, #fdf6ee);
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 28px;
+  border-left: 3px solid #c9963a;
+  font-size: .78rem;
+  color: #5c3040;
+  line-height: 1.65;
+}
+.pi-notes strong { display: block; color: #1a0a0e; margin-bottom: 4px; font-size: .8rem; }
+
+/* ── Footer ── */
+.pi-footer {
+  border-top: 1px solid #f0e0e4;
+  padding-top: 20px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+}
+.pi-footer-brand {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.pi-footer-name {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: .95rem;
+  font-weight: 700;
+  color: #1a0a0e;
+}
+.pi-footer-contact {
+  font-size: .7rem;
+  color: #9b7080;
+  line-height: 1.6;
+}
+.pi-footer-right {
+  text-align: right;
+}
+.pi-footer-generated {
+  font-size: .66rem;
+  color: #c8b0b6;
+  font-family: monospace;
+  letter-spacing: .04em;
+}
+.pi-footer-page {
+  font-size: .66rem;
+  color: #c8b0b6;
+  margin-top: 2px;
+}
+
+/* ── Barcode area ── */
+.pi-barcode-area {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.pi-barcode-bars {
+  display: flex;
+  gap: 1.5px;
+  height: 32px;
+  align-items: flex-end;
+}
+.pi-barcode-bars span {
+  display: block;
+  background: #1a0a0e;
+  border-radius: 1px;
+  opacity: .65;
+}
+.pi-barcode-num {
+  font-family: monospace;
+  font-size: .58rem;
+  color: #9b7080;
+  letter-spacing: .14em;
+}
+
+/* ── Bottom accent bar ── */
+.pi-bottom-bar {
+  height: 6px;
+  background: linear-gradient(90deg, #c9963a 0%, #c0394b 50%, #c9963a 100%);
+  width: 100%;
+  position: fixed;
+  bottom: 0; left: 0;
+}
+
+/* Ensure colors print */
+* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
 
 
 /* ═══ INVENTARIO ═══════════════════════════════════════════ */
@@ -2478,137 +2858,479 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 }
 
 
-/* ═══ PANTALLA DE CONFIRMACIÓN ════════════════════════════ */
+/* ═══ PANTALLA DE CONFIRMACIÓN — NUEVA FACTURA ════════════ */
+@keyframes receiptPrint {
+  from { clip-path: inset(0 0 100% 0); opacity: 0; }
+  to   { clip-path: inset(0 0 0% 0);   opacity: 1; }
+}
+@keyframes checkDraw {
+  from { stroke-dashoffset: 100; }
+  to   { stroke-dashoffset: 0; }
+}
+@keyframes successRing {
+  0%   { transform: scale(0.6); opacity: 0; }
+  60%  { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+@keyframes tickerSlide {
+  0%   { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+@keyframes confettiDrop {
+  0%   { transform: translateY(-20px) rotate(0deg); opacity: 1; }
+  100% { transform: translateY(80px) rotate(720deg); opacity: 0; }
+}
+@keyframes lineGrow {
+  from { width: 0; }
+  to   { width: 100%; }
+}
+@keyframes stepAppear {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+@keyframes numFlip {
+  from { transform: rotateX(90deg); opacity: 0; }
+  to   { transform: rotateX(0); opacity: 1; }
+}
+
 .confirm-overlay {
   display: none;
   position: fixed; inset: 0;
-  background: rgba(10,0,5,.85);
-  backdrop-filter: blur(8px);
+  background: rgba(8,2,8,.92);
+  backdrop-filter: blur(14px);
   z-index: 9000;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
+  overflow-y: auto;
 }
 .confirm-overlay.open { display: flex; }
+
+/* Confetti particles */
+.confetti-wrap {
+  position: fixed; inset: 0; pointer-events: none; z-index: 9001;
+  overflow: hidden;
+}
+.confetti-piece {
+  position: absolute;
+  top: -10px;
+  width: 8px; height: 8px;
+  border-radius: 2px;
+  animation: confettiDrop 1.4s ease-in forwards;
+}
+
+/* ── Main receipt card ── */
 .confirm-box {
-  background: #fff;
-  border-radius: 32px;
-  padding: 48px 36px;
-  max-width: 440px;
+  background: transparent;
+  max-width: 460px;
   width: 100%;
   text-align: center;
-  animation: fadeUp .4s cubic-bezier(.22,.68,0,1.2) both;
+  animation: fadeUp .45s cubic-bezier(.22,.68,0,1.2) both;
+  position: relative;
+  margin: auto;
+}
+
+/* Success header */
+.cf-header {
+  background: linear-gradient(135deg, #0f1f0f 0%, #1a3520 50%, #0f1f0f 100%);
+  border-radius: 28px 28px 0 0;
+  padding: 36px 32px 28px;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(74,222,128,.15);
+  border-bottom: none;
+}
+.cf-header::before {
+  content: "";
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse 120% 100% at 50% 0%, rgba(74,222,128,.12), transparent 70%);
+  pointer-events: none;
+}
+.cf-header-stars {
+  position: absolute; inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,.6) 0%, transparent 100%),
+    radial-gradient(1px 1px at 80% 20%, rgba(255,255,255,.4) 0%, transparent 100%),
+    radial-gradient(1px 1px at 40% 70%, rgba(255,255,255,.3) 0%, transparent 100%),
+    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,.5) 0%, transparent 100%),
+    radial-gradient(1px 1px at 10% 80%, rgba(255,255,255,.3) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.cf-check-wrap {
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 18px;
+  position: relative;
+}
+.cf-check-ring {
+  width: 80px; height: 80px;
+  animation: successRing .6s cubic-bezier(.22,.68,0,1.5) both;
+  position: relative;
+}
+.cf-check-ring svg {
+  width: 80px; height: 80px;
+  position: absolute; inset: 0;
+}
+.cf-check-bg {
+  fill: none; stroke: rgba(74,222,128,.2); stroke-width: 3;
+}
+.cf-check-circle {
+  fill: none; stroke: #4ade80; stroke-width: 3;
+  stroke-dasharray: 220; stroke-dashoffset: 220;
+  animation: checkDraw .5s .3s ease forwards;
+  stroke-linecap: round;
+}
+.cf-check-icon {
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.8rem;
+}
+.cf-status-label {
+  font-size: .7rem; font-weight: 700; letter-spacing: .18em;
+  text-transform: uppercase; color: #4ade80;
+  margin-bottom: 6px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.cf-status-dot {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: #4ade80;
+  animation: pulse 1.5s infinite;
+}
+.cf-main-title {
+  font-family: var(--ff-head);
+  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-weight: 900;
+  color: #fff;
+  margin-bottom: 4px;
+  line-height: 1.1;
+}
+.cf-subtitle {
+  color: rgba(255,255,255,.5);
+  font-size: .82rem;
+}
+
+/* Tear separator */
+.cf-tear {
+  height: 18px;
+  background: #fff;
   position: relative;
   overflow: hidden;
 }
-.confirm-box::before {
+.cf-tear::before {
   content: "";
-  position: absolute; top: 0; left: 0; right: 0; height: 5px;
-  background: linear-gradient(90deg, var(--rose), var(--gold));
+  position: absolute; top: 0; left: -2%; right: -2%;
+  height: 24px;
+  background: linear-gradient(135deg, #0f1f0f 25%, transparent 25%) -6px 0,
+              linear-gradient(225deg, #0f1f0f 25%, transparent 25%) -6px 0,
+              linear-gradient(315deg, #0f1f0f 25%, transparent 25%),
+              linear-gradient( 45deg, #0f1f0f 25%, transparent 25%);
+  background-size: 12px 12px;
+  background-color: #0f1f0f;
 }
-.confirm-check {
-  width: 88px; height: 88px;
-  background: linear-gradient(135deg, #16a34a, #4ade80);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2.5rem;
-  margin: 0 auto 24px;
-  box-shadow: 0 12px 32px rgba(22,163,74,.35);
-  animation: pulse 2s ease infinite;
+.cf-tear::after {
+  content: "";
+  position: absolute; bottom: 0; left: -2%; right: -2%;
+  height: 12px;
+  background: linear-gradient(135deg, #f9f5f0 25%, transparent 25%) -6px 0,
+              linear-gradient(225deg, #f9f5f0 25%, transparent 25%) -6px 0,
+              linear-gradient(315deg, #f9f5f0 25%, transparent 25%),
+              linear-gradient( 45deg, #f9f5f0 25%, transparent 25%);
+  background-size: 12px 12px;
+  background-color: transparent;
 }
-.confirm-title {
-  font-family: var(--ff-head);
-  font-size: 1.8rem;
-  font-weight: 900;
-  color: var(--dark);
-  margin-bottom: 8px;
+
+/* Receipt body */
+.cf-receipt {
+  background: #f9f5f0;
+  padding: 0 28px 24px;
+  font-family: 'Courier New', monospace;
+  border-left: 1px solid rgba(0,0,0,.06);
+  border-right: 1px solid rgba(0,0,0,.06);
+  animation: receiptPrint .6s .2s ease both;
 }
-.confirm-subtitle {
-  color: var(--muted);
-  font-size: .9rem;
-  margin-bottom: 28px;
-  line-height: 1.6;
-}
-.confirm-pedido-num {
+
+/* Order number band */
+.cf-order-band {
   background: linear-gradient(135deg, var(--rose), var(--gold));
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-family: var(--ff-head);
-  font-size: 2.8rem;
-  font-weight: 900;
-  display: block;
-  margin-bottom: 6px;
-}
-.confirm-details {
-  background: var(--cream);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin: 20px 0 28px;
-  text-align: left;
-}
-.confirm-detail-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: .84rem;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border);
-  color: var(--mid);
-}
-.confirm-detail-row:last-child { border-bottom: none; }
-.confirm-detail-row span:last-child {
-  font-weight: 600;
-  color: var(--dark);
-  text-align: right;
-  max-width: 55%;
-}
-.confirm-total-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 10px 0 0;
-  font-weight: 700;
-  font-size: 1rem;
-  color: var(--dark);
-}
-.confirm-total-row span:last-child {
-  font-family: var(--ff-head);
-  font-size: 1.4rem;
-  color: var(--rose);
-}
-.confirm-wa-btn {
-  width: 100%;
-  padding: 15px;
-  background: #25d366;
-  color: #fff;
-  border: none;
-  border-radius: 14px;
-  font-family: var(--ff-body);
-  font-weight: 700;
-  font-size: .95rem;
-  cursor: pointer;
+  margin: 0 -28px 22px;
+  padding: 14px 28px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
-  transition: all .2s;
-  box-shadow: 0 6px 20px rgba(37,211,102,.35);
+  justify-content: space-between;
 }
-.confirm-wa-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,211,102,.4); }
-.confirm-close-btn {
-  width: 100%;
-  padding: 13px;
-  background: transparent;
-  border: 1.5px solid var(--border);
-  border-radius: 14px;
+.cf-order-num-label {
+  font-size: .65rem; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: rgba(255,255,255,.7);
+}
+.cf-order-num-val {
+  font-family: var(--ff-head);
+  font-size: 1.6rem; font-weight: 900; color: #fff;
+  animation: numFlip .4s .5s ease both;
+  transform-origin: top;
+}
+.cf-order-timestamp {
+  font-size: .66rem;
+  color: rgba(255,255,255,.65);
+  text-align: right;
+  font-family: 'Courier New', monospace;
+}
+
+/* Info rows */
+.cf-info-section {
+  margin-bottom: 16px;
+}
+.cf-section-title {
+  font-size: .6rem; font-weight: 700;
+  letter-spacing: .18em; text-transform: uppercase;
+  color: var(--muted); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 8px;
+}
+.cf-section-title::after {
+  content: ""; flex: 1; height: 1px;
+  background: repeating-linear-gradient(90deg, var(--border) 0, var(--border) 4px, transparent 4px, transparent 8px);
+}
+
+.cf-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px dashed rgba(0,0,0,.08);
+  font-size: .81rem;
+}
+.cf-row:last-child { border-bottom: none; }
+.cf-row-label {
+  color: var(--muted);
+  display: flex; align-items: center; gap: 6px;
+  font-size: .78rem;
+}
+.cf-row-val {
+  font-weight: 600; color: var(--dark);
+  text-align: right; max-width: 58%;
   font-family: var(--ff-body);
-  font-weight: 600;
-  font-size: .88rem;
-  cursor: pointer;
-  color: var(--mid);
-  transition: all .2s;
 }
-.confirm-close-btn:hover { border-color: var(--rose); color: var(--rose); }
+
+/* Divider dashes */
+.cf-divider {
+  border: none;
+  border-top: 1.5px dashed rgba(0,0,0,.12);
+  margin: 14px 0;
+}
+
+/* Total section */
+.cf-total-section {
+  background: linear-gradient(135deg, #fff8f0, #fff);
+  border: 1.5px solid rgba(192,57,75,.15);
+  border-radius: 16px;
+  padding: 16px 18px;
+  margin-bottom: 20px;
+}
+.cf-total-items {
+  display: flex;
+  justify-content: space-between;
+  font-size: .78rem;
+  color: var(--muted);
+  padding: 3px 0;
+  font-family: var(--ff-body);
+}
+.cf-total-main {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0 0;
+  margin-top: 8px;
+  border-top: 2px solid rgba(192,57,75,.15);
+}
+.cf-total-lbl {
+  font-size: .8rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .08em;
+  color: var(--mid); font-family: var(--ff-body);
+}
+.cf-total-amount {
+  font-family: var(--ff-head);
+  font-size: 2rem; font-weight: 900;
+  color: var(--rose);
+  line-height: 1;
+}
+
+/* Progress timeline */
+.cf-timeline {
+  margin-bottom: 22px;
+}
+.cf-timeline-track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 8px;
+}
+.cf-timeline-track::before {
+  content: "";
+  position: absolute;
+  top: 16px; left: 8px; right: 8px; height: 2px;
+  background: rgba(0,0,0,.08);
+  z-index: 0;
+}
+.cf-timeline-fill {
+  position: absolute;
+  top: 16px; left: 8px; height: 2px;
+  background: linear-gradient(90deg, var(--rose), var(--gold));
+  z-index: 1;
+  width: 0;
+  transition: width 1.2s .8s cubic-bezier(.22,.68,0,1.2);
+  border-radius: 999px;
+}
+.cf-timeline-step {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  position: relative; z-index: 2;
+  animation: stepAppear .4s ease both;
+}
+.cf-timeline-step:nth-child(2) { animation-delay: .1s; }
+.cf-timeline-step:nth-child(3) { animation-delay: .2s; }
+.cf-timeline-step:nth-child(4) { animation-delay: .3s; }
+.cf-step-dot {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .9rem;
+  background: rgba(0,0,0,.06);
+  border: 2px solid transparent;
+  transition: all .4s;
+}
+.cf-step-dot.active {
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  border-color: transparent;
+  box-shadow: 0 4px 14px rgba(192,57,75,.35);
+}
+.cf-step-dot.done {
+  background: #4ade80;
+  border-color: transparent;
+  box-shadow: 0 4px 12px rgba(74,222,128,.3);
+}
+.cf-step-lbl {
+  font-size: .6rem; font-weight: 700;
+  letter-spacing: .04em; text-transform: uppercase;
+  color: var(--muted); white-space: nowrap;
+  font-family: var(--ff-body);
+}
+.cf-step-dot.active + .cf-step-lbl,
+.cf-step-dot.done  + .cf-step-lbl { color: var(--dark); }
+
+/* Barcode stripe */
+.cf-barcode {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.cf-barcode-stripes {
+  display: inline-flex;
+  gap: 1px;
+  height: 36px;
+  align-items: flex-end;
+  margin-bottom: 4px;
+  opacity: .5;
+}
+.cf-barcode-stripes span {
+  display: block;
+  background: var(--dark);
+  border-radius: 1px;
+}
+.cf-barcode-code {
+  font-family: 'Courier New', monospace;
+  font-size: .64rem;
+  color: var(--muted);
+  letter-spacing: .12em;
+}
+
+/* Action buttons */
+.cf-actions {
+  display: flex; flex-direction: column; gap: 8px;
+  padding: 0;
+}
+.cf-btn-wa {
+  width: 100%; padding: 15px;
+  background: linear-gradient(135deg, #25d366, #128c4a);
+  color: #fff; border: none; border-radius: 14px;
+  font-family: var(--ff-body); font-weight: 700; font-size: .95rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  transition: all .25s;
+  box-shadow: 0 6px 20px rgba(37,211,102,.35);
+  letter-spacing: .02em;
+}
+.cf-btn-wa:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(37,211,102,.45); }
+.cf-btn-wa:active { transform: translateY(0); }
+
+.cf-btn-close {
+  width: 100%; padding: 13px;
+  background: transparent;
+  border: 1.5px solid rgba(0,0,0,.1);
+  border-radius: 14px;
+  font-family: var(--ff-body); font-weight: 600; font-size: .88rem;
+  cursor: pointer; color: var(--mid); transition: all .2s;
+  background: rgba(255,255,255,.6);
+}
+.cf-btn-close:hover { border-color: var(--rose); color: var(--rose); background: rgba(192,57,75,.03); }
+
+/* Bottom receipt tear */
+.cf-tear-bottom {
+  height: 18px;
+  background: #f9f5f0;
+  border-left: 1px solid rgba(0,0,0,.06);
+  border-right: 1px solid rgba(0,0,0,.06);
+  position: relative;
+  overflow: hidden;
+}
+.cf-tear-bottom::before {
+  content: "";
+  position: absolute; bottom: 0; left: -2%; right: -2%;
+  height: 16px;
+  background: linear-gradient(135deg, #f9f5f0 25%, transparent 25%) -6px 0,
+              linear-gradient(225deg, #f9f5f0 25%, transparent 25%) -6px 0,
+              linear-gradient(315deg, #f9f5f0 25%, transparent 25%),
+              linear-gradient( 45deg, #f9f5f0 25%, transparent 25%);
+  background-size: 12px 12px;
+  background-color: transparent;
+}
+
+/* Receipt footer */
+.cf-receipt-footer {
+  background: #f0ebe3;
+  border-radius: 0 0 28px 28px;
+  padding: 14px 28px 20px;
+  border: 1px solid rgba(0,0,0,.06);
+  border-top: none;
+  display: flex; flex-direction: column; gap: 8px;
+}
+
+/* Ticker tape */
+.cf-ticker {
+  background: linear-gradient(135deg, var(--dark), var(--mid));
+  border-radius: 10px;
+  overflow: hidden;
+  padding: 8px 0;
+  position: relative;
+}
+.cf-ticker-inner {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  animation: tickerSlide 10s linear infinite;
+}
+.cf-ticker-text {
+  font-size: .68rem; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gold2);
+  padding: 0 28px;
+  font-family: var(--ff-body);
+}
+.cf-ticker-sep { color: var(--rose); font-size: .6rem; }
+
+@media(max-width: 480px) {
+  .cf-receipt { padding: 0 20px 20px; }
+  .cf-order-band { margin: 0 -20px 18px; padding: 12px 20px; }
+  .cf-header { padding: 28px 22px 22px; }
+  .cf-receipt-footer { padding: 12px 20px 16px; }
+}
 
 
 /* ═══ PANTALLA CONFIRMACIÓN DE PEDIDO ════════════════════════ */
@@ -3010,6 +3732,302 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
 /* Keep IDs used by loadEstadisticas (compatibility) */
 #st-pedidos, #st-ingresos, #st-pendientes, #st-entregados { display: none; }
+
+/* ═══ PEDIDOS — HEADER V3 ══════════════════════════════════ */
+.ord-header-v3 {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 24px; flex-wrap: wrap;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--border);
+}
+.ord-header-left {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.ord-main-title {
+  font-family: var(--ff-head);
+  font-size: 2rem; font-weight: 900; color: var(--dark);
+  margin: 0; letter-spacing: -.02em;
+}
+.ord-header-right {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.ord-view-toggle {
+  display: flex; background: rgba(0,0,0,.06); border-radius: 12px; padding: 3px; gap: 2px;
+  border: 1px solid var(--border);
+}
+.ord-vbtn {
+  padding: 8px 16px; border-radius: 9px; border: none; background: none;
+  font-family: var(--ff-body); font-size: .8rem; font-weight: 600;
+  color: var(--muted); cursor: pointer; transition: all .22s;
+  display: flex; align-items: center; gap: 6px;
+}
+.ord-vbtn.active {
+  background: #fff; color: var(--rose);
+  box-shadow: 0 2px 10px rgba(0,0,0,.12);
+}
+.ord-vbtn:hover:not(.active) { color: var(--dark); background: rgba(255,255,255,.6); }
+
+/* ── KPI strip v3 ── */
+.ord-kpi-v3 {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 12px; margin-bottom: 24px;
+}
+@media(max-width:900px)  { .ord-kpi-v3 { grid-template-columns: repeat(3,1fr); } }
+@media(max-width:560px)  { .ord-kpi-v3 { grid-template-columns: repeat(2,1fr); } }
+
+.ord-kpi3 {
+  background: #fff; border-radius: 18px;
+  padding: 18px 18px 12px;
+  border: 1px solid var(--border);
+  position: relative; overflow: hidden;
+  transition: transform .2s, box-shadow .2s;
+}
+.ord-kpi3:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(26,10,14,.1); }
+.ord-kpi3::before {
+  content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+}
+.okpi-c-rose::before  { background: linear-gradient(90deg, var(--rose), var(--rose2)); }
+.okpi-c-amber::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.okpi-c-green::before { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.okpi-c-red::before   { background: linear-gradient(90deg, #ef4444, #f87171); }
+.okpi-c-gold::before  { background: linear-gradient(90deg, var(--gold), var(--gold2)); }
+
+.okpi3-icon { font-size: 1.4rem; margin-bottom: 6px; }
+.okpi3-body { margin-bottom: 10px; }
+.okpi3-val  { font-family: var(--ff-head); font-size: 1.5rem; font-weight: 700; color: var(--dark); line-height: 1; }
+.okpi3-lbl  { font-size: .68rem; color: var(--muted); margin-top: 2px; text-transform: uppercase; letter-spacing: .05em; }
+.okpi3-bar-wrap { height: 4px; background: rgba(0,0,0,.06); border-radius: 999px; overflow: hidden; }
+.okpi3-bar { height: 100%; border-radius: 999px; width: 0;
+  transition: width .8s cubic-bezier(.22,.68,0,1.2);
+  background: linear-gradient(90deg, var(--rose), var(--rose2));
+}
+.okpi3-amber { background: linear-gradient(90deg, #f59e0b, #fbbf24) !important; }
+.okpi3-green { background: linear-gradient(90deg, #16a34a, #4ade80) !important; }
+.okpi3-red   { background: linear-gradient(90deg, #ef4444, #f87171) !important; }
+.okpi3-gold  { background: linear-gradient(90deg, var(--gold), var(--gold2)) !important; }
+
+/* ═══ KANBAN BOARD ══════════════════════════════════════════ */
+.kanban-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+@media(max-width:900px) { .kanban-board { grid-template-columns: 1fr; } }
+
+.kanban-col {
+  background: #f8f4f0;
+  border-radius: 22px;
+  border: 1.5px solid var(--border);
+  overflow: visible;
+  transition: box-shadow .25s, border-color .25s;
+  min-height: 320px;
+  display: flex;
+  flex-direction: column;
+}
+.kanban-col.highlighted {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(192,57,75,.12), 0 12px 40px rgba(192,57,75,.15);
+}
+
+/* Column accent top bar */
+.kanban-col::before {
+  content: "";
+  display: block;
+  height: 4px;
+  border-radius: 22px 22px 0 0;
+}
+.kanban-col#kcol-pendiente::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+.kanban-col#kcol-entregado::before { background: linear-gradient(90deg, #16a34a, #4ade80); }
+.kanban-col#kcol-cancelado::before { background: linear-gradient(90deg, #ef4444, #f87171); }
+
+.kanban-col-hdr {
+  display: flex; align-items: center; gap: 10px;
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid rgba(0,0,0,.07);
+  background: transparent;
+  position: sticky; top: 0; z-index: 1;
+}
+/* Remove individual color gradients — handled by col accent bar */
+.kanban-hdr-amber { background: transparent; }
+.kanban-hdr-green { background: transparent; }
+.kanban-hdr-red   { background: transparent; }
+
+.kanban-col-icon  { font-size: 1.25rem; }
+.kanban-col-title { font-family: var(--ff-head); font-size: 1.05rem; font-weight: 800; color: var(--dark); flex: 1; }
+
+.kanban-col-count {
+  min-width: 26px; height: 26px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: .72rem; font-weight: 800;
+  border-radius: 999px; white-space: nowrap;
+  padding: 0 8px;
+}
+#kcol-pendiente .kanban-col-count { background: rgba(245,158,11,.18); color: #92400e; }
+#kcol-entregado .kanban-col-count { background: rgba(22,163,74,.18);  color: #14532d; }
+#kcol-cancelado .kanban-col-count { background: rgba(239,68,68,.18);  color: #b91c1c; }
+
+.kanban-col-total {
+  font-size: .7rem; font-weight: 700;
+  color: var(--muted); white-space: nowrap;
+  background: rgba(255,255,255,.7); padding: 3px 9px; border-radius: 999px;
+  border: 1px solid var(--border);
+}
+
+.kanban-col-body {
+  padding: 14px 12px 16px;
+  display: flex; flex-direction: column; gap: 10px;
+  min-height: 200px;
+  flex: 1;
+}
+
+.kanban-empty {
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  padding: 48px 16px; text-align: center;
+  color: var(--muted); font-size: .84rem;
+  flex: 1; justify-content: center;
+}
+.kanban-empty p { margin: 0; font-weight: 500; }
+
+/* ── Tarjeta Kanban — rediseño ── */
+@keyframes kcardIn { from { opacity:0; transform: translateY(16px) scale(.97); } to { opacity:1; transform: translateY(0) scale(1); } }
+
+.kanban-card {
+  background: #fff;
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,.07);
+  padding: 0;
+  transition: transform .25s cubic-bezier(.22,.68,0,1.2), box-shadow .25s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+  animation: kcardIn .35s cubic-bezier(.22,.68,0,1.2) both;
+  box-shadow: 0 2px 8px rgba(26,10,14,.05);
+}
+/* Status stripe left */
+.kanban-card::before {
+  content: ""; position: absolute; top: 0; left: 0; bottom: 0; width: 4px;
+  border-radius: 16px 0 0 16px;
+}
+.kanban-card.kc-pendiente::before { background: linear-gradient(180deg, #f59e0b, #d97706); }
+.kanban-card.kc-entregado::before  { background: linear-gradient(180deg, #22c55e, #16a34a); }
+.kanban-card.kc-cancelado::before  { background: linear-gradient(180deg, #ef4444, #dc2626); opacity: .6; }
+
+.kanban-card:hover {
+  transform: translateY(-5px) scale(1.015);
+  box-shadow: 0 16px 36px rgba(26,10,14,.13);
+}
+.kanban-card.kc-cancelado { opacity: .72; }
+.kanban-card.kc-cancelado:hover { opacity: .9; }
+
+/* Card inner padding (offset for left stripe) */
+.kc-inner { padding: 13px 14px 13px 18px; }
+
+.kc-top {
+  display: flex; align-items: flex-start; justify-content: space-between;
+  gap: 8px; margin-bottom: 6px;
+}
+.kc-client {
+  font-weight: 700; font-size: .94rem; color: var(--dark);
+  line-height: 1.3; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kc-id {
+  font-size: .6rem; color: var(--muted); font-family: monospace;
+  background: rgba(0,0,0,.05); padding: 2px 7px; border-radius: 4px;
+  white-space: nowrap; flex-shrink: 0; margin-top: 2px;
+}
+.kc-amount {
+  font-family: var(--ff-head); font-size: 1.25rem; font-weight: 700;
+  color: var(--rose); margin-bottom: 7px; line-height: 1;
+}
+.kc-meta {
+  font-size: .71rem; color: var(--muted);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+  margin-bottom: 9px;
+}
+.kc-meta-dot { opacity: .35; }
+.kc-products {
+  display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px;
+}
+.kc-chip {
+  font-size: .67rem; background: var(--cream); color: var(--mid);
+  padding: 3px 8px; border-radius: 6px; border: 1px solid var(--border);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.kc-chip-qty {
+  background: linear-gradient(135deg, var(--rose), var(--gold));
+  color: #fff; font-size: .56rem; font-weight: 700;
+  padding: 1px 5px; border-radius: 4px;
+}
+.kc-actions {
+  display: flex; gap: 5px; flex-wrap: wrap;
+  padding: 10px 14px 12px 18px;
+  border-top: 1px solid rgba(0,0,0,.05);
+  background: rgba(0,0,0,.015);
+}
+.kc-btn {
+  flex: 1; min-width: 0;
+  padding: 6px 8px; border-radius: 9px; border: none;
+  font-family: var(--ff-body); font-size: .69rem; font-weight: 600;
+  cursor: pointer; transition: all .18s;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  white-space: nowrap;
+}
+.kc-btn:hover { transform: translateY(-1px); }
+.kc-btn-deliver { background: rgba(34,197,94,.12); color: #15803d; }
+.kc-btn-deliver:hover { background: rgba(34,197,94,.22); box-shadow: 0 3px 10px rgba(34,197,94,.2); }
+.kc-btn-cancel  { background: rgba(239,68,68,.08); color: #dc2626; }
+.kc-btn-cancel:hover  { background: rgba(239,68,68,.16); }
+.kc-btn-restore { background: rgba(245,158,11,.1); color: #b45309; }
+.kc-btn-restore:hover { background: rgba(245,158,11,.2); }
+.kc-btn-wa { background: rgba(37,211,102,.1); color: #128c4a; }
+.kc-btn-wa:hover { background: rgba(37,211,102,.2); }
+.kc-btn-print { background: rgba(59,130,246,.08); color: #1d4ed8; }
+.kc-btn-print:hover { background: rgba(59,130,246,.15); }
+
+/* Time badge */
+.kc-time-badge {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: .62rem; color: var(--muted);
+  background: rgba(0,0,0,.04); padding: 2px 8px;
+  border-radius: 999px; white-space: nowrap;
+}
+
+/* Address */
+.kc-addr {
+  font-size: .71rem; color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 100%; margin-bottom: 7px;
+  display: flex; align-items: center; gap: 4px;
+}
+
+/* Delivery badge on card */
+.kc-delivery-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .62rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  background: rgba(59,130,246,.08); color: #2563eb;
+  border: 1px solid rgba(59,130,246,.15);
+}
+
+/* Payment method badge */
+.kc-pay-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: .62rem; font-weight: 600;
+  padding: 2px 8px; border-radius: 6px;
+  background: rgba(201,150,58,.1); color: var(--gold);
+  border: 1px solid rgba(201,150,58,.2);
+}
+
+/* Responsive kanban */
+@media(max-width:640px) {
+  .ord-header-v3 { flex-direction: column; align-items: flex-start; }
+  .ord-header-right { width: 100%; }
+  .kanban-col-hdr { flex-wrap: wrap; }
+  .kanban-board { gap: 12px; }
+}
 </style>
 
 </head>
@@ -3240,7 +4258,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           <h4>Contacto</h4>
           <p>📍 La Altagracia, Rep. Dom.</p>
           <a href="https://wa.me/18295551234" target="_blank">📱 +1 (829) 555-1234</a>
-          <p>✉️ <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c0a9aea6af80a4b5aca3a5a9aeb3b0a9b2a1a3a9afaeeea3afad">[email&#160;protected]</a></p>
+          <p>✉️ <a href="mailto:info@dulceinspiracion.com">info@dulceinspiracion.com</a></p>
         </div>
         <div class="footer-col">
           <h4>Horario</h4>
@@ -3302,6 +4320,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       <button class="tab-btn" id="tbtn-o" onclick="switchTab('o')">📦 Pedidos</button>
       <button class="tab-btn" id="tbtn-s" onclick="switchTab('s')">📊 Estadísticas</button>
       <button class="tab-btn" id="tbtn-u" onclick="switchTab('u')">👥 Usuarios</button>
+      <button class="tab-btn" id="tbtn-e" onclick="switchTab('e')">📋 Registro Mercancía</button>
     </div>
 
     <!-- Tab Dashboard -->
@@ -3500,9 +4519,14 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
           <h2 style="margin-bottom:4px">Gestión de Productos</h2>
           <p style="font-size:.8rem;color:var(--muted)" id="prod-subtitle">Cargando...</p>
         </div>
-        <button class="btn btn-primary" onclick="openAddProd()">
-          <i class="fa-solid fa-plus"></i> Nuevo Producto
-        </button>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-secondary" onclick="openEntradaModal()" style="border-color:var(--gold);color:var(--gold)">
+            <i class="fa-solid fa-truck-ramp-box"></i> Registrar Entrada
+          </button>
+          <button class="btn btn-primary" onclick="openAddProd()">
+            <i class="fa-solid fa-plus"></i> Nuevo Producto
+          </button>
+        </div>
       </div>
 
       <!-- KPI Strip -->
@@ -3587,11 +4611,26 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       </div>
     </div>
 
-    <!-- Tab Pedidos -->
+    <!-- Tab Pedidos — Rediseño Kanban -->
     <div id="tab-o" style="display:none">
-      <div class="sec-hdr">
-        <h2>Pedidos recibidos</h2>
-        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+
+      <!-- ── Header con título + controles ── -->
+      <div class="ord-header-v3">
+        <div class="ord-header-left">
+          <div>
+            <h2 class="ord-main-title">📬 Pedidos recibidos</h2>
+            <p style="font-size:.82rem;color:var(--muted);margin:3px 0 0" id="ord-subtitle">Gestiona y actualiza el estado de cada pedido</p>
+          </div>
+          <div class="ord-view-toggle">
+            <button class="ord-vbtn active" id="ord-view-kanban" onclick="setOrderView('kanban')">
+              <i class="fa-solid fa-table-columns"></i> Tablero
+            </button>
+            <button class="ord-vbtn" id="ord-view-list" onclick="setOrderView('list')">
+              <i class="fa-solid fa-list"></i> Lista
+            </button>
+          </div>
+        </div>
+        <div class="ord-header-right">
           <div class="search-wrap">
             <input class="search-input" type="text" id="ord-search"
               placeholder="Buscar por nombre, tel. o #ID..."
@@ -3600,10 +4639,10 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
               style="width:230px;padding:9px 36px 9px 14px;border-radius:10px">
             <i class="fa-solid fa-magnifying-glass search-icon"></i>
           </div>
-          <select class="ord-filter" id="ord-filter" onchange="filterOrders()">
+          <!-- filtro estado SOLO visible en vista lista -->
+          <select class="ord-filter" id="ord-filter" onchange="filterOrders()" style="display:none">
             <option value="all">Todos los estados</option>
             <option value="pendiente">⏳ Pendiente</option>
-            <option value="confirmado">✅ Confirmado</option>
             <option value="entregado">🚚 Entregado</option>
             <option value="cancelado">❌ Cancelado</option>
           </select>
@@ -3613,34 +4652,120 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
             <option value="week">Esta semana</option>
             <option value="month">Este mes</option>
           </select>
+          <button class="btn btn-primary" onclick="loadOrders()" style="padding:9px 18px;font-size:.82rem">
+            <i class="fa-solid fa-rotate"></i> Actualizar
+          </button>
         </div>
       </div>
 
-      <!-- KPI strip -->
-      <div class="ord-kpi-strip" id="ord-kpi-strip">
-        <div class="ord-kpi">
-          <div class="ord-kpi-icon rose">📦</div>
-          <div><div class="ord-kpi-val" id="okpi-total">—</div><div class="ord-kpi-lbl">Total pedidos</div></div>
+      <!-- ── KPI strip mejorado ── -->
+      <div class="ord-kpi-v3" id="ord-kpi-strip">
+        <div class="ord-kpi3 okpi-c-rose">
+          <div class="okpi3-icon">📦</div>
+          <div class="okpi3-body">
+            <div class="okpi3-val" id="okpi-total">—</div>
+            <div class="okpi3-lbl">Total</div>
+          </div>
+          <div class="okpi3-bar-wrap"><div class="okpi3-bar" id="okpi-bar-total" style="width:100%"></div></div>
         </div>
-        <div class="ord-kpi">
-          <div class="ord-kpi-icon amber">⏳</div>
-          <div><div class="ord-kpi-val" id="okpi-pend">—</div><div class="ord-kpi-lbl">Pendientes</div></div>
+        <div class="ord-kpi3 okpi-c-amber" onclick="setOrderView('kanban');highlightKanbanCol('pendiente')" style="cursor:pointer">
+          <div class="okpi3-icon">⏳</div>
+          <div class="okpi3-body">
+            <div class="okpi3-val" id="okpi-pend">—</div>
+            <div class="okpi3-lbl">Pendientes</div>
+          </div>
+          <div class="okpi3-bar-wrap"><div class="okpi3-bar okpi3-amber" id="okpi-bar-pend"></div></div>
         </div>
-        <div class="ord-kpi">
-          <div class="ord-kpi-icon green">✅</div>
-          <div><div class="ord-kpi-val" id="okpi-exit">—</div><div class="ord-kpi-lbl">Exitosos</div></div>
+        <div class="ord-kpi3 okpi-c-green" onclick="setOrderView('kanban');highlightKanbanCol('entregado')" style="cursor:pointer">
+          <div class="okpi3-icon">🚚</div>
+          <div class="okpi3-body">
+            <div class="okpi3-val" id="okpi-exit">—</div>
+            <div class="okpi3-lbl">Entregados</div>
+          </div>
+          <div class="okpi3-bar-wrap"><div class="okpi3-bar okpi3-green" id="okpi-bar-exit"></div></div>
         </div>
-        <div class="ord-kpi">
-          <div class="ord-kpi-icon rose">💰</div>
-          <div><div class="ord-kpi-val" id="okpi-ing" style="font-size:1.1rem">—</div><div class="ord-kpi-lbl">Ingresos</div></div>
+        <div class="ord-kpi3 okpi-c-red" onclick="setOrderView('kanban');highlightKanbanCol('cancelado')" style="cursor:pointer">
+          <div class="okpi3-icon">❌</div>
+          <div class="okpi3-body">
+            <div class="okpi3-val" id="okpi-cancel">—</div>
+            <div class="okpi3-lbl">Cancelados</div>
+          </div>
+          <div class="okpi3-bar-wrap"><div class="okpi3-bar okpi3-red" id="okpi-bar-cancel"></div></div>
+        </div>
+        <div class="ord-kpi3 okpi-c-gold" style="grid-column:span 1">
+          <div class="okpi3-icon">💰</div>
+          <div class="okpi3-body">
+            <div class="okpi3-val" id="okpi-ing" style="font-size:1rem">—</div>
+            <div class="okpi3-lbl">Ingresos</div>
+          </div>
+          <div class="okpi3-bar-wrap"><div class="okpi3-bar okpi3-gold" style="width:100%"></div></div>
         </div>
       </div>
 
       <div id="ord-load" class="loading-wrap"><div class="spinner"></div></div>
+
+      <!-- ── VISTA KANBAN (tablero de 3 columnas) ── -->
+      <div id="ord-kanban" style="display:none">
+        <div class="kanban-board">
+
+          <!-- Columna PENDIENTE -->
+          <div class="kanban-col" id="kcol-pendiente">
+            <div class="kanban-col-hdr kanban-hdr-amber">
+              <span class="kanban-col-icon">⏳</span>
+              <span class="kanban-col-title">Pendiente</span>
+              <span class="kanban-col-count" id="kcount-pendiente">0</span>
+              <span class="kanban-col-total" id="ktotal-pendiente"></span>
+            </div>
+            <div class="kanban-col-body" id="kbody-pendiente">
+              <div class="kanban-empty" id="kempty-pendiente" style="display:none">
+                <span style="font-size:2rem;opacity:.4">⏳</span>
+                <p>Sin pedidos pendientes</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna ENTREGADO -->
+          <div class="kanban-col" id="kcol-entregado">
+            <div class="kanban-col-hdr kanban-hdr-green">
+              <span class="kanban-col-icon">🚚</span>
+              <span class="kanban-col-title">Entregado</span>
+              <span class="kanban-col-count" id="kcount-entregado">0</span>
+              <span class="kanban-col-total" id="ktotal-entregado"></span>
+            </div>
+            <div class="kanban-col-body" id="kbody-entregado">
+              <div class="kanban-empty" id="kempty-entregado" style="display:none">
+                <span style="font-size:2rem;opacity:.4">🚚</span>
+                <p>Sin pedidos entregados</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Columna CANCELADO -->
+          <div class="kanban-col" id="kcol-cancelado">
+            <div class="kanban-col-hdr kanban-hdr-red">
+              <span class="kanban-col-icon">❌</span>
+              <span class="kanban-col-title">Cancelado</span>
+              <span class="kanban-col-count" id="kcount-cancelado">0</span>
+              <span class="kanban-col-total" id="ktotal-cancelado"></span>
+            </div>
+            <div class="kanban-col-body" id="kbody-cancelado">
+              <div class="kanban-empty" id="kempty-cancelado" style="display:none">
+                <span style="font-size:2rem;opacity:.4">❌</span>
+                <p>Sin pedidos cancelados</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ── VISTA LISTA (expandible, agrupada por fecha) ── -->
       <div id="ord-list" style="display:none"></div>
+
       <div id="ord-empty" class="empty-wrap" style="display:none">
         <span class="empty-icon">📭</span>
-        <p style="color:var(--muted)">No hay pedidos todavía</p>
+        <p style="color:var(--muted);font-weight:600">No hay pedidos todavía</p>
+        <p style="color:var(--muted);font-size:.82rem;margin-top:4px">Los pedidos aparecerán aquí cuando los clientes ordenen</p>
       </div>
     </div>
 
@@ -3880,6 +5005,96 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
     </div>
 
+    <!-- ══ Tab Registro de Mercancía ══════════════════════════ -->
+    <div id="tab-e" style="display:none">
+
+      <!-- Header -->
+      <div class="sec-hdr" style="margin-bottom:20px">
+        <div>
+          <h2 style="margin-bottom:4px">📋 Registro de Mercancía</h2>
+          <p style="font-size:.8rem;color:var(--muted)" id="ent-hist-subtitle">Historial completo de entradas de inventario</p>
+        </div>
+        <button class="btn btn-gold" onclick="openEntradaModal()">
+          <i class="fa-solid fa-truck-ramp-box"></i> Nueva entrada
+        </button>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="prod-kpi-strip" style="margin-bottom:20px">
+        <div class="prod-kpi-card">
+          <div class="prod-kpi-icon" style="background:rgba(201,150,58,.1)">📥</div>
+          <div><div class="prod-kpi-val" id="ek-total">—</div><div class="prod-kpi-lbl">Total entradas</div></div>
+        </div>
+        <div class="prod-kpi-card">
+          <div class="prod-kpi-icon" style="background:rgba(22,163,74,.1)">📦</div>
+          <div><div class="prod-kpi-val" id="ek-unidades">—</div><div class="prod-kpi-lbl">Unidades recibidas</div></div>
+        </div>
+        <div class="prod-kpi-card">
+          <div class="prod-kpi-icon" style="background:rgba(192,57,75,.1)">💸</div>
+          <div><div class="prod-kpi-val" id="ek-inversion" style="font-size:.95rem">—</div><div class="prod-kpi-lbl">Inversión total</div></div>
+        </div>
+        <div class="prod-kpi-card">
+          <div class="prod-kpi-icon" style="background:rgba(99,102,241,.1)">🏪</div>
+          <div><div class="prod-kpi-val" id="ek-proveedores">—</div><div class="prod-kpi-lbl">Proveedores</div></div>
+        </div>
+      </div>
+
+      <!-- Filtros -->
+      <div class="prod-toolbar" style="margin-bottom:16px">
+        <div class="search-wrap" style="flex:1;max-width:280px">
+          <input class="search-input" type="text" id="ent-search"
+            placeholder="Buscar producto o proveedor..."
+            oninput="filterEntradas()"
+            style="width:100%;padding:10px 40px 10px 16px;border-radius:12px">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        </div>
+        <select class="ord-filter" id="ent-filter-prod" onchange="filterEntradas()">
+          <option value="">Todos los productos</option>
+        </select>
+        <select class="ord-filter" id="ent-filter-mes" onchange="filterEntradas()">
+          <option value="">Todos los meses</option>
+        </select>
+        <span id="ent-count-lbl" style="font-size:.78rem;color:var(--muted);white-space:nowrap"></span>
+      </div>
+
+      <!-- Loading -->
+      <div id="ent-hist-load" class="loading-wrap" style="display:none"><div class="spinner"></div></div>
+
+      <!-- Tabla historial -->
+      <div style="overflow-x:auto;border-radius:16px;border:1px solid var(--border)">
+        <table style="width:100%;border-collapse:collapse;font-size:.85rem">
+          <thead>
+            <tr style="background:rgba(192,57,75,.06);text-align:left">
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;white-space:nowrap">Fecha</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600">Producto</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:center">Cant.</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:right">P. Compra</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:right">P. Venta</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:center">Margen</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600">Proveedor</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600">Factura</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:right">Inversión</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="ent-hist-tbody">
+            <tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Cargando...</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Empty -->
+      <div id="ent-hist-empty" class="empty-wrap" style="display:none">
+        <span class="empty-icon">📋</span>
+        <p style="color:var(--muted)">No hay entradas registradas aún</p>
+        <button class="btn btn-gold" style="margin-top:16px" onclick="openEntradaModal()">
+
+          <i class="fa-solid fa-truck-ramp-box"></i> Registrar primera entrada
+        </button>
+      </div>
+
+    </div>
+
   </div>
 </div>
 
@@ -3919,7 +5134,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
 <!-- Checkout -->
 <div class="modal-overlay" id="m-checkout">
-  <div class="modal-box" style="max-height:88vh">
+  <div class="modal-box">
     <div class="modal-head">
       <h3>Finalizar pedido</h3>
       <button class="modal-x" onclick="closeCheckout()">×</button>
@@ -4161,7 +5376,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
 <!-- Modal Producto -->
 <div class="modal-overlay" id="m-prod">
-  <div class="modal-box" style="max-width:540px;max-height:88vh">
+  <div class="modal-box" style="max-width:540px">
     <div class="modal-head">
       <h3 id="prod-modal-title">Nuevo Producto</h3>
       <button class="modal-x" onclick="closeProdModal()">×</button>
@@ -4205,7 +5420,81 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   </div>
 </div>
 
-<!-- ════ MODAL NUEVO USUARIO ════════════════════════ -->
+<!-- ════ MODAL REGISTRAR ENTRADA DE INVENTARIO ════════════ -->
+<div class="modal-overlay" id="m-entrada">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-head">
+      <h3>📥 Registrar Entrada de Inventario</h3>
+      <button class="modal-x" onclick="closeModal('m-entrada')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <!-- Producto -->
+      <div class="fg">
+        <label>Producto</label>
+        <select class="fi" id="ent-producto">
+          <option value="">— Selecciona un producto —</option>
+        </select>
+      </div>
+
+      <div class="form-2col">
+        <!-- Cantidad recibida -->
+        <div class="fg">
+          <label>Cantidad recibida</label>
+          <input class="fi" id="ent-cantidad" type="number" min="1" placeholder="Ej: 24">
+        </div>
+        <!-- Precio de compra -->
+        <div class="fg">
+          <label>Precio de compra (RD$)</label>
+          <input class="fi" id="ent-precio-compra" type="number" min="0" step="0.01" placeholder="Ej: 180.00" oninput="calcMargenEntrada()">
+        </div>
+      </div>
+
+      <!-- Margen estimado (se muestra si hay precio de venta) -->
+      <div id="ent-margen-wrap" style="display:none;background:rgba(201,150,58,.07);border:1px solid rgba(201,150,58,.25);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:.82rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+          <span style="color:var(--mid)">Precio de venta actual: <strong id="ent-precio-venta-lbl">—</strong></span>
+          <span>Margen estimado: <strong id="ent-margen-lbl" style="color:var(--gold)">—</strong></span>
+        </div>
+      </div>
+
+      <div class="form-2col">
+        <!-- Fecha de entrada -->
+        <div class="fg">
+          <label>Fecha de entrada</label>
+          <input class="fi" id="ent-fecha" type="date">
+        </div>
+        <!-- Proveedor -->
+        <div class="fg">
+          <label>Proveedor / Suplidor</label>
+          <input class="fi" id="ent-proveedor" type="text" placeholder="Ej: Distribuidora XYZ">
+        </div>
+      </div>
+
+      <!-- Número de factura -->
+      <div class="fg">
+        <label>N° de Factura / Referencia <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <input class="fi" id="ent-factura" type="text" placeholder="Ej: FAC-2026-00123">
+      </div>
+
+      <!-- Notas -->
+      <div class="fg">
+        <label>Notas <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <textarea class="fi" id="ent-notas" rows="2" placeholder="Condición del pedido, observaciones..." style="resize:none"></textarea>
+      </div>
+
+      <div id="ent-err" style="color:#ef4444;font-size:.82rem;text-align:center;display:none;margin-bottom:4px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('m-entrada')">Cancelar</button>
+      <button class="btn btn-gold" style="flex:1" id="ent-save-btn" onclick="saveEntrada()">
+        <i class="fa-solid fa-truck-ramp-box"></i> Registrar entrada
+      </button>
+    </div>
+  </div>
+</div>
+
+
 <div class="modal-overlay" id="m-user">
   <div class="modal-box" style="max-width:440px">
     <div class="modal-head">
@@ -4307,7 +5596,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 <!-- ════════════════════════════════════════════
      JAVASCRIPT — Toda la lógica de la app
 ════════════════════════════════════════════ -->
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+<script>
 /* ─────────────────────────────────────────────────────────
    CONFIGURACIÓN
    Cambia API_URL a la URL donde corre tu backend Node.js
@@ -4334,7 +5623,7 @@ let imgData = null;
 let payMethod = "Efectivo";
 let authToken = null;
 let sessionTimer = null;
-let currentUserRole = 'admin'; // 'admin' | 'editor'
+let currentUserRole = null; // 'admin' | 'editor' — nunca asumir rol sin autenticación
 
 // Recuperar token guardado y verificar que no haya expirado
 (function restoreSession() {
@@ -4342,9 +5631,9 @@ let currentUserRole = 'admin'; // 'admin' | 'editor'
   const savedAt = parseInt(localStorage.getItem("di_token_time") || "0");
   if (saved && savedAt && (Date.now() - savedAt < SESSION_TIMEOUT_MS)) {
     authToken = saved;
-    // Si no hay rol guardado, forzar login de nuevo (no asumir admin)
+    // Solo asignar 'admin' si se guardó explícitamente como "admin"; cualquier otro valor → editor
     const savedRol = localStorage.getItem("di_token_rol");
-    currentUserRole = (savedRol === "admin" || savedRol === "editor") ? savedRol : "editor";
+    currentUserRole = (savedRol === "admin") ? "admin" : "editor";
   } else {
     localStorage.removeItem("di_token");
     localStorage.removeItem("di_token_time");
@@ -4456,9 +5745,15 @@ async function submitLogin() {
     localStorage.setItem("di_token", authToken);
     localStorage.setItem("di_token_time", Date.now().toString());
     localStorage.setItem("di_token_email", data.nombre + " · " + data.email);
-    // Guardar rol — si el backend no lo devuelve, preguntar o asumir admin solo si es el primer usuario
+    // Guardar rol — prioridad: lo que devuelve el backend; si no, verificar email conocido
+    const ADMIN_EMAILS = ["admin@dulceinspiracion.com"];
     const rolRecibido = data.rol || data.role || data.Role || null;
-    currentUserRole = (rolRecibido === "editor") ? "editor" : "admin";
+    if (rolRecibido === "admin" || rolRecibido === "editor") {
+      currentUserRole = rolRecibido;
+    } else {
+      // El backend no devolvió rol — usar email como fallback
+      currentUserRole = ADMIN_EMAILS.includes(email.toLowerCase()) ? "admin" : "editor";
+    }
     localStorage.setItem("di_token_rol", currentUserRole);
     g("admin-email-lbl").textContent = data.nombre + " · " + data.email;
     closeModal("m-login");
@@ -5326,7 +6621,318 @@ function filterOrders() {
   renderOrders(list);
 }
 
-// renderOrders — definida más abajo (versión completa con agrupación por fecha)
+/* ══════════════════════════════════════════════════════
+   PEDIDOS — Vista Kanban / Lista
+══════════════════════════════════════════════════════ */
+let _ordView = "kanban"; // 'kanban' | 'list'
+
+function setOrderView(view) {
+  _ordView = view;
+  // Toggle buttons
+  document.getElementById("ord-view-kanban")?.classList.toggle("active", view === "kanban");
+  document.getElementById("ord-view-list")?.classList.toggle("active", view === "list");
+  // Show/hide filter select (only in list view)
+  const fSel = document.getElementById("ord-filter");
+  if (fSel) fSel.style.display = view === "list" ? "" : "none";
+  filterOrders();
+}
+
+function highlightKanbanCol(col) {
+  document.querySelectorAll(".kanban-col").forEach(c => c.classList.remove("highlighted"));
+  const el = document.getElementById("kcol-" + col);
+  if (el) {
+    el.classList.add("highlighted");
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => el.classList.remove("highlighted"), 2000);
+  }
+}
+
+// renderOrders — versión completa con Kanban y Lista
+function renderOrders(list) {
+  const cont  = document.getElementById("ord-list");
+  const empty = document.getElementById("ord-empty");
+  const kanban = document.getElementById("ord-kanban");
+
+  // ── KPIs ──
+  const allForKpi = orders;
+  const kpiPend   = allForKpi.filter(o => o.estado === "pendiente");
+  const kpiExit   = allForKpi.filter(o => o.estado === "entregado");
+  const kpiCancel = allForKpi.filter(o => o.estado === "cancelado");
+  const kpiIng    = kpiExit.reduce((s,o) => s + Number(o.total), 0);
+  const total     = allForKpi.length;
+
+  const setK = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  setK("okpi-total",  total);
+  setK("okpi-pend",   kpiPend.length);
+  setK("okpi-exit",   kpiExit.length);
+  setK("okpi-cancel", kpiCancel.length);
+  setK("okpi-ing",    "RD$ " + kpiIng.toLocaleString());
+
+  // Animate KPI bars
+  setTimeout(() => {
+    const pBar = (id, pct) => { const e = document.getElementById(id); if(e) e.style.width = pct + "%"; };
+    pBar("okpi-bar-total",  100);
+    pBar("okpi-bar-pend",   total > 0 ? Math.round(kpiPend.length/total*100) : 0);
+    pBar("okpi-bar-exit",   total > 0 ? Math.round(kpiExit.length/total*100) : 0);
+    pBar("okpi-bar-cancel", total > 0 ? Math.round(kpiCancel.length/total*100) : 0);
+  }, 100);
+
+  if (!list.length) {
+    if (cont)   cont.style.display   = "none";
+    if (kanban) kanban.style.display = "none";
+    empty.style.display = "block"; return;
+  }
+  empty.style.display = "none";
+
+  const ESTADO_META = {
+    pendiente:  { label:"⏳ Pendiente",  cls:"os-pendiente",  avCls:"av-pendiente",  stCls:"st-pendiente",  icon:"⏳" },
+    confirmado: { label:"✅ Confirmado", cls:"os-confirmado", avCls:"av-confirmado", stCls:"st-confirmado", icon:"✅" },
+    entregado:  { label:"🚚 Entregado",  cls:"os-entregado",  avCls:"av-entregado",  stCls:"st-entregado",  icon:"🚚" },
+    cancelado:  { label:"❌ Cancelado",  cls:"os-cancelado",  avCls:"av-cancelado",  stCls:"st-cancelado",  icon:"❌" }
+  };
+  const STATE_BTNS = {
+    pendiente:  [
+      { k:"entregado", lbl:"Entregado", css:"btn-st-deliver" },
+      { k:"cancelado", lbl:"Cancelar",  css:"btn-st-cancel"  }
+    ],
+    confirmado: [
+      { k:"entregado",  lbl:"Entregado",   css:"btn-st-deliver" },
+      { k:"pendiente",  lbl:"↩ Pendiente", css:"btn-st-pending" },
+      { k:"cancelado",  lbl:"Cancelar",    css:"btn-st-cancel"  }
+    ],
+    entregado:  [
+      { k:"pendiente",  lbl:"↩ Pendiente", css:"btn-st-pending" }
+    ],
+    cancelado:  [
+      { k:"pendiente",  lbl:"↩ Restaurar", css:"btn-st-pending" }
+    ]
+  };
+
+  // ══════════════════════════════════
+  //  VISTA KANBAN
+  // ══════════════════════════════════
+  if (_ordView === "kanban") {
+    if (cont)   cont.style.display   = "none";
+    if (kanban) kanban.style.display = "block";
+
+    const cols = ["pendiente", "entregado", "cancelado"];
+    cols.forEach(estado => {
+      const body  = document.getElementById("kbody-" + estado);
+      const emptyEl = document.getElementById("kempty-" + estado);
+      const countEl = document.getElementById("kcount-" + estado);
+      const totalEl = document.getElementById("ktotal-" + estado);
+      if (!body) return;
+
+      // Clear old cards (keep empty placeholder)
+      Array.from(body.children).forEach(c => { if (!c.classList.contains("kanban-empty")) c.remove(); });
+
+      const colList = list.filter(o => {
+        if (estado === "pendiente") return o.estado === "pendiente" || o.estado === "confirmado";
+        return o.estado === estado;
+      }).sort((a,b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
+
+      if (countEl) countEl.textContent = colList.length;
+      if (totalEl) {
+        const colTotal = colList.filter(o=>o.estado!=="cancelado").reduce((s,o)=>s+Number(o.total),0);
+        totalEl.textContent = colTotal > 0 ? "RD$ " + colTotal.toLocaleString() : "";
+      }
+
+      if (!colList.length) {
+        if (emptyEl) emptyEl.style.display = "flex";
+        return;
+      }
+      if (emptyEl) emptyEl.style.display = "none";
+
+      colList.forEach(o => {
+        const hora = o.fecha_creacion
+          ? new Date(o.fecha_creacion).toLocaleTimeString("es-DO", { hour:"2-digit", minute:"2-digit" })
+          : "—";
+        const fecha = o.fecha_creacion
+          ? new Date(o.fecha_creacion).toLocaleDateString("es-DO", { day:"2-digit", month:"short" })
+          : "";
+        const waNum = (o.telefono||"").replace(/\D/g,"");
+
+        const chips = (o.items||[]).slice(0,3).map(i => {
+          const qty = i.cantidad||1;
+          const nom = i.nombre_producto||i.nombre||"";
+          return `<span class="kc-chip"><span class="kc-chip-qty">${qty}×</span>${nom.length>18?nom.slice(0,18)+"…":nom}</span>`;
+        }).join("") + (o.items&&o.items.length>3 ? `<span class="kc-chip">+${o.items.length-3} más</span>` : "");
+
+        const allowedBtns = STATE_BTNS[o.estado] || [];
+
+        const renderKcBtns = allowedBtns.map(b => {
+          const kcCls = b.k === "entregado" ? "kc-btn-deliver"
+                      : b.k === "cancelado" ? "kc-btn-cancel"
+                      : "kc-btn-restore";
+          const kcIco = b.k === "entregado" ? "🚚" : b.k === "cancelado" ? "❌" : "↩";
+          return `<button class="kc-btn ${kcCls}" onclick="updOrder(${o.id},'${b.k}')">${kcIco} ${b.lbl}</button>`;
+        }).join("");
+
+        const waBtn = waNum
+          ? `<a class="kc-btn kc-btn-wa" href="https://wa.me/${waNum}" target="_blank"><i class="fa-brands fa-whatsapp"></i> WA</a>`
+          : "";
+        const printBtn = `<button class="kc-btn kc-btn-print" onclick="printOrder(${o.id})"><i class="fa-solid fa-print"></i></button>`;
+
+        const meta = ESTADO_META[o.estado] || ESTADO_META.pendiente;
+        const estadoCls = estado; // pendiente|entregado|cancelado
+
+        const card = document.createElement("div");
+        card.className = `kanban-card kc-${estadoCls}`;
+        card.id = `kc-${o.id}`;
+        card.innerHTML = `
+          <div class="kc-inner">
+            <div class="kc-top">
+              <div style="flex:1;min-width:0">
+                <div class="kc-client">${o.nombre} ${o.apellido}</div>
+                <div class="kc-meta">
+                  <span>📱 ${o.telefono||"—"}</span>
+                  <span class="kc-meta-dot">·</span>
+                  <span class="kc-time-badge">🕐 ${hora} · ${fecha}</span>
+                </div>
+              </div>
+              <div class="kc-id">#${String(o.id).padStart(4,"0")}</div>
+            </div>
+            <div class="kc-amount">RD$ ${Number(o.total).toLocaleString()}</div>
+            ${o.ubicacion ? `<div class="kc-addr"><span>📍</span>${o.ubicacion}</div>` : ""}
+            <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${chips?'8px':'0'}">
+              ${o.estado === "confirmado" ? `<span class="kc-pay-tag">✅ Confirmado</span>` : ""}
+              ${o.metodo_pago ? `<span class="kc-pay-tag">💳 ${o.metodo_pago}</span>` : ""}
+              ${o.envio > 0 ? `<span class="kc-delivery-tag">🛵 RD$ ${Number(o.envio).toLocaleString()}</span>` : ""}
+            </div>
+            ${chips ? `<div class="kc-products">${chips}</div>` : ""}
+          </div>
+          <div class="kc-actions">
+            ${renderKcBtns}
+            ${waBtn}
+            ${printBtn}
+          </div>`;
+        body.appendChild(card);
+      });
+    });
+
+    setTimeout(applyRoleRestrictions, 0);
+    return;
+  }
+
+  // ══════════════════════════════════
+  //  VISTA LISTA (expandible, agrupada por fecha)
+  // ══════════════════════════════════
+  if (kanban) kanban.style.display = "none";
+  cont.style.display = "block";
+  cont.innerHTML = "";
+
+  const groups = {};
+  list.forEach(o => {
+    const d = o.fecha_creacion ? new Date(o.fecha_creacion) : new Date();
+    const dayKey = d.toDateString();
+    const label  = d.toLocaleDateString("es-DO", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+    if (!groups[dayKey]) groups[dayKey] = { label, items: [] };
+    groups[dayKey].items.push(o);
+  });
+
+  Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dayKey => {
+    const { label, items } = groups[dayKey];
+    const isToday = new Date().toDateString() === dayKey;
+
+    const dayConfirmados = items.filter(o => o.estado==="entregado");
+    const dayTotal = dayConfirmados.reduce((s,o) => s + Number(o.total), 0);
+    const dayPend  = items.filter(o => o.estado==="pendiente").length;
+
+    const group = document.createElement("div");
+    group.className = "orders-date-group";
+    group.innerHTML = `<div class="orders-date-header">
+      <span class="orders-date-label">${isToday ? "📅 Hoy — " + label : "📅 " + label}</span>
+      <span class="orders-date-count">${items.length} pedido${items.length!==1?"s":""}</span>
+      ${dayPend > 0 ? `<span style="font-size:.72rem;background:rgba(245,158,11,.15);color:#b45309;padding:3px 10px;border-radius:999px;font-weight:600">⏳ ${dayPend} pendiente${dayPend!==1?"s":""}</span>` : ""}
+      ${dayTotal > 0 ? `<span class="orders-date-total" style="margin-left:auto">RD$ ${dayTotal.toLocaleString()}</span>` : ""}
+    </div>`;
+
+    items.forEach((o, idx) => {
+      const meta  = ESTADO_META[o.estado] || ESTADO_META.pendiente;
+      const hora  = o.fecha_creacion
+        ? new Date(o.fecha_creacion).toLocaleString("es-DO", { hour:"2-digit", minute:"2-digit" })
+        : "—";
+      const waNum = (o.telefono||"").replace(/\D/g,"");
+
+      const chipItems = (o.items||[]).map(i => {
+        const qty  = i.cantidad||1;
+        const nom  = i.nombre_producto||i.nombre;
+        const prec = Number(i.precio||0);
+        return `<span class="item-chip-v2">
+          <span class="chip-qty">${qty}×</span>
+          <span>${nom}</span>
+          ${prec > 0 ? `<span class="chip-price">RD$ ${(prec*qty).toLocaleString()}</span>` : ""}
+        </span>`;
+      }).join("");
+
+      const allowedBtns = STATE_BTNS[o.estado] || [];
+      const stateBtns = allowedBtns.map(b =>
+        `<button class="btn-state ${b.css}" onclick="updOrder(${o.id},'${b.k}');event.stopPropagation()">${b.lbl}</button>`
+      ).join("");
+
+      const card = document.createElement("div");
+      card.className = `order-card-v2 ${meta.stCls}`;
+      card.id = `oc-${o.id}`;
+      card.innerHTML = `
+        <div class="order-card-summary" onclick="toggleOrderCard(${o.id})">
+          <div class="order-avatar ${meta.avCls}">${meta.icon}</div>
+          <div class="order-summary-main">
+            <div class="order-summary-name">
+              <span class="order-daily-num">#${idx+1}</span>
+              ${o.nombre} ${o.apellido}
+              <span class="os-badge ${meta.cls}" style="font-size:.68rem;padding:3px 9px">${meta.label}</span>
+            </div>
+            <div class="order-summary-meta">
+              <span>📱 ${o.telefono}</span>
+              <span class="sep">·</span>
+              <span>🕐 ${hora}</span>
+              <span class="sep">·</span>
+              <span style="font-family:monospace;font-size:.7rem;opacity:.6">ID ${o.id}</span>
+            </div>
+          </div>
+          <div class="order-summary-amount">
+            <div class="order-summary-total">RD$ ${Number(o.total).toLocaleString()}</div>
+            <div class="order-summary-method">${o.metodo_pago||""}</div>
+          </div>
+          <span class="order-chevron"><i class="fa-solid fa-chevron-down"></i></span>
+        </div>
+        <div class="order-expand-body">
+          <div class="order-detail-grid">
+            <div class="order-detail-row">
+              <span class="order-detail-lbl">📍 Dirección</span>
+              <span class="order-detail-val">${o.ubicacion||"—"}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-lbl">💳 Pago</span>
+              <span class="order-detail-val">${o.metodo_pago||"—"}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-lbl">📅 Fecha</span>
+              <span class="order-detail-val">${o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO",{dateStyle:"medium",timeStyle:"short"}) : "—"}</span>
+            </div>
+            <div class="order-detail-row">
+              <span class="order-detail-lbl">🚚 Envío</span>
+              <span class="order-detail-val">${o.envio > 0 ? "RD$ " + Number(o.envio).toLocaleString() : "Sin costo"}</span>
+            </div>
+          </div>
+          ${chipItems ? `<div class="order-items-section">
+            <div class="order-items-title">Productos pedidos</div>
+            <div class="order-items-chips">${chipItems}</div>
+          </div>` : ""}
+          <div class="order-actions-v2">
+            <div class="actions-left">${stateBtns}</div>
+            <div class="actions-right">
+              ${waNum ? `<a class="btn-state btn-st-wa" href="https://wa.me/${waNum}" target="_blank" onclick="event.stopPropagation()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ""}
+              <button class="btn-state btn-st-print" onclick="printOrder(${o.id});event.stopPropagation()"><i class="fa-solid fa-print"></i> Imprimir</button>
+            </div>
+          </div>
+        </div>`;
+      group.appendChild(card);
+    });
+    cont.appendChild(group);
+  });
+  setTimeout(applyRoleRestrictions, 0);
+}
 
 async function updOrder(id, estado) {
   try {
@@ -5389,7 +6995,8 @@ function goTo(id) {
 
 
 
-/* ══════════════════════════════════════════════════════
+/*
+ ══════════════════════════════════════════════════════
    SPLASH SCREEN
 ══════════════════════════════════════════════════════ */
 window.addEventListener("load", () => {
@@ -6351,23 +7958,189 @@ async function deleteUser(id, nombre) { askDeleteUser(id, nombre); }
 function printOrder(id) {
   const o = orders.find(x => x.id === id);
   if (!o) return;
-  const fecha = o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO",{dateStyle:"long",timeStyle:"short"}) : "—";
-  const ESTADOS = {pendiente:"⏳ Pendiente",confirmado:"✅ Confirmado",entregado:"🚚 Entregado",cancelado:"❌ Cancelado"};
-  const itemsHtml = (o.items||[]).map(i=>`<div class="print-item"><span>${i.cantidad||1}× ${i.nombre_producto||i.nombre}</span><span>RD$ ${(Number(i.precio)*(i.cantidad||1)).toLocaleString()}</span></div>`).join("");
+
+  const fecha = o.fecha_creacion
+    ? new Date(o.fecha_creacion).toLocaleDateString("es-DO", { day:"2-digit", month:"long", year:"numeric" })
+    : "—";
+  const hora = o.fecha_creacion
+    ? new Date(o.fecha_creacion).toLocaleTimeString("es-DO", { hour:"2-digit", minute:"2-digit" })
+    : "";
+
+  const ESTADOS = {
+    pendiente:  { label:"⏳ Pendiente",  cls:"pi-status-pendiente"  },
+    confirmado: { label:"✅ Confirmado", cls:"pi-status-confirmado" },
+    entregado:  { label:"🚚 Entregado",  cls:"pi-status-entregado"  },
+    cancelado:  { label:"❌ Cancelado",  cls:"pi-status-cancelado"  }
+  };
+  const estadoInfo = ESTADOS[o.estado] || { label: o.estado, cls: "pi-status-pendiente" };
+
+  const items = o.items || [];
+  const subtotal = items.reduce((s, i) => s + Number(i.precio) * (i.cantidad || 1), 0);
+  const envio = Number(o.total) - subtotal;
+
+  // Table rows
+  const rowsHtml = items.map((i, idx) => {
+    const qty   = i.cantidad || 1;
+    const price = Number(i.precio);
+    const sub   = price * qty;
+    return `<tr>
+      <td>
+        <div class="pi-prod-name">${i.nombre_producto || i.nombre}</div>
+        <div class="pi-prod-id">SKU-${String(i.id || idx+1).padStart(4,"0")}</div>
+      </td>
+      <td>${qty}</td>
+      <td>RD$ ${price.toLocaleString()}</td>
+      <td>RD$ ${sub.toLocaleString()}</td>
+    </tr>`;
+  }).join("");
+
+  // Totals
+  const envioRow = envio > 0
+    ? `<div class="pi-total-row"><span class="pi-total-lbl">🛵 Envío</span><span class="pi-total-val">RD$ ${envio.toLocaleString()}</span></div>`
+    : "";
+  const subtotalRow = envio > 0
+    ? `<div class="pi-total-row"><span class="pi-total-lbl">Subtotal</span><span class="pi-total-val">RD$ ${subtotal.toLocaleString()}</span></div>`
+    : "";
+
+  // Barcode
+  const barcodeId = `${String(o.id).padStart(6,"0")}-${Date.now().toString().slice(-6)}`;
+  const barWidths = [2,4,2,3,1,4,2,3,1,2,4,1,3,2,4,1,2,3,2,4,1,3,2,1,4,2,3,1,2,4,3,2,1,3,2,4];
+  const barsHtml = barWidths.map(w =>
+    `<span style="width:${w}px;height:${22 + (w*3)}px"></span>`
+  ).join("");
+
+  // Payment method
+  const metodoPago = o.metodo_pago || "—";
+  const bankNames  = { popular:"Banco Popular", reservas:"Banco de Reservas", bhd:"BHD León" };
+
   document.getElementById("print-area").innerHTML = `
-    <div class="print-header"><div class="print-logo">🍭</div><div class="print-title">Suplidora Dulce Inspiración</div><div class="print-sub">La Altagracia, República Dominicana</div></div>
-    <div class="print-body">
-      <div class="print-row"><span class="print-label">N° Pedido</span><span>#${o.id}</span></div>
-      <div class="print-row"><span class="print-label">Fecha</span><span>${fecha}</span></div>
-      <div class="print-row"><span class="print-label">Cliente</span><span>${o.nombre} ${o.apellido}</span></div>
-      <div class="print-row"><span class="print-label">Teléfono</span><span>${o.telefono}</span></div>
-      <div class="print-row"><span class="print-label">Dirección</span><span>${o.ubicacion}</span></div>
-      <div class="print-row"><span class="print-label">Pago</span><span>${o.metodo_pago}</span></div>
-      <div class="print-row"><span class="print-label">Estado</span><span>${ESTADOS[o.estado]||o.estado}</span></div>
+  <div class="pi-top-bar"></div>
+  <div class="pi-watermark">Dulce Inspiración</div>
+  <div class="pi-page">
+
+    <!-- ENCABEZADO -->
+    <div class="pi-header">
+      <div class="pi-brand-col">
+        <div class="pi-brand-logo">
+          <div class="pi-brand-icon">🍭</div>
+          <div>
+            <div class="pi-brand-name">Dulce Inspiración</div>
+            <div class="pi-brand-tagline">Suplidora de dulces</div>
+          </div>
+        </div>
+        <div class="pi-brand-address">
+          La Altagracia, República Dominicana<br>
+          WhatsApp: +1 (829) 000-0000
+        </div>
+      </div>
+      <div class="pi-invoice-col">
+        <div class="pi-invoice-label">Comprobante de Pedido</div>
+        <div class="pi-invoice-number">#${String(o.id).padStart(4,"0")}</div>
+        <div class="pi-invoice-date">${fecha}</div>
+        <div class="pi-invoice-time">${hora}</div>
+        <div>
+          <span class="pi-status-badge ${estadoInfo.cls}">${estadoInfo.label}</span>
+        </div>
+      </div>
     </div>
-    <div class="print-items"><div style="font-weight:700;margin-bottom:10px">Productos:</div>${itemsHtml}</div>
-    <div class="print-total-row"><span>TOTAL</span><span>RD$ ${Number(o.total).toLocaleString()}</span></div>
-    <div class="print-footer">Gracias por confiar en Dulce Inspiración 💖<br>Comprobante generado el ${new Date().toLocaleString("es-DO")}</div>`;
+
+    <!-- CLIENTE + PAGO -->
+    <div class="pi-meta-grid">
+      <div class="pi-meta-card">
+        <div class="pi-meta-card-title">👤 Información del Cliente</div>
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Nombre completo</span>
+          <span class="pi-meta-val">${o.nombre} ${o.apellido}</span>
+        </div>
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">WhatsApp</span>
+          <span class="pi-meta-val">${o.telefono}</span>
+        </div>
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Dirección de entrega</span>
+          <span class="pi-meta-val">${o.ubicacion || "—"}</span>
+        </div>
+      </div>
+      <div class="pi-meta-card">
+        <div class="pi-meta-card-title">💳 Información de Pago</div>
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Método</span>
+          <span class="pi-meta-val">${metodoPago}</span>
+        </div>
+        ${metodoPago === "Transferencia" ? `
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Banco</span>
+          <span class="pi-meta-val">${bankNames[o.banco] || "—"}</span>
+        </div>` : ""}
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Estado del pago</span>
+          <span class="pi-meta-val" style="color:${o.estado==="entregado"?"#15803d":"#b45309"}">${o.estado==="entregado"?"✅ Pagado":"⏳ Pendiente"}</span>
+        </div>
+        <div class="pi-meta-row">
+          <span class="pi-meta-lbl">Total de artículos</span>
+          <span class="pi-meta-val">${items.length} producto${items.length!==1?"s":""}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCTOS -->
+    <div class="pi-products-title">📦 Detalle de Productos</div>
+    <table class="pi-table">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Cant.</th>
+          <th>Precio unit.</th>
+          <th>Subtotal</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <!-- TOTALES -->
+    <div class="pi-totals-wrap">
+      <div class="pi-totals">
+        ${subtotalRow}
+        ${envioRow}
+        <div class="pi-total-row grand">
+          <span class="pi-total-lbl">Total</span>
+          <span class="pi-total-val">RD$ ${Number(o.total).toLocaleString()}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTA -->
+    <div class="pi-notes">
+      <strong>📝 Nota para el cliente</strong>
+      Gracias por elegir Suplidora Dulce Inspiración. Este comprobante es válido como constancia de su pedido.
+      Para consultas comuníquese por WhatsApp. ¡Que disfruten sus dulces! 🍬
+    </div>
+
+    <!-- FOOTER -->
+    <div class="pi-footer">
+      <div class="pi-footer-brand">
+        <div class="pi-footer-name">Suplidora Dulce Inspiración</div>
+        <div class="pi-footer-contact">
+          La Altagracia, República Dominicana<br>
+          Este documento no tiene valor fiscal.
+        </div>
+      </div>
+      <div class="pi-barcode-area">
+        <div class="pi-barcode-bars">${barsHtml}</div>
+        <div class="pi-barcode-num">${barcodeId}</div>
+      </div>
+      <div class="pi-footer-right">
+        <div class="pi-footer-generated">Generado: ${new Date().toLocaleString("es-DO")}</div>
+        <div class="pi-footer-page">Pág. 1 / 1</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="pi-bottom-bar"></div>
+  `;
+
   window.print();
 }
 
@@ -6380,7 +8153,7 @@ function switchTab(t) {
     toast("⛔ Sin acceso a esta sección");
     t = "d";
   }
-  ["d","p","o","s","u"].forEach(x => {
+  ["d","p","o","s","u","e"].forEach(x => {
     const tab = document.getElementById("tab-"+x), btn = document.getElementById("tbtn-"+x);
     if (tab) tab.style.display = t===x?"block":"none";
     if (btn) btn.className = "tab-btn"+(t===x?" active":"");
@@ -6390,193 +8163,12 @@ function switchTab(t) {
   if (t==="p") { const prom = loadAdminProducts(); prom && prom.then ? prom.then(()=>setTimeout(applyRoleRestrictions,100)) : setTimeout(applyRoleRestrictions,300); }
   if (t==="s") { loadEstadisticas(); if (!orders.length) loadOrders().then(loadStats); else loadStats(); setTimeout(applyRoleRestrictions,200); }
   if (t==="u") { loadUsers(); setTimeout(applyRoleRestrictions,300); }
+  if (t==="e") { loadEntradas(); setTimeout(applyRoleRestrictions,300); }
 }
 
 /* ══════════════════════════════════════════════════════
    renderOrders — tarjetas expandibles, sin datos repetidos
 ══════════════════════════════════════════════════════ */
-function renderOrders(list) {
-  const cont  = document.getElementById("ord-list");
-  const empty = document.getElementById("ord-empty");
-
-  // ── KPI strip (siempre usa lista completa si viene filtrada, usa lo que hay) ──
-  const allForKpi = list;
-  const kpiExit = allForKpi.filter(o => o.estado==="confirmado"||o.estado==="entregado");
-  const kpiPend = allForKpi.filter(o => o.estado==="pendiente");
-  const kpiIng  = kpiExit.reduce((s,o) => s + Number(o.total), 0);
-  const setK = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
-  setK("okpi-total", allForKpi.length);
-  setK("okpi-pend",  kpiPend.length);
-  setK("okpi-exit",  kpiExit.length);
-  setK("okpi-ing",   "RD$ " + kpiIng.toLocaleString());
-
-  if (!list.length) { cont.style.display="none"; empty.style.display="block"; return; }
-  empty.style.display="none"; cont.style.display="block"; cont.innerHTML="";
-
-  const ESTADO_META = {
-    pendiente:  { label:"⏳ Pendiente",  cls:"os-pendiente",  avCls:"av-pendiente",  stCls:"st-pendiente",  icon:"⏳" },
-    confirmado: { label:"✅ Confirmado", cls:"os-confirmado", avCls:"av-confirmado", stCls:"st-confirmado", icon:"✅" },
-    entregado:  { label:"🚚 Entregado",  cls:"os-entregado",  avCls:"av-entregado",  stCls:"st-entregado",  icon:"🚚" },
-    cancelado:  { label:"❌ Cancelado",  cls:"os-cancelado",  avCls:"av-cancelado",  stCls:"st-cancelado",  icon:"❌" }
-  };
-
-  const STATE_BTNS = {
-    pendiente:  [
-      { k:"confirmado", lbl:"Confirmar",   css:"btn-st-confirm" },
-      { k:"cancelado",  lbl:"Cancelar",    css:"btn-st-cancel"  }
-    ],
-    confirmado: [
-      { k:"entregado",  lbl:"Entregado",   css:"btn-st-deliver" },
-      { k:"pendiente",  lbl:"↩ Pendiente", css:"btn-st-pending" },
-      { k:"cancelado",  lbl:"Cancelar",    css:"btn-st-cancel"  }
-    ],
-    entregado:  [
-      { k:"confirmado", lbl:"↩ Confirmar", css:"btn-st-confirm" }
-    ],
-    cancelado:  [
-      { k:"pendiente",  lbl:"↩ Restaurar", css:"btn-st-pending" }
-    ]
-  };
-
-  // ── Agrupar por fecha ──
-  const groups = {};
-  list.forEach(o => {
-    const d = o.fecha_creacion ? new Date(o.fecha_creacion) : new Date();
-    const dayKey = d.toDateString();
-    const label  = d.toLocaleDateString("es-DO", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
-    if (!groups[dayKey]) groups[dayKey] = { label, items: [] };
-    groups[dayKey].items.push(o);
-  });
-
-  Object.keys(groups).sort((a,b) => new Date(b) - new Date(a)).forEach(dayKey => {
-    const { label, items } = groups[dayKey];
-    const isToday = new Date().toDateString() === dayKey;
-
-    // Totales del día
-    const dayConfirmados = items.filter(o => o.estado==="confirmado"||o.estado==="entregado");
-    const dayTotal = dayConfirmados.reduce((s,o) => s + Number(o.total), 0);
-    const dayPend  = items.filter(o => o.estado==="pendiente").length;
-
-    const group = document.createElement("div");
-    group.className = "orders-date-group";
-
-    // Encabezado de día
-    group.innerHTML = `<div class="orders-date-header">
-      <span class="orders-date-label">${isToday ? "📅 Hoy — " + label : "📅 " + label}</span>
-      <span class="orders-date-count">${items.length} pedido${items.length!==1?"s":""}</span>
-      ${dayPend > 0 ? `<span style="font-size:.72rem;background:rgba(245,158,11,.15);color:#b45309;padding:3px 10px;border-radius:999px;font-weight:600">⏳ ${dayPend} pendiente${dayPend!==1?"s":""}</span>` : ""}
-      ${dayTotal > 0 ? `<span class="orders-date-total" style="margin-left:auto">RD$ ${dayTotal.toLocaleString()}</span>` : ""}
-    </div>`;
-
-    // Tarjetas de pedido (expandibles)
-    items.forEach((o, idx) => {
-      const meta  = ESTADO_META[o.estado] || ESTADO_META.pendiente;
-      const hora  = o.fecha_creacion
-        ? new Date(o.fecha_creacion).toLocaleString("es-DO", { hour:"2-digit", minute:"2-digit" })
-        : "—";
-      const waNum = (o.telefono||"").replace(/\D/g,"");
-
-      // Chips de productos (sin duplicar precio ya que está en detalle)
-      const chipItems = (o.items||[]).map(i => {
-        const qty  = i.cantidad||1;
-        const nom  = i.nombre_producto||i.nombre;
-        const prec = Number(i.precio||0);
-        return `<span class="item-chip-v2">
-          <span class="chip-qty">${qty}×</span>
-          <span>${nom}</span>
-          ${prec > 0 ? `<span class="chip-price">RD$ ${(prec*qty).toLocaleString()}</span>` : ""}
-        </span>`;
-      }).join("");
-
-      // Botones de cambio de estado (contextuales, sin repetir estado actual)
-      // Editor no puede cancelar pedidos
-      const allowedBtns = canDelete()
-        ? (STATE_BTNS[o.estado]||[])
-        : (STATE_BTNS[o.estado]||[]).filter(b => b.k !== "cancelado");
-      const stateBtns = allowedBtns.map(b =>
-        `<button class="btn-state ${b.css}" onclick="updOrder(${o.id},'${b.k}');event.stopPropagation()">${b.lbl}</button>`
-      ).join("");
-
-      const card = document.createElement("div");
-      card.className = `order-card-v2 ${meta.stCls}`;
-      card.id = `oc-${o.id}`;
-
-      card.innerHTML = `
-        <!-- RESUMEN (siempre visible, clic para expandir) -->
-        <div class="order-card-summary" onclick="toggleOrderCard(${o.id})">
-          <div class="order-avatar ${meta.avCls}">${meta.icon}</div>
-          <div class="order-summary-main">
-            <div class="order-summary-name">
-              <span class="order-daily-num">#${idx+1}</span>
-              ${o.nombre} ${o.apellido}
-              <span class="os-badge ${meta.cls}" style="font-size:.68rem;padding:3px 9px">${meta.label}</span>
-            </div>
-            <div class="order-summary-meta">
-              <span>📱 ${o.telefono}</span>
-              <span class="sep">·</span>
-              <span>🕐 ${hora}</span>
-              <span class="sep">·</span>
-              <span style="font-family:monospace;font-size:.7rem;opacity:.6">ID ${o.id}</span>
-            </div>
-          </div>
-          <div class="order-summary-amount">
-            <div class="order-summary-total">RD$ ${Number(o.total).toLocaleString()}</div>
-            <div class="order-summary-method">${o.metodo_pago||""}</div>
-          </div>
-          <span class="order-chevron"><i class="fa-solid fa-chevron-down"></i></span>
-        </div>
-
-        <!-- CUERPO EXPANDIDO (oculto por defecto) -->
-        <div class="order-expand-body">
-
-          <div class="order-detail-grid">
-            <div class="order-detail-row">
-              <span class="order-detail-lbl">📍 Dirección</span>
-              <span class="order-detail-val">${o.ubicacion||"—"}</span>
-            </div>
-            <div class="order-detail-row">
-              <span class="order-detail-lbl">💳 Pago</span>
-              <span class="order-detail-val">${o.metodo_pago||"—"}</span>
-            </div>
-            <div class="order-detail-row">
-              <span class="order-detail-lbl">📅 Fecha</span>
-              <span class="order-detail-val">${o.fecha_creacion ? new Date(o.fecha_creacion).toLocaleString("es-DO",{dateStyle:"medium",timeStyle:"short"}) : "—"}</span>
-            </div>
-            <div class="order-detail-row">
-              <span class="order-detail-lbl">🚚 Envío</span>
-              <span class="order-detail-val">${o.envio > 0 ? "RD$ " + Number(o.envio).toLocaleString() : "Sin costo"}</span>
-            </div>
-          </div>
-
-          ${chipItems ? `<div class="order-items-section">
-            <div class="order-items-title">Productos pedidos</div>
-            <div class="order-items-chips">${chipItems}</div>
-          </div>` : ""}
-
-          <div class="order-actions-v2">
-            <div class="actions-left">
-              ${stateBtns}
-            </div>
-            <div class="actions-right">
-              ${waNum ? `<a class="btn-state btn-st-wa" href="https://wa.me/${waNum}" target="_blank" onclick="event.stopPropagation()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ""}
-              <button class="btn-state btn-st-print" onclick="printOrder(${o.id});event.stopPropagation()"><i class="fa-solid fa-print"></i> Imprimir</button>
-            </div>
-          </div>
-        </div>`;
-
-      group.appendChild(card);
-    });
-
-    cont.appendChild(group);
-  });
-  // Aplicar restricciones de rol sobre los elementos recién renderizados
-  setTimeout(applyRoleRestrictions, 0);
-}
-
-function toggleOrderCard(id) {
-  const card = document.getElementById("oc-" + id);
-  if (card) card.classList.toggle("expanded");
-}
 
 /* ══════════════════════════════════════════════════════
    OVERRIDE: showAdmin + doLogout con botón flotante
@@ -6608,7 +8200,7 @@ function showAdmin() {
             exportar CSV, crear usuarios
 ══════════════════════════════════════════════════════ */
 function applyRoleRestrictions() {
-  const isAdmin = currentUserRole === "admin";
+  const isAdmin = currentUserRole === "admin"; // null o 'editor' → NO es admin
 
   // ── Badge de rol en la barra de admin ──
   const emailLbl = document.getElementById("admin-email-lbl");
@@ -6649,9 +8241,7 @@ function applyRoleRestrictions() {
   });
 
   // ── Botones cancelar en tarjetas de pedidos ──
-  document.querySelectorAll(".btn-st-cancel").forEach(btn => {
-    btn.style.display = isAdmin ? "" : "none";
-  });
+  // document.querySelectorAll(".btn-st-cancel").forEach(btn => { btn.style.display = isAdmin ? "" : "none"; });
 
   // ── Botones eliminar usuario en tarjetas de usuarios ──
   document.querySelectorAll(".btn-ucv2-del").forEach(btn => {
@@ -6666,7 +8256,7 @@ function canSeeUsers() { return currentUserRole === "admin"; }
 
 function doLogout(isAuto=false) {
   authToken=null;
-  currentUserRole='admin';
+  currentUserRole=null; // Limpiar rol — no asumir ningún rol hasta el próximo login
   localStorage.removeItem("di_token");
   localStorage.removeItem("di_token_time");
   localStorage.removeItem("di_token_email");
@@ -7028,27 +8618,111 @@ let pendingWAMsg = "";
 
 function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg) {
   pendingWAMsg = waMsg;
+
+  // Order number
   const numEl = document.getElementById("confirm-num");
   if (numEl) numEl.textContent = "#" + String(pedidoId).padStart(4, "0");
+
+  // Timestamp
+  const tsEl = document.getElementById("cf-timestamp");
+  if (tsEl) {
+    const now = new Date();
+    tsEl.innerHTML = now.toLocaleDateString("es-DO", { day:"2-digit", month:"short", year:"numeric" }) +
+      "<br>" + now.toLocaleTimeString("es-DO", { hour:"2-digit", minute:"2-digit" });
+  }
+
+  // Details rows
   const det = document.getElementById("confirm-details");
   if (det) {
-    det.innerHTML = `
-      <div class="confirm-detail-row"><span>👤 Cliente</span><span>${clienteData.nombre} ${clienteData.apellido}</span></div>
-      <div class="confirm-detail-row"><span>📱 WhatsApp</span><span>${clienteData.telefono}</span></div>
-      <div class="confirm-detail-row"><span>📍 Dirección</span><span>${clienteData.ubicacion}</span></div>
-      <div class="confirm-detail-row"><span>💳 Pago</span><span>${clienteData.metodo_pago}</span></div>
-      <div class="confirm-detail-row"><span>📦 Productos</span><span>${itemsData.length} artículo${itemsData.length!==1?"s":""}</span></div>
-      ${envio > 0 ? `<div class="confirm-detail-row"><span>🛵 Envío</span><span>RD$ ${envio.toLocaleString()}</span></div>` : ""}
-      <div class="confirm-total-row"><span>Total a pagar</span><span>RD$ ${total.toLocaleString()}</span></div>`;
+    det.innerHTML =
+      cfRow("👤", "Cliente",     clienteData.nombre + " " + clienteData.apellido) +
+      cfRow("📱", "WhatsApp",    clienteData.telefono) +
+      cfRow("📍", "Dirección",   clienteData.ubicacion) +
+      cfRow("💳", "Pago",        clienteData.metodo_pago) +
+      cfRow("📦", "Artículos",   itemsData.length + " producto" + (itemsData.length !== 1 ? "s" : ""));
   }
+
+  // Totals
+  const subtotal = total - envio;
+  const subRow = document.getElementById("cf-subtotal-row");
+  const envRow = document.getElementById("cf-envio-row");
+  const totVal = document.getElementById("cf-total-val");
+  if (envio > 0 && subRow && envRow) {
+    subRow.style.display = "flex";
+    envRow.style.display = "flex";
+    document.getElementById("cf-subtotal-val").textContent = "RD$ " + subtotal.toLocaleString();
+    document.getElementById("cf-envio-val").textContent    = "RD$ " + envio.toLocaleString();
+  }
+  if (totVal) totVal.textContent = "RD$ " + total.toLocaleString();
+
+  // Barcode decoration
+  const bc = document.getElementById("cf-barcode");
+  const bcCode = document.getElementById("cf-barcode-code");
+  if (bc) {
+    const widths = [2,3,2,4,1,3,2,1,4,2,3,1,2,4,2,3,1,2,3,4,1,2,3,1,4,2,1,3,2,4,3,1,2,3];
+    bc.innerHTML = widths.map(w =>
+      `<span style="width:${w}px;height:${24 + Math.random()*12}px"></span>`
+    ).join("");
+    const code = String(pedidoId).padStart(4,"0") + "-" + Date.now().toString().slice(-8);
+    bcCode.textContent = code;
+  }
+
+  // WhatsApp button
   const waBtn = document.getElementById("confirm-wa-btn");
   if (waBtn) waBtn.onclick = () => window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(pendingWAMsg)}`, "_blank");
+
+  // Animate timeline fill after open
+  setTimeout(() => {
+    const fill = document.getElementById("cf-timeline-fill");
+    if (fill) fill.style.width = "33%";
+  }, 500);
+
+  // Confetti
+  launchConfetti();
+
   document.getElementById("m-confirm").classList.add("open");
+}
+
+function cfRow(icon, label, val) {
+  return `<div class="cf-row">
+    <span class="cf-row-label">${icon} ${label}</span>
+    <span class="cf-row-val">${val}</span>
+  </div>`;
+}
+
+function launchConfetti() {
+  const wrap = document.getElementById("confetti-wrap");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  const colors = ["#c0394b","#e8536a","#c9963a","#f0c060","#4ade80","#fff"];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement("span");
+    p.className = "confetti-piece";
+    p.style.cssText = `
+      left: ${Math.random()*100}%;
+      background: ${colors[Math.floor(Math.random()*colors.length)]};
+      animation-delay: ${Math.random()*.8}s;
+      animation-duration: ${1.2 + Math.random()*.8}s;
+      width: ${6 + Math.random()*8}px;
+      height: ${6 + Math.random()*8}px;
+      border-radius: ${Math.random() > .5 ? "50%" : "2px"};
+    `;
+    wrap.appendChild(p);
+  }
+  setTimeout(() => { if(wrap) wrap.innerHTML = ""; }, 2500);
 }
 
 function closeConfirm() {
   document.getElementById("m-confirm").classList.remove("open");
   pendingWAMsg = "";
+  // Reset timeline
+  const fill = document.getElementById("cf-timeline-fill");
+  if (fill) fill.style.width = "0";
+  // Reset total rows
+  const sr = document.getElementById("cf-subtotal-row");
+  const er = document.getElementById("cf-envio-row");
+  if (sr) sr.style.display = "none";
+  if (er) er.style.display = "none";
 }
 
 /* ══ ESTADÍSTICAS ══ */
@@ -7111,27 +8785,311 @@ async function loadEstadisticas() {
     console.error("loadEstadisticas error:", e.message);
   }
 }
-// selStorePay — definida arriba con lógica completa de bancos
 
+/* ══════════════════════════════════════════════════════
+   REGISTRO DE MERCANCÍA — Historial (loadEntradas)
+══════════════════════════════════════════════════════ */
+let _allEntradas = [];
+
+async function loadEntradas() {
+  const tbody  = document.getElementById("ent-hist-tbody");
+  const loader = document.getElementById("ent-hist-load");
+  const empty  = document.getElementById("ent-hist-empty");
+  if (loader) loader.style.display = "block";
+  if (tbody)  tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">Cargando...</td></tr>';
+  if (empty)  empty.style.display = "none";
+
+  try {
+    const data = await api("GET", "/api/admin/entradas");
+    _allEntradas = Array.isArray(data) ? data : [];
+  } catch (e) {
+    // Si el backend no tiene el endpoint aún, construir historial desde productos locales
+    _allEntradas = [];
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">El backend aún no tiene el endpoint /api/admin/entradas. Registra entradas desde la pestaña Productos.</td></tr>';
+    if (loader) loader.style.display = "none";
+    return;
+  } finally {
+    if (loader) loader.style.display = "none";
+  }
+
+  // Poblar filtro de productos
+  const selProd = document.getElementById("ent-filter-prod");
+  if (selProd) {
+    const nombresUnicos = [...new Set(_allEntradas.map(e => e.producto_nombre || e.nombre || "—"))].sort();
+    selProd.innerHTML = '<option value="">Todos los productos</option>' +
+      nombresUnicos.map(n => `<option value="${n}">${n}</option>`).join("");
+  }
+
+  // Poblar filtro de meses
+  const selMes = document.getElementById("ent-filter-mes");
+  if (selMes) {
+    const meses = [...new Set(_allEntradas.map(e => {
+      if (!e.fecha) return null;
+      const d = new Date(e.fecha);
+      return d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0");
+    }).filter(Boolean))].sort().reverse();
+    selMes.innerHTML = '<option value="">Todos los meses</option>' +
+      meses.map(m => {
+        const [y, mo] = m.split("-");
+        const lbl = new Date(y, mo-1, 1).toLocaleDateString("es-DO", { month:"long", year:"numeric" });
+        return `<option value="${m}">${lbl}</option>`;
+      }).join("");
+  }
+
+  renderEntradas(_allEntradas);
+}
+
+function filterEntradas() {
+  const q       = (document.getElementById("ent-search")?.value || "").toLowerCase();
+  const prodFil = document.getElementById("ent-filter-prod")?.value || "";
+  const mesFil  = document.getElementById("ent-filter-mes")?.value  || "";
+
+  let list = _allEntradas;
+  if (q)       list = list.filter(e => (e.producto_nombre||e.nombre||"").toLowerCase().includes(q) || (e.proveedor||"").toLowerCase().includes(q));
+  if (prodFil) list = list.filter(e => (e.producto_nombre||e.nombre||"") === prodFil);
+  if (mesFil)  list = list.filter(e => {
+    if (!e.fecha) return false;
+    const d = new Date(e.fecha);
+    return (d.getFullYear() + "-" + String(d.getMonth()+1).padStart(2,"0")) === mesFil;
+  });
+
+  const lbl = document.getElementById("ent-count-lbl");
+  if (lbl) lbl.textContent = list.length !== _allEntradas.length ? `${list.length} resultado${list.length!==1?"s":""}` : "";
+  renderEntradas(list);
+}
+
+function renderEntradas(list) {
+  const tbody = document.getElementById("ent-hist-tbody");
+  const empty = document.getElementById("ent-hist-empty");
+  if (!tbody) return;
+
+  // KPIs
+  const setK = (id, v) => { const e = document.getElementById(id); if(e) e.textContent = v; };
+  const totalUnidades  = _allEntradas.reduce((s, e) => s + Number(e.cantidad||0), 0);
+  const totalInversion = _allEntradas.reduce((s, e) => s + (Number(e.precio_compra||0) * Number(e.cantidad||0)), 0);
+  const proveedores    = new Set(_allEntradas.map(e => e.proveedor).filter(Boolean)).size;
+  setK("ek-total",      _allEntradas.length);
+  setK("ek-unidades",   totalUnidades + " uds");
+  setK("ek-inversion",  "RD$ " + totalInversion.toLocaleString());
+  setK("ek-proveedores", proveedores || "—");
+
+  if (!list.length) {
+    tbody.innerHTML = "";
+    if (empty) empty.style.display = "block";
+    return;
+  }
+  if (empty) empty.style.display = "none";
+
+  tbody.innerHTML = list.map(e => {
+    const fecha       = e.fecha ? new Date(e.fecha).toLocaleDateString("es-DO", { day:"2-digit", month:"short", year:"numeric" }) : "—";
+    const pCompra     = Number(e.precio_compra || 0);
+    const pVenta      = Number(e.precio_venta  || e.precio || 0);
+    const cantidad    = Number(e.cantidad || 0);
+    const inversion   = pCompra * cantidad;
+    const margen      = pVenta > 0 ? ((pVenta - pCompra) / pVenta * 100).toFixed(1) : null;
+    const margenColor = margen === null ? "" : margen < 10 ? "color:#ef4444" : margen < 25 ? "color:#f59e0b" : "color:#16a34a";
+
+    return `<tr style="border-bottom:1px solid var(--border)">
+      <td style="padding:11px 14px;white-space:nowrap;color:var(--muted);font-size:.78rem">${fecha}</td>
+      <td style="padding:11px 14px;font-weight:600">${e.producto_nombre || e.nombre || "—"}</td>
+      <td style="padding:11px 14px;text-align:center">${cantidad}</td>
+      <td style="padding:11px 14px;text-align:right">RD$ ${pCompra.toLocaleString()}</td>
+      <td style="padding:11px 14px;text-align:right;color:var(--rose)">${pVenta > 0 ? "RD$ " + pVenta.toLocaleString() : "—"}</td>
+      <td style="padding:11px 14px;text-align:center;${margenColor};font-weight:700">${margen !== null ? margen + "%" : "—"}</td>
+      <td style="padding:11px 14px;color:var(--muted)">${e.proveedor || "—"}</td>
+      <td style="padding:11px 14px;color:var(--muted);font-size:.78rem">${e.factura || "—"}</td>
+      <td style="padding:11px 14px;text-align:right;font-weight:600">RD$ ${inversion.toLocaleString()}</td>
+      <td style="padding:11px 14px;text-align:center">
+        <button onclick="verNotasEntrada(${e.id || 0},'${(e.notas||"").replace(/'/g,"")}')"
+          style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.72rem;color:var(--muted)">
+          <i class="fa-solid fa-note-sticky"></i>
+        </button>
+      </td>
+    </tr>`;
+  }).join("");
+}
+
+function verNotasEntrada(id, notas) {
+  toast(notas ? "📝 " + notas : "Sin notas para esta entrada");
+}
+
+async function saveEntrada() {
+  const productoId   = document.getElementById("ent-producto").value;
+  const cantidad     = parseInt(document.getElementById("ent-cantidad").value);
+  const precioCompra = parseFloat(document.getElementById("ent-precio-compra").value);
+  const fecha        = document.getElementById("ent-fecha").value;
+  const proveedor    = document.getElementById("ent-proveedor").value.trim();
+  const factura      = document.getElementById("ent-factura").value.trim();
+  const notas        = document.getElementById("ent-notas").value.trim();
+  const errEl        = document.getElementById("ent-err");
+  errEl.style.display = "none";
+
+  if (!productoId)               { errEl.textContent = "⚠️ Selecciona un producto";          errEl.style.display="block"; return; }
+  if (!cantidad || cantidad < 1) { errEl.textContent = "⚠️ La cantidad debe ser mayor a 0";  errEl.style.display="block"; return; }
+  if (!precioCompra || precioCompra <= 0) { errEl.textContent = "⚠️ Ingresa el precio de compra"; errEl.style.display="block"; return; }
+  if (!fecha)                    { errEl.textContent = "⚠️ Selecciona la fecha";              errEl.style.display="block"; return; }
+
+  const btn = document.getElementById("ent-save-btn");
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+  btn.disabled  = true;
+
+  const prod       = prods.find(p => p.id == productoId);
+  const stockNuevo = Number(prod?.stock ?? 0) + cantidad;
+
+  try {
+    await api("PUT", `/api/admin/productos/${productoId}`, { ...prod, stock: stockNuevo });
+    api("POST", "/api/admin/entradas", {
+      producto_id: productoId, cantidad, precio_compra: precioCompra,
+      fecha, proveedor: proveedor||null, factura: factura||null, notas: notas||null
+    }).catch(() => {});
+    toast("✅ Entrada registrada · Stock actualizado a " + stockNuevo + " uds");
+    closeModal("m-entrada");
+    loadAdminProducts();
+    loadPublicProducts();
+  } catch(e) {
+    errEl.textContent = "❌ " + e.message;
+    errEl.style.display = "block";
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-truck-ramp-box"></i> Registrar entrada';
+    btn.disabled  = false;
+  }
+}
 
 </script>
 
 
+<!-- ════ CONFETTI ════════════════════════════════════════ -->
+<div class="confetti-wrap" id="confetti-wrap"></div>
+
 <!-- ════ PANTALLA DE CONFIRMACIÓN ════════════════════════ -->
 <div class="confirm-overlay" id="m-confirm">
   <div class="confirm-box">
-    <div class="confirm-check">✓</div>
-    <div class="confirm-title">¡Pedido recibido!</div>
-    <p class="confirm-subtitle">Tu pedido ha sido registrado exitosamente.<br>Nos pondremos en contacto contigo pronto.</p>
-    <span class="confirm-pedido-num" id="confirm-num">#000</span>
-    <div class="confirm-details" id="confirm-details"></div>
-    <button class="confirm-wa-btn" id="confirm-wa-btn">
-      <i class="fa-brands fa-whatsapp"></i> Abrir WhatsApp para confirmar
-    </button>
-    <button class="confirm-close-btn" onclick="closeConfirm()">
-      Volver a la tienda
-    </button>
-  </div>
+
+    <!-- Header verde éxito -->
+    <div class="cf-header">
+      <div class="cf-header-stars"></div>
+      <div class="cf-check-wrap">
+        <div class="cf-check-ring">
+          <svg viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle class="cf-check-bg" cx="40" cy="40" r="36"/>
+            <circle class="cf-check-circle" cx="40" cy="40" r="36" transform="rotate(-90 40 40)"/>
+          </svg>
+          <div class="cf-check-icon">🎉</div>
+        </div>
+      </div>
+      <div class="cf-status-label">
+        <span class="cf-status-dot"></span>
+        Pedido registrado
+      </div>
+      <div class="cf-main-title">¡Gracias por tu pedido!</div>
+      <div class="cf-subtitle">Prepararemos todo con mucho cariño 🍭</div>
+    </div>
+
+    <!-- Borde dentado superior -->
+    <div class="cf-tear"></div>
+
+    <!-- Cuerpo del recibo -->
+    <div class="cf-receipt">
+
+      <!-- Banda número de pedido -->
+      <div class="cf-order-band">
+        <div>
+          <div class="cf-order-num-label">N° de Pedido</div>
+          <div class="cf-order-num-val" id="confirm-num">#0001</div>
+        </div>
+        <div class="cf-order-timestamp" id="cf-timestamp"></div>
+      </div>
+
+      <!-- Info del cliente -->
+      <div class="cf-info-section">
+        <div class="cf-section-title">Datos del cliente</div>
+        <div id="confirm-details"></div>
+      </div>
+
+      <hr class="cf-divider">
+
+      <!-- Total -->
+      <div class="cf-total-section">
+        <div id="cf-subtotal-row" class="cf-total-items" style="display:none">
+          <span>Subtotal</span><span id="cf-subtotal-val"></span>
+        </div>
+        <div id="cf-envio-row" class="cf-total-items" style="display:none">
+          <span>🛵 Envío</span><span id="cf-envio-val"></span>
+        </div>
+        <div class="cf-total-main">
+          <div class="cf-total-lbl">Total a pagar</div>
+          <div class="cf-total-amount" id="cf-total-val">RD$0</div>
+        </div>
+      </div>
+
+      <!-- Timeline de progreso -->
+      <div class="cf-timeline">
+        <div class="cf-section-title">Estado del pedido</div>
+        <div class="cf-timeline-track" id="cf-timeline">
+          <div class="cf-timeline-fill" id="cf-timeline-fill"></div>
+          <div class="cf-timeline-step">
+            <div class="cf-step-dot done">✓</div>
+            <div class="cf-step-lbl">Recibido</div>
+          </div>
+          <div class="cf-timeline-step">
+            <div class="cf-step-dot active">⏳</div>
+            <div class="cf-step-lbl">Revisando</div>
+          </div>
+          <div class="cf-timeline-step">
+            <div class="cf-step-dot">🧁</div>
+            <div class="cf-step-lbl">Preparando</div>
+          </div>
+          <div class="cf-timeline-step">
+            <div class="cf-step-dot">🚀</div>
+            <div class="cf-step-lbl">En camino</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Código de barras decorativo -->
+      <div class="cf-barcode">
+        <div class="cf-barcode-stripes" id="cf-barcode"></div>
+        <div class="cf-barcode-code" id="cf-barcode-code">000000000000</div>
+      </div>
+
+      <!-- Botones -->
+      <div class="cf-actions">
+        <button class="cf-btn-wa" id="confirm-wa-btn">
+          <i class="fa-brands fa-whatsapp fa-lg"></i>
+          Confirmar por WhatsApp
+        </button>
+        <button class="cf-btn-close" onclick="closeConfirm()">
+          Volver a la tienda &rarr;
+        </button>
+      </div>
+    </div>
+
+    <!-- Borde dentado inferior -->
+    <div class="cf-tear-bottom"></div>
+
+    <!-- Footer del recibo -->
+    <div class="cf-receipt-footer">
+      <div class="cf-ticker">
+        <div class="cf-ticker-inner">
+          <span class="cf-ticker-text">Suplidora Dulce Inspiración</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">¡Gracias por tu compra!</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">Hecho con amor 🍭</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">San Pedro de Macorís, RD</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">Suplidora Dulce Inspiración</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">¡Gracias por tu compra!</span>
+          <span class="cf-ticker-sep">✦</span>
+          <span class="cf-ticker-text">Hecho con amor 🍭</span>
+          <span class="cf-ticker-sep">✦</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /confirm-box -->
 </div>
 
 
