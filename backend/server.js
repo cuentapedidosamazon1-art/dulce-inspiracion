@@ -41,12 +41,51 @@ async function initDB() {
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS usuario_id INT NULL;`).catch(() => {});
-    // Migrar columnas con mayusculas a minusculas si existen
+
+    // Renombrar columnas con mayúsculas → minúsculas (solo si existen)
     await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Proveedor" TO proveedor;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Factura" TO factura;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Notas" TO notas;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_entrada TO fecha;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Factura"   TO factura;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Notas"     TO notas;`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_registro TO fecha_creacion;`).catch(() => {});
+
+    // Migración fecha_entrada → fecha:
+    // Caso A: existe fecha_entrada pero NO fecha → renombrar
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha'
+        ) THEN
+          ALTER TABLE entradas_inventario RENAME COLUMN fecha_entrada TO fecha;
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    // Caso B: existen AMBAS (fecha_entrada y fecha) → copiar datos y soltar fecha_entrada
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
+        ) AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha'
+        ) THEN
+          -- Copiar fecha_entrada → fecha donde fecha sea null
+          UPDATE entradas_inventario SET fecha = fecha_entrada WHERE fecha IS NULL AND fecha_entrada IS NOT NULL;
+          -- Quitar restricción NOT NULL de fecha_entrada para poder soltarla
+          ALTER TABLE entradas_inventario ALTER COLUMN fecha_entrada DROP NOT NULL;
+          ALTER TABLE entradas_inventario DROP COLUMN fecha_entrada;
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    // Garantizar que la columna fecha exista (por si la tabla es nueva)
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha DATE;`).catch(() => {});
+
     // El primer usuario (admin) siempre es admin
     await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
 
