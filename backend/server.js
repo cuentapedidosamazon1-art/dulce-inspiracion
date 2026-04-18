@@ -474,6 +474,73 @@ app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+
+// PUT /api/admin/entradas/:id  → editar entrada y ajustar stock atomicamente
+app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
+  const { cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
+
+  if (!cantidad || parseInt(cantidad) < 1)
+    return res.status(400).json({ error: "La cantidad debe ser mayor a 0" });
+  if (!precio_compra || parseFloat(precio_compra) <= 0)
+    return res.status(400).json({ error: "precio_compra debe ser mayor a 0" });
+  if (!fecha)
+    return res.status(400).json({ error: "La fecha es requerida" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Obtener la entrada original para calcular diff de stock
+    const orig = await client.query(
+      "SELECT producto_id, cantidad FROM entradas_inventario WHERE id = $1",
+      [req.params.id]
+    );
+    if (!orig.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Entrada no encontrada" });
+    }
+
+    const { producto_id, cantidad: cantidadOriginal } = orig.rows[0];
+    const diff = parseInt(cantidad) - parseInt(cantidadOriginal);
+
+    // Actualizar la entrada
+    await client.query(`
+      UPDATE entradas_inventario
+      SET cantidad=$1, precio_compra=$2, fecha=$3, proveedor=$4, factura=$5, notas=$6
+      WHERE id=$7
+    `, [
+      parseInt(cantidad),
+      parseFloat(precio_compra),
+      fecha,
+      proveedor || null,
+      factura   || null,
+      notas     || null,
+      req.params.id
+    ]);
+
+    // Ajustar stock solo si la cantidad cambió
+    let stockNuevo = null;
+    if (diff !== 0) {
+      const stockRes = await client.query(
+        "UPDATE productos SET stock = GREATEST(stock + $1, 0) WHERE id = $2 RETURNING stock",
+        [diff, producto_id]
+      );
+      stockNuevo = stockRes.rows[0]?.stock;
+    } else {
+      const stockRes = await client.query("SELECT stock FROM productos WHERE id = $1", [producto_id]);
+      stockNuevo = stockRes.rows[0]?.stock;
+    }
+
+    await client.query("COMMIT");
+    res.json({ ok: true, stock_nuevo: stockNuevo });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
 // POST /api/admin/entradas  → registrar entrada y actualizar stock atomicamente
 app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
   const { producto_id, cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
