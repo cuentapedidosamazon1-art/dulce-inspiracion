@@ -37,10 +37,11 @@ async function connectDB() {
 async function initDB() {
   const client = await pool.connect();
   try {
-    // Agregar columna stock si no existe (migración)
-    await client.query(`
-      ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;
-    `).catch(() => {});
+    // Migraciones seguras
+    await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
+    // El primer usuario (admin) siempre es admin
+    await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
 
     await client.query(`
       CREATE TABLE IF NOT EXISTS usuarios (
@@ -165,8 +166,8 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: "Contraseña incorrecta" });
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, nombre: user.nombre, email: user.email });
+    const token = jwt.sign({ id: user.id, email: user.email, rol: user.rol || 'editor' }, JWT_SECRET, { expiresIn: "8h" });
+    res.json({ token, nombre: user.nombre, email: user.email, rol: user.rol || 'editor' });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -174,14 +175,14 @@ app.post("/api/login", async (req, res) => {
 app.get("/api/admin/usuarios", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT id, nombre, email, activo, fecha_creacion FROM usuarios ORDER BY fecha_creacion ASC"
+      "SELECT id, nombre, email, rol, activo, fecha_creacion FROM usuarios ORDER BY fecha_creacion ASC"
     );
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
-  const { nombre, email, password } = req.body;
+  const { nombre, email, password, rol } = req.body;
   if (!nombre || !email || !password)
     return res.status(400).json({ error: "Todos los campos son requeridos" });
   if (password.length < 8)
@@ -189,8 +190,8 @@ app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
   try {
     const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
-      "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3) RETURNING id, nombre, email",
-      [nombre, email, hash]
+      "INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES ($1,$2,$3,$4) RETURNING id, nombre, email, rol",
+      [nombre, email, hash, rol || 'editor']
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
