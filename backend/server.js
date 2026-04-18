@@ -436,18 +436,18 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
       SELECT
         e.id,
         e.producto_id,
-        p.nombre            AS producto_nombre,
-        p.precio            AS precio_venta,
+        p.nombre                                                  AS producto_nombre,
+        p.precio::float                                           AS precio_venta,
         e.cantidad,
-        e.precio_compra,
-        e.proveedor,
-        e.factura,
-        e.notas,
-        e.fecha_entrada AS fecha,
+        e.precio_compra::float,
+        COALESCE(e.proveedor, '')                                 AS proveedor,
+        COALESCE(e.factura, '')                                   AS factura,
+        COALESCE(e.notas, '')                                     AS notas,
+        COALESCE(e.fecha_entrada, e.fecha_creacion::date)         AS fecha,
         e.fecha_creacion,
         ROUND(
           ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
-        )::float            AS margen_pct
+        )::float                                                  AS margen_pct
       FROM entradas_inventario e
       JOIN productos p ON p.id = e.producto_id
       ORDER BY e.fecha_creacion DESC
@@ -568,6 +568,21 @@ app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+
+// ── DIAGNÓSTICO TEMPORAL — borrar después ───────────────────────
+app.get("/api/debug/entradas-schema", authMiddleware, async (req, res) => {
+  try {
+    const cols = await pool.query(`
+      SELECT column_name, data_type, is_nullable
+      FROM information_schema.columns
+      WHERE table_name = 'entradas_inventario'
+      ORDER BY ordinal_position
+    `);
+    const sample = await pool.query(`SELECT * FROM entradas_inventario LIMIT 3`);
+    res.json({ columnas: cols.rows, muestra: sample.rows });
+  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── KEEP-ALIVE (evita que Render se duerma) ─────────────────────
