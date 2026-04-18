@@ -1005,7 +1005,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 }
 /* Ensure admin modals appear above admin nav (z-index 500) */
 #admin-view ~ .modal-overlay,
-#m-prod, #m-user, #m-del-user {
+#m-prod, #m-user, #m-del-user, #m-entrada {
   z-index: 1000;
 }
 
@@ -6349,7 +6349,7 @@ async function saveProduct() {
   const stock       = parseInt(g("p-stock").value) || 0;
 
   if (!nombre || !precio || !descripcion) { toast("⚠️ Completa todos los campos"); return; }
-  if (!imgData) { toast("⚠️ Agrega una imagen"); return; }
+  if (!imgData && !editId) { toast("⚠️ Agrega una imagen al producto"); return; }
 
   const btn = g("save-btn");
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
@@ -8801,12 +8801,15 @@ async function loadEntradas() {
 
   try {
     const data = await api("GET", "/api/admin/entradas");
-    _allEntradas = Array.isArray(data) ? data : [];
+    _allEntradas = (Array.isArray(data) ? data : []).map(e => ({
+      ...e,
+      fecha: e.fecha || e.fecha_entrada || null
+    }));
   } catch (e) {
-    // Si el backend no tiene el endpoint aún, construir historial desde productos locales
     _allEntradas = [];
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:var(--muted)">El backend aún no tiene el endpoint /api/admin/entradas. Registra entradas desde la pestaña Productos.</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:#ef4444">❌ Error: ' + e.message + '</td></tr>';
     if (loader) loader.style.display = "none";
+    renderEntradas([]);
     return;
   } finally {
     if (loader) loader.style.display = "none";
@@ -8933,19 +8936,17 @@ async function saveEntrada() {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
   btn.disabled  = true;
 
-  const prod       = prods.find(p => p.id == productoId);
-  const stockNuevo = Number(prod?.stock ?? 0) + cantidad;
-
   try {
-    await api("PUT", `/api/admin/productos/${productoId}`, { ...prod, stock: stockNuevo });
-    api("POST", "/api/admin/entradas", {
+    const result = await api("POST", "/api/admin/entradas", {
       producto_id: productoId, cantidad, precio_compra: precioCompra,
       fecha, proveedor: proveedor||null, factura: factura||null, notas: notas||null
-    }).catch(() => {});
+    });
+    const stockNuevo = result.stock_nuevo ?? "?";
     toast("✅ Entrada registrada · Stock actualizado a " + stockNuevo + " uds");
     closeModal("m-entrada");
     loadAdminProducts();
     loadPublicProducts();
+    loadEntradas();
   } catch(e) {
     errEl.textContent = "❌ " + e.message;
     errEl.style.display = "block";
@@ -8955,17 +8956,10 @@ async function saveEntrada() {
   }
 }
 
-function openEntradaModal() {
+async function openEntradaModal() {
   const sel = document.getElementById("ent-producto");
   if (!sel) return;
-  sel.innerHTML = '<option value="">— Selecciona un producto —</option>';
-  prods.forEach(p => {
-    const opt = document.createElement("option");
-    opt.value = p.id;
-    opt.textContent = p.nombre + "  (Stock: " + (p.stock ?? 0) + " uds)";
-    opt.dataset.precio = p.precio;
-    sel.appendChild(opt);
-  });
+  sel.innerHTML = '<option value="">⏳ Cargando productos...</option>';
   document.getElementById("ent-cantidad").value      = "";
   document.getElementById("ent-precio-compra").value = "";
   document.getElementById("ent-proveedor").value     = "";
@@ -8976,6 +8970,23 @@ function openEntradaModal() {
   document.getElementById("ent-fecha").value = new Date().toISOString().split("T")[0];
   sel.onchange = calcMargenEntrada;
   openModal("m-entrada");
+  try {
+    const lista = await api("GET", "/api/admin/productos");
+    if (Array.isArray(lista) && lista.length) prods = lista;
+  } catch(e) { /* usar prods actual */ }
+  sel.innerHTML = '<option value="">— Selecciona un producto —</option>';
+  const activos = prods.filter(p => p.estado !== "inactivo");
+  if (!activos.length) {
+    sel.innerHTML += '<option value="" disabled>⚠️ No hay productos activos</option>';
+    return;
+  }
+  activos.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre + "  (Stock: " + (p.stock ?? 0) + " uds)";
+    opt.dataset.precio = p.precio;
+    sel.appendChild(opt);
+  });
 }
 
 function calcMargenEntrada() {
