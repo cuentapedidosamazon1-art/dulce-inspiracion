@@ -6,7 +6,13 @@ const jwt     = require("jsonwebtoken");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.JWT_SECRET || "DulceInspiracion2026";
+
+// FIX #1: JWT_SECRET nunca usa fallback inseguro en producción
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  console.error("❌ FATAL: La variable de entorno JWT_SECRET no está definida.");
+  process.exit(1);
+}
 
 app.use(cors({
   origin: "*",
@@ -28,7 +34,7 @@ async function connectDB() {
     console.log("✅ Conectado a PostgreSQL");
     client.release();
   } catch (err) {
-    console.log("❌ Error de conexión:", err.message);
+    console.error("❌ Error de conexión:", err.message);
     process.exit(1);
   }
 }
@@ -37,58 +43,9 @@ async function connectDB() {
 async function initDB() {
   const client = await pool.connect();
   try {
-    // Migraciones seguras
-    await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
-    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS usuario_id INT NULL;`).catch(() => {});
 
-    // Renombrar columnas con mayúsculas → minúsculas (solo si existen)
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Proveedor" TO proveedor;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Factura"   TO factura;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Notas"     TO notas;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_registro TO fecha_creacion;`).catch(() => {});
-
-    // Migración fecha_entrada → fecha:
-    // Caso A: existe fecha_entrada pero NO fecha → renombrar
-    await client.query(`
-      DO $$ BEGIN
-        IF EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
-        ) AND NOT EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name='entradas_inventario' AND column_name='fecha'
-        ) THEN
-          ALTER TABLE entradas_inventario RENAME COLUMN fecha_entrada TO fecha;
-        END IF;
-      END $$;
-    `).catch(() => {});
-
-    // Caso B: existen AMBAS (fecha_entrada y fecha) → copiar datos y soltar fecha_entrada
-    await client.query(`
-      DO $$ BEGIN
-        IF EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
-        ) AND EXISTS (
-          SELECT 1 FROM information_schema.columns
-          WHERE table_name='entradas_inventario' AND column_name='fecha'
-        ) THEN
-          -- Copiar fecha_entrada → fecha donde fecha sea null
-          UPDATE entradas_inventario SET fecha = fecha_entrada WHERE fecha IS NULL AND fecha_entrada IS NOT NULL;
-          -- Quitar restricción NOT NULL de fecha_entrada para poder soltarla
-          ALTER TABLE entradas_inventario ALTER COLUMN fecha_entrada DROP NOT NULL;
-          ALTER TABLE entradas_inventario DROP COLUMN fecha_entrada;
-        END IF;
-      END $$;
-    `).catch(() => {});
-
-    // Garantizar que la columna fecha exista (por si la tabla es nueva)
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha DATE;`).catch(() => {});
-
-    // El primer usuario (admin) siempre es admin
-    await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
-
+    // ── PASO 1: Crear tablas primero (seguro con IF NOT EXISTS) ──
+    // FIX #2: Las tablas se crean ANTES de intentar alterarlas
     await client.query(`
       CREATE TABLE IF NOT EXISTS usuarios (
         id             SERIAL PRIMARY KEY,
@@ -134,18 +91,71 @@ async function initDB() {
       );
 
       CREATE TABLE IF NOT EXISTS entradas_inventario (
-        id            SERIAL PRIMARY KEY,
-        producto_id   INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
-        usuario_id    INT NULL,
-        cantidad      INT NOT NULL CHECK (cantidad > 0),
-        precio_compra DECIMAL(10,2) NOT NULL CHECK (precio_compra > 0),
-        proveedor     VARCHAR(200) NULL,
-        factura       VARCHAR(100) NULL,
-        notas         TEXT NULL,
-        fecha         DATE NOT NULL,
+        id             SERIAL PRIMARY KEY,
+        producto_id    INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+        usuario_id     INT NULL,
+        cantidad       INT NOT NULL CHECK (cantidad > 0),
+        precio_compra  DECIMAL(10,2) NOT NULL CHECK (precio_compra > 0),
+        proveedor      VARCHAR(200) NULL,
+        factura        VARCHAR(100) NULL,
+        notas          TEXT NULL,
+        fecha          DATE NOT NULL,
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
+
+    // ── PASO 2: Migraciones sobre tablas ya existentes ───────────
+    // Agregar columnas nuevas si no existen (deploy en BD legacy)
+    await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
+    await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS usuario_id INT NULL;`).catch(() => {});
+
+    // Renombrar columnas con mayúsculas → minúsculas (solo si existen)
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Proveedor" TO proveedor;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Factura"   TO factura;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Notas"     TO notas;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_registro TO fecha_creacion;`).catch(() => {});
+
+    // Migración fecha_entrada → fecha:
+    // Caso A: existe fecha_entrada pero NO fecha → renombrar
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha'
+        ) THEN
+          ALTER TABLE entradas_inventario RENAME COLUMN fecha_entrada TO fecha;
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    // Caso B: existen AMBAS (fecha_entrada y fecha) → copiar datos y soltar fecha_entrada
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha_entrada'
+        ) AND EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='entradas_inventario' AND column_name='fecha'
+        ) THEN
+          UPDATE entradas_inventario SET fecha = fecha_entrada WHERE fecha IS NULL AND fecha_entrada IS NOT NULL;
+          ALTER TABLE entradas_inventario ALTER COLUMN fecha_entrada DROP NOT NULL;
+          ALTER TABLE entradas_inventario DROP COLUMN fecha_entrada;
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    // Garantizar columna fecha (por si la tabla era legacy sin ella)
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha DATE;`).catch(() => {});
+
+    // Garantizar que el primer admin siempre tenga rol admin
+    await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
+
+    // ── PASO 3: Datos iniciales ──────────────────────────────────
 
     // Admin inicial
     const adminCheck = await client.query(
@@ -154,13 +164,13 @@ async function initDB() {
     if (adminCheck.rows.length === 0) {
       const hash = await bcrypt.hash("Admin123!", 10);
       await client.query(
-        "INSERT INTO usuarios (nombre, email, password_hash) VALUES ($1,$2,$3)",
-        ["Administrador", "admin@dulceinspiracion.com", hash]
+        "INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES ($1,$2,$3,$4)",
+        ["Administrador", "admin@dulceinspiracion.com", hash, "admin"]
       );
       console.log("✅ Admin creado → admin@dulceinspiracion.com / Admin123!");
     }
 
-    // Productos de ejemplo
+    // Productos de ejemplo (solo si la tabla está vacía)
     const prodCheck = await client.query("SELECT COUNT(*) FROM productos");
     if (parseInt(prodCheck.rows[0].count) === 0) {
       await client.query(`
@@ -205,6 +215,8 @@ app.get("/api/health", (req, res) => {
 // ── LOGIN ───────────────────────────────────────────────────────
 app.post("/api/login", async (req, res) => {
   const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ error: "Email y contraseña son requeridos" });
   try {
     const result = await pool.query(
       "SELECT * FROM usuarios WHERE email=$1 AND activo=true", [email]
@@ -213,8 +225,12 @@ app.post("/api/login", async (req, res) => {
     if (!user) return res.status(401).json({ error: "Usuario no encontrado" });
     const ok = await bcrypt.compare(password, user.password_hash);
     if (!ok) return res.status(401).json({ error: "Contraseña incorrecta" });
-    const token = jwt.sign({ id: user.id, email: user.email, rol: user.rol || 'editor' }, JWT_SECRET, { expiresIn: "8h" });
-    res.json({ token, nombre: user.nombre, email: user.email, rol: user.rol || 'editor' });
+    const token = jwt.sign(
+      { id: user.id, email: user.email, rol: user.rol || "editor" },
+      JWT_SECRET,
+      { expiresIn: "8h" }
+    );
+    res.json({ token, nombre: user.nombre, email: user.email, rol: user.rol || "editor" });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
@@ -238,7 +254,7 @@ app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
     const hash = await bcrypt.hash(password, 10);
     const result = await pool.query(
       "INSERT INTO usuarios (nombre, email, password_hash, rol) VALUES ($1,$2,$3,$4) RETURNING id, nombre, email, rol",
-      [nombre, email, hash, rol || 'editor']
+      [nombre, email, hash, rol || "editor"]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) {
@@ -247,11 +263,16 @@ app.post("/api/admin/usuarios", authMiddleware, async (req, res) => {
   }
 });
 
+// FIX #3: DELETE usuario verifica que exista antes de responder ok
 app.delete("/api/admin/usuarios/:id", authMiddleware, async (req, res) => {
   if (parseInt(req.params.id) === req.user.id)
     return res.status(400).json({ error: "No puedes eliminarte a ti mismo" });
   try {
-    await pool.query("DELETE FROM usuarios WHERE id=$1", [req.params.id]);
+    const result = await pool.query(
+      "DELETE FROM usuarios WHERE id=$1 RETURNING id", [req.params.id]
+    );
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Usuario no encontrado" });
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -276,11 +297,13 @@ app.get("/api/admin/productos", authMiddleware, async (req, res) => {
 
 app.post("/api/admin/productos", authMiddleware, async (req, res) => {
   const { nombre, descripcion, precio, imagen, estado, stock } = req.body;
+  if (!nombre || !descripcion || !precio)
+    return res.status(400).json({ error: "nombre, descripcion y precio son requeridos" });
   try {
     const result = await pool.query(
       `INSERT INTO productos (nombre, descripcion, precio, imagen, stock, estado, fecha_creacion)
        VALUES ($1,$2,$3,$4,$5,$6,NOW()) RETURNING *`,
-      [nombre, descripcion, precio, imagen, stock || 0, estado || "activo"]
+      [nombre, descripcion, precio, imagen || null, stock || 0, estado || "activo"]
     );
     res.status(201).json(result.rows[0]);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -288,18 +311,26 @@ app.post("/api/admin/productos", authMiddleware, async (req, res) => {
 
 app.put("/api/admin/productos/:id", authMiddleware, async (req, res) => {
   const { nombre, descripcion, precio, imagen, estado, stock } = req.body;
+  if (!nombre || !descripcion || !precio)
+    return res.status(400).json({ error: "nombre, descripcion y precio son requeridos" });
   try {
-    await pool.query(
-      `UPDATE productos SET nombre=$1, descripcion=$2, precio=$3, imagen=$4, estado=$5, stock=$6 WHERE id=$7`,
-      [nombre, descripcion, precio, imagen, estado, stock !== undefined ? stock : 0, req.params.id]
+    const result = await pool.query(
+      `UPDATE productos SET nombre=$1, descripcion=$2, precio=$3, imagen=$4, estado=$5, stock=$6 WHERE id=$7 RETURNING id`,
+      [nombre, descripcion, precio, imagen || null, estado, stock !== undefined ? stock : 0, req.params.id]
     );
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Producto no encontrado" });
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.delete("/api/admin/productos/:id", authMiddleware, async (req, res) => {
   try {
-    await pool.query("DELETE FROM productos WHERE id=$1", [req.params.id]);
+    const result = await pool.query(
+      "DELETE FROM productos WHERE id=$1 RETURNING id", [req.params.id]
+    );
+    if (result.rowCount === 0)
+      return res.status(404).json({ error: "Producto no encontrado" });
     res.json({ ok: true });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -307,6 +338,12 @@ app.delete("/api/admin/productos/:id", authMiddleware, async (req, res) => {
 // ── PEDIDOS ─────────────────────────────────────────────────────
 app.post("/api/pedidos", async (req, res) => {
   const { nombre, apellido, telefono, ubicacion, items, total, metodo_pago } = req.body;
+
+  if (!nombre || !apellido || !telefono || !ubicacion || !metodo_pago)
+    return res.status(400).json({ error: "Todos los datos del cliente son requeridos" });
+  if (!Array.isArray(items) || items.length === 0)
+    return res.status(400).json({ error: "El pedido debe tener al menos un producto" });
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -358,21 +395,42 @@ app.post("/api/pedidos", async (req, res) => {
   }
 });
 
+// FIX #4: GET pedidos con JOIN en lugar de N+1 queries
 app.get("/api/admin/pedidos", authMiddleware, async (req, res) => {
   try {
     const pedidos = await pool.query("SELECT * FROM pedidos ORDER BY fecha_creacion DESC");
-    const result  = await Promise.all(pedidos.rows.map(async (p) => {
-      const items = await pool.query(
-        "SELECT nombre_producto, precio, cantidad, producto_id FROM detalle_pedido WHERE pedido_id=$1",
-        [p.id]
-      );
-      return { ...p, items: items.rows };
+    if (pedidos.rows.length === 0) return res.json([]);
+
+    const pedidoIds = pedidos.rows.map(p => p.id);
+    const detalles  = await pool.query(
+      `SELECT pedido_id, nombre_producto, precio, cantidad, producto_id
+       FROM detalle_pedido
+       WHERE pedido_id = ANY($1)`,
+      [pedidoIds]
+    );
+
+    // Agrupar detalles por pedido_id
+    const detalleMap = {};
+    for (const row of detalles.rows) {
+      if (!detalleMap[row.pedido_id]) detalleMap[row.pedido_id] = [];
+      detalleMap[row.pedido_id].push(row);
+    }
+
+    const result = pedidos.rows.map(p => ({
+      ...p,
+      items: detalleMap[p.id] || []
     }));
+
     res.json(result);
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
+  const estadoNuevo = req.body.estado;
+  const estadosValidos = ["pendiente", "confirmado", "entregado", "cancelado"];
+  if (!estadosValidos.includes(estadoNuevo))
+    return res.status(400).json({ error: "Estado no válido" });
+
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
@@ -380,8 +438,11 @@ app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
     const current = await client.query(
       "SELECT estado FROM pedidos WHERE id=$1", [req.params.id]
     );
-    const estadoAnterior = current.rows[0]?.estado;
-    const estadoNuevo    = req.body.estado;
+    if (!current.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Pedido no encontrado" });
+    }
+    const estadoAnterior = current.rows[0].estado;
 
     // Cancelar → restaurar stock
     if (estadoNuevo === "cancelado" && estadoAnterior !== "cancelado") {
@@ -469,10 +530,9 @@ app.get("/api/admin/estadisticas", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-
 // ── ENTRADAS DE INVENTARIO ──────────────────────────────────────
 
-// GET /api/admin/entradas  → historial completo (con nombre de producto)
+// GET /api/admin/entradas → historial completo
 app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -499,7 +559,7 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// GET /api/admin/entradas/:id  → una entrada especifica
+// GET /api/admin/entradas/:id → una entrada específica
 app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
@@ -513,8 +573,7 @@ app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-
-// PUT /api/admin/entradas/:id  → editar entrada y ajustar stock atomicamente
+// PUT /api/admin/entradas/:id → editar entrada y ajustar stock atómicamente
 app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   const { cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
 
@@ -529,7 +588,6 @@ app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // Obtener la entrada original para calcular diff de stock
     const orig = await client.query(
       "SELECT producto_id, cantidad FROM entradas_inventario WHERE id = $1",
       [req.params.id]
@@ -542,7 +600,6 @@ app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
     const { producto_id, cantidad: cantidadOriginal } = orig.rows[0];
     const diff = parseInt(cantidad) - parseInt(cantidadOriginal);
 
-    // Actualizar la entrada
     await client.query(`
       UPDATE entradas_inventario
       SET cantidad=$1, precio_compra=$2, fecha=$3, proveedor=$4, factura=$5, notas=$6
@@ -557,7 +614,6 @@ app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
       req.params.id
     ]);
 
-    // Ajustar stock solo si la cantidad cambió
     let stockNuevo = null;
     if (diff !== 0) {
       const stockRes = await client.query(
@@ -580,7 +636,7 @@ app.put("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// POST /api/admin/entradas  → registrar entrada y actualizar stock atomicamente
+// POST /api/admin/entradas → registrar entrada y actualizar stock atómicamente
 app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
   const { producto_id, cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
   const usuario_id = req.user.id;
@@ -598,7 +654,6 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
   try {
     await client.query("BEGIN");
 
-    // Verificar que el producto existe
     const prodRes = await client.query(
       "SELECT id, nombre, stock FROM productos WHERE id = $1", [producto_id]
     );
@@ -607,7 +662,6 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Insertar registro de entrada
     const entrada = await client.query(`
       INSERT INTO entradas_inventario
         (producto_id, usuario_id, cantidad, precio_compra, fecha, proveedor, factura, notas)
@@ -624,7 +678,6 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
       notas     || null
     ]);
 
-    // Actualizar stock del producto atomicamente
     const stockRes = await client.query(
       "UPDATE productos SET stock = stock + $1 WHERE id = $2 RETURNING stock",
       [parseInt(cantidad), producto_id]
@@ -645,13 +698,12 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
   }
 });
 
-// DELETE /api/admin/entradas/:id  → eliminar entrada y revertir stock
+// DELETE /api/admin/entradas/:id → eliminar entrada y revertir stock
 app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   const client = await pool.connect();
   try {
     await client.query("BEGIN");
 
-    // Obtener la entrada antes de borrarla
     const entRes = await client.query(
       "SELECT producto_id, cantidad FROM entradas_inventario WHERE id = $1",
       [req.params.id]
@@ -663,13 +715,11 @@ app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
 
     const { producto_id, cantidad } = entRes.rows[0];
 
-    // Revertir el stock (no bajar de 0)
     await client.query(
       "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id = $2",
       [cantidad, producto_id]
     );
 
-    // Eliminar la entrada
     await client.query("DELETE FROM entradas_inventario WHERE id = $1", [req.params.id]);
 
     await client.query("COMMIT");
@@ -682,7 +732,7 @@ app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// ── KEEP-ALIVE (evita que Render se duerma) ─────────────────────
+// ── KEEP-ALIVE (evita que Render se duerma en plan gratuito) ────
 const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 setInterval(() => {
   try {
@@ -696,4 +746,7 @@ connectDB().then(initDB).then(() => {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor corriendo en puerto ${PORT}`);
   });
+}).catch(err => {
+  console.error("❌ Error al iniciar el servidor:", err.message);
+  process.exit(1);
 });
