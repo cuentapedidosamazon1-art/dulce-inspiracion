@@ -40,7 +40,7 @@ async function initDB() {
     // Migraciones seguras
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha DATE NOT NULL DEFAULT CURRENT_DATE;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha_entrada DATE NOT NULL DEFAULT CURRENT_DATE;`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS proveedor VARCHAR(200) NULL;`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS factura VARCHAR(100) NULL;`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS notas TEXT NULL;`).catch(() => {});
@@ -99,7 +99,7 @@ async function initDB() {
         proveedor     VARCHAR(200) NULL,
         factura       VARCHAR(100) NULL,
         notas         TEXT NULL,
-        fecha         DATE NOT NULL,
+        fecha_entrada  DATE NOT NULL DEFAULT CURRENT_DATE,
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
@@ -443,7 +443,7 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
         e.proveedor,
         e.factura,
         e.notas,
-        e.fecha,
+        e.fecha_entrada,
         e.fecha_creacion,
         ROUND(
           ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
@@ -472,7 +472,7 @@ app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
 
 // POST /api/admin/entradas  → registrar entrada y actualizar stock atomicamente
 app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
-  const { producto_id, cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
+  const { producto_id, cantidad, precio_compra, fecha: fecha_entrada, proveedor, factura, notas } = req.body;
 
   if (!producto_id)
     return res.status(400).json({ error: "producto_id es requerido" });
@@ -480,7 +480,7 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
     return res.status(400).json({ error: "La cantidad debe ser mayor a 0" });
   if (!precio_compra || parseFloat(precio_compra) <= 0)
     return res.status(400).json({ error: "precio_compra debe ser mayor a 0" });
-  if (!fecha)
+  if (!fecha_entrada)
     return res.status(400).json({ error: "La fecha es requerida" });
 
   const client = await pool.connect();
@@ -499,7 +499,7 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
     // Insertar registro de entrada
     const entrada = await client.query(`
       INSERT INTO entradas_inventario
-        (producto_id, cantidad, precio_compra, proveedor, factura, notas, fecha)
+        (producto_id, cantidad, precio_compra, proveedor, factura, notas, fecha_entrada)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `, [
@@ -509,7 +509,7 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
       proveedor || null,
       factura   || null,
       notas     || null,
-      fecha
+      fecha_entrada
     ]);
 
     // Actualizar stock del producto atomicamente
