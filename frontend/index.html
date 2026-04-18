@@ -8807,7 +8807,7 @@ async function loadEntradas() {
     }));
   } catch (e) {
     _allEntradas = [];
-    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:#ef4444">❌ Error: ' + e.message + '</td></tr>';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="10" style="text-align:center;padding:32px;color:#ef4444">❌ Error al cargar: ' + e.message + '</td></tr>';
     if (loader) loader.style.display = "none";
     renderEntradas([]);
     return;
