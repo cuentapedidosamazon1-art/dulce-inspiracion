@@ -5074,7 +5074,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
               <th style="padding:12px 14px;color:var(--muted);font-weight:600">Proveedor</th>
               <th style="padding:12px 14px;color:var(--muted);font-weight:600">Factura</th>
               <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:right">Inversión</th>
-              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:center">Acción</th>
+              <th style="padding:12px 14px;color:var(--muted);font-weight:600;text-align:center">Acciones</th>
             </tr>
           </thead>
           <tbody id="ent-hist-tbody">
@@ -5494,6 +5494,96 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   </div>
 </div>
 
+
+<!-- ════ MODAL EDITAR ENTRADA DE INVENTARIO ════════════ -->
+<div class="modal-overlay" id="m-edit-entrada">
+  <div class="modal-box" style="max-width:520px">
+    <div class="modal-head">
+      <h3>✏️ Editar Entrada de Inventario</h3>
+      <button class="modal-x" onclick="closeModal('m-edit-entrada')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-ent-id">
+
+      <!-- Producto (solo lectura en edición) -->
+      <div class="fg">
+        <label>Producto</label>
+        <div class="fi" id="edit-ent-producto-lbl"
+          style="background:rgba(0,0,0,.04);color:var(--muted);display:flex;align-items:center;gap:8px;cursor:default">
+          <i class="fa-solid fa-box" style="opacity:.5"></i>
+          <span id="edit-ent-producto-nombre">—</span>
+        </div>
+        <p style="font-size:.72rem;color:var(--muted);margin-top:4px">⚠️ El producto no se puede cambiar. Si es necesario, elimina esta entrada y crea una nueva.</p>
+      </div>
+
+      <div class="form-2col">
+        <div class="fg">
+          <label>Cantidad recibida</label>
+          <input class="fi" id="edit-ent-cantidad" type="number" min="1" placeholder="Ej: 24">
+        </div>
+        <div class="fg">
+          <label>Precio de compra (RD$)</label>
+          <input class="fi" id="edit-ent-precio-compra" type="number" min="0" step="0.01" placeholder="Ej: 180.00">
+        </div>
+      </div>
+
+      <div class="form-2col">
+        <div class="fg">
+          <label>Fecha de entrada</label>
+          <input class="fi" id="edit-ent-fecha" type="date">
+        </div>
+        <div class="fg">
+          <label>Proveedor / Suplidor</label>
+          <input class="fi" id="edit-ent-proveedor" type="text" placeholder="Ej: Distribuidora XYZ">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label>N° de Factura / Referencia <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <input class="fi" id="edit-ent-factura" type="text" placeholder="Ej: FAC-2026-00123">
+      </div>
+
+      <div class="fg">
+        <label>Notas <span style="font-weight:400;color:var(--muted)">(opcional)</span></label>
+        <textarea class="fi" id="edit-ent-notas" rows="2" placeholder="Condición del pedido, observaciones..." style="resize:none"></textarea>
+      </div>
+
+      <!-- Info sobre ajuste de stock -->
+      <div id="edit-ent-stock-info" style="display:none;background:rgba(29,78,216,.07);border:1px solid rgba(29,78,216,.2);border-radius:12px;padding:10px 14px;font-size:.8rem;color:#1d4ed8;margin-bottom:4px">
+        <i class="fa-solid fa-circle-info"></i>
+        <span id="edit-ent-stock-msg"></span>
+      </div>
+
+      <div id="edit-ent-err" style="color:#ef4444;font-size:.82rem;text-align:center;display:none;margin-bottom:4px"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" style="flex:1" onclick="closeModal('m-edit-entrada')">Cancelar</button>
+      <button class="btn btn-primary" style="flex:1" id="edit-ent-save-btn" onclick="saveEditEntrada()">
+        <i class="fa-solid fa-floppy-disk"></i> Guardar cambios
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ MODAL CONFIRMAR ELIMINAR ENTRADA ════════════ -->
+<div class="modal-overlay" id="m-del-entrada">
+  <div class="modal-box" style="max-width:380px">
+    <div class="modal-body" style="padding:36px 28px;text-align:center">
+      <div style="width:64px;height:64px;background:rgba(239,68,68,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 20px;font-size:1.8rem">🗑️</div>
+      <h3 style="font-family:var(--ff-head);margin-bottom:10px">¿Eliminar entrada?</h3>
+      <p style="color:var(--muted);font-size:.88rem;margin-bottom:6px">Estás a punto de eliminar la entrada de</p>
+      <p style="font-weight:700;font-size:1.05rem;color:var(--dark);margin-bottom:12px" id="del-ent-nombre">—</p>
+      <p style="font-size:.78rem;color:var(--muted);margin-bottom:28px">⚠️ El stock del producto se revertirá automáticamente. Esta acción no se puede deshacer.</p>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-secondary" style="flex:1" onclick="closeModal('m-del-entrada')">Cancelar</button>
+        <button class="btn" style="flex:1;background:linear-gradient(135deg,#ef4444,#b91c1c);color:#fff;box-shadow:0 6px 20px rgba(239,68,68,.35)"
+          id="confirm-del-ent-btn" onclick="doDeleteEntrada()">
+          <i class="fa-solid fa-trash-can"></i> Eliminar
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div class="modal-overlay" id="m-user">
   <div class="modal-box" style="max-width:440px">
@@ -8903,10 +8993,18 @@ function renderEntradas(list) {
       <td style="padding:11px 14px;color:var(--muted);font-size:.78rem">${e.factura || "—"}</td>
       <td style="padding:11px 14px;text-align:right;font-weight:600">RD$ ${inversion.toLocaleString()}</td>
       <td style="padding:11px 14px;text-align:center">
-        <button onclick="verNotasEntrada(${e.id || 0},'${(e.notas||"").replace(/'/g,"")}')"
-          style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.72rem;color:var(--muted)">
-          <i class="fa-solid fa-note-sticky"></i>
-        </button>
+        <div style="display:flex;gap:6px;justify-content:center">
+          <button onclick="openEditEntradaModal(${e.id})"
+            title="Editar"
+            style="background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.72rem;color:#1d4ed8">
+            <i class="fa-solid fa-pen-to-square"></i>
+          </button>
+          <button onclick="confirmDeleteEntrada(${e.id},'${(e.producto_nombre||e.nombre||"").replace(/'/g,"")}')"
+            title="Eliminar"
+            style="background:none;border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:.72rem;color:#ef4444">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
       </td>
     </tr>`;
   }).join("");
@@ -9003,6 +9101,115 @@ function calcMargenEntrada() {
   document.getElementById("ent-margen-lbl").textContent       = margen + "% " + (margen < 10 ? "Margen bajo" : margen < 25 ? "Margen medio" : "Margen saludable");
   wrap.style.display = "block";
 }
+/* ══════════════════════════════════════════════════════
+   EDITAR / ELIMINAR ENTRADAS
+══════════════════════════════════════════════════════ */
+let _editEntradaOriginal = null;
+let _delEntradaId = null;
+
+async function openEditEntradaModal(id) {
+  _editEntradaOriginal = null;
+  document.getElementById("edit-ent-err").style.display = "none";
+  document.getElementById("edit-ent-stock-info").style.display = "none";
+
+  let entrada = _allEntradas.find(e => e.id === id);
+  if (!entrada) {
+    try { entrada = await api("GET", "/api/admin/entradas/" + id); }
+    catch(e) { toast("❌ No se pudo cargar la entrada: " + e.message); return; }
+  }
+
+  _editEntradaOriginal = entrada;
+  document.getElementById("edit-ent-id").value                     = entrada.id;
+  document.getElementById("edit-ent-producto-nombre").textContent  = entrada.producto_nombre || entrada.nombre || "—";
+  document.getElementById("edit-ent-cantidad").value               = entrada.cantidad || "";
+  document.getElementById("edit-ent-precio-compra").value          = entrada.precio_compra || "";
+  document.getElementById("edit-ent-proveedor").value              = entrada.proveedor || "";
+  document.getElementById("edit-ent-factura").value                = entrada.factura || "";
+  document.getElementById("edit-ent-notas").value                  = entrada.notas || "";
+  document.getElementById("edit-ent-fecha").value                  = (entrada.fecha || "").toString().slice(0, 10);
+
+  document.getElementById("edit-ent-cantidad").oninput = function() {
+    const orig  = Number(_editEntradaOriginal?.cantidad || 0);
+    const nuevo = parseInt(this.value) || 0;
+    const diff  = nuevo - orig;
+    const infoEl = document.getElementById("edit-ent-stock-info");
+    const msgEl  = document.getElementById("edit-ent-stock-msg");
+    if (diff === 0 || !nuevo) { infoEl.style.display = "none"; return; }
+    infoEl.style.display = "block";
+    msgEl.textContent = diff > 0
+      ? " Se sumarán " + diff + " unidad" + (diff !== 1 ? "es" : "") + " al stock."
+      : " Se restarán " + Math.abs(diff) + " unidad" + (Math.abs(diff) !== 1 ? "es" : "") + " del stock.";
+  };
+
+  openModal("m-edit-entrada");
+}
+
+async function saveEditEntrada() {
+  const id           = parseInt(document.getElementById("edit-ent-id").value);
+  const cantidad     = parseInt(document.getElementById("edit-ent-cantidad").value);
+  const precioCompra = parseFloat(document.getElementById("edit-ent-precio-compra").value);
+  const fecha        = document.getElementById("edit-ent-fecha").value;
+  const proveedor    = document.getElementById("edit-ent-proveedor").value.trim();
+  const factura      = document.getElementById("edit-ent-factura").value.trim();
+  const notas        = document.getElementById("edit-ent-notas").value.trim();
+  const errEl        = document.getElementById("edit-ent-err");
+  errEl.style.display = "none";
+
+  if (!cantidad || cantidad < 1)           { errEl.textContent = "⚠️ La cantidad debe ser mayor a 0";   errEl.style.display = "block"; return; }
+  if (!precioCompra || precioCompra <= 0)  { errEl.textContent = "⚠️ Ingresa el precio de compra";      errEl.style.display = "block"; return; }
+  if (!fecha)                              { errEl.textContent = "⚠️ Selecciona la fecha";              errEl.style.display = "block"; return; }
+
+  const btn = document.getElementById("edit-ent-save-btn");
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Guardando...';
+  btn.disabled  = true;
+  try {
+    const result = await api("PUT", "/api/admin/entradas/" + id, {
+      cantidad, precio_compra: precioCompra, fecha,
+      proveedor: proveedor || null,
+      factura:   factura   || null,
+      notas:     notas     || null
+    });
+    toast("✅ Entrada actualizada · Stock: " + (result.stock_nuevo ?? "?") + " uds");
+    closeModal("m-edit-entrada");
+    loadEntradas();
+    loadAdminProducts();
+    loadPublicProducts();
+  } catch(e) {
+    errEl.textContent = "❌ " + e.message;
+    errEl.style.display = "block";
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Guardar cambios';
+    btn.disabled  = false;
+  }
+}
+
+function confirmDeleteEntrada(id, nombre) {
+  _delEntradaId = id;
+  document.getElementById("del-ent-nombre").textContent = nombre || "esta entrada";
+  openModal("m-del-entrada");
+}
+
+async function doDeleteEntrada() {
+  if (!_delEntradaId) return;
+  const btn = document.getElementById("confirm-del-ent-btn");
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...';
+  btn.disabled  = true;
+  try {
+    await api("DELETE", "/api/admin/entradas/" + _delEntradaId);
+    toast("🗑️ Entrada eliminada · Stock revertido");
+    closeModal("m-del-entrada");
+    _delEntradaId = null;
+    loadEntradas();
+    loadAdminProducts();
+    loadPublicProducts();
+  } catch(e) {
+    toast("❌ " + e.message);
+  } finally {
+    btn.innerHTML = '<i class="fa-solid fa-trash-can"></i> Eliminar';
+    btn.disabled  = false;
+  }
+}
+
 
 
 </script>
