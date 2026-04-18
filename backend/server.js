@@ -40,6 +40,10 @@ async function initDB() {
     // Migraciones seguras
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha DATE NOT NULL DEFAULT CURRENT_DATE;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS proveedor VARCHAR(200) NULL;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS factura VARCHAR(100) NULL;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS notas TEXT NULL;`).catch(() => {});
     // El primer usuario (admin) siempre es admin
     await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
 
