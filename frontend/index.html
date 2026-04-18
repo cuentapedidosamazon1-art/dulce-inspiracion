@@ -8955,6 +8955,45 @@ async function saveEntrada() {
   }
 }
 
+function openEntradaModal() {
+  const sel = document.getElementById("ent-producto");
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Selecciona un producto —</option>';
+  prods.forEach(p => {
+    const opt = document.createElement("option");
+    opt.value = p.id;
+    opt.textContent = p.nombre + "  (Stock: " + (p.stock ?? 0) + " uds)";
+    opt.dataset.precio = p.precio;
+    sel.appendChild(opt);
+  });
+  document.getElementById("ent-cantidad").value      = "";
+  document.getElementById("ent-precio-compra").value = "";
+  document.getElementById("ent-proveedor").value     = "";
+  document.getElementById("ent-factura").value       = "";
+  document.getElementById("ent-notas").value         = "";
+  document.getElementById("ent-err").style.display   = "none";
+  document.getElementById("ent-margen-wrap").style.display = "none";
+  document.getElementById("ent-fecha").value = new Date().toISOString().split("T")[0];
+  sel.onchange = calcMargenEntrada;
+  openModal("m-entrada");
+}
+
+function calcMargenEntrada() {
+  const sel          = document.getElementById("ent-producto");
+  const opt          = sel.options[sel.selectedIndex];
+  const precioVenta  = parseFloat(opt?.dataset?.precio || 0);
+  const precioCompra = parseFloat(document.getElementById("ent-precio-compra").value || 0);
+  const wrap         = document.getElementById("ent-margen-wrap");
+  if (!precioVenta || !precioCompra || sel.value === "") { wrap.style.display = "none"; return; }
+  const margen = ((precioVenta - precioCompra) / precioVenta * 100).toFixed(1);
+  const color  = margen < 10 ? "#ef4444" : margen < 25 ? "#f59e0b" : "#16a34a";
+  document.getElementById("ent-precio-venta-lbl").textContent = "RD$ " + Number(precioVenta).toLocaleString();
+  document.getElementById("ent-margen-lbl").style.color       = color;
+  document.getElementById("ent-margen-lbl").textContent       = margen + "% " + (margen < 10 ? "Margen bajo" : margen < 25 ? "Margen medio" : "Margen saludable");
+  wrap.style.display = "block";
+}
+
+
 </script>
 
 
