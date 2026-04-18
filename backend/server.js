@@ -40,10 +40,6 @@ async function initDB() {
     // Migraciones seguras
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS fecha_entrada DATE NOT NULL DEFAULT CURRENT_DATE;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS proveedor VARCHAR(200) NULL;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS factura VARCHAR(100) NULL;`).catch(() => {});
-    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS notas TEXT NULL;`).catch(() => {});
     // El primer usuario (admin) siempre es admin
     await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
 
@@ -99,7 +95,7 @@ async function initDB() {
         proveedor     VARCHAR(200) NULL,
         factura       VARCHAR(100) NULL,
         notas         TEXT NULL,
-        fecha_entrada  DATE NOT NULL DEFAULT CURRENT_DATE,
+        fecha         DATE NOT NULL,
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
@@ -436,21 +432,21 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
       SELECT
         e.id,
         e.producto_id,
-        p.nombre                                                  AS producto_nombre,
-        p.precio::float                                           AS precio_venta,
+        p.nombre                                                        AS producto_nombre,
+        p.precio::float                                                 AS precio_venta,
         e.cantidad,
         e.precio_compra::float,
-        COALESCE(e.proveedor, '')                                 AS proveedor,
-        COALESCE(e.factura, '')                                   AS factura,
-        COALESCE(e.notas, '')                                     AS notas,
-        COALESCE(e.fecha_entrada, e.fecha_creacion::date)         AS fecha,
-        e.fecha_creacion,
+        COALESCE(e."Proveedor", '')                                     AS proveedor,
+        COALESCE(e."Factura",   '')                                     AS factura,
+        COALESCE(e."Notas",     '')                                     AS notas,
+        COALESCE(e.fecha_entrada, e.fecha)                              AS fecha,
+        e.fecha_registro                                                AS fecha_creacion,
         ROUND(
           ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
-        )::float                                                  AS margen_pct
+        )::float                                                        AS margen_pct
       FROM entradas_inventario e
       JOIN productos p ON p.id = e.producto_id
-      ORDER BY e.fecha_creacion DESC
+      ORDER BY e.fecha_registro DESC
     `);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -460,7 +456,7 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
 app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT e.*, p.nombre AS producto_nombre, p.precio AS precio_venta
+      SELECT e.*, p.nombre AS producto_nombre, p.precio::float AS precio_venta
       FROM entradas_inventario e
       JOIN productos p ON p.id = e.producto_id
       WHERE e.id = $1
@@ -472,7 +468,8 @@ app.get("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
 
 // POST /api/admin/entradas  → registrar entrada y actualizar stock atomicamente
 app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
-  const { producto_id, cantidad, precio_compra, fecha: fecha_entrada, proveedor, factura, notas } = req.body;
+  const { producto_id, cantidad, precio_compra, fecha, proveedor, factura, notas } = req.body;
+  const usuario_id = req.user.id;
 
   if (!producto_id)
     return res.status(400).json({ error: "producto_id es requerido" });
@@ -480,7 +477,7 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
     return res.status(400).json({ error: "La cantidad debe ser mayor a 0" });
   if (!precio_compra || parseFloat(precio_compra) <= 0)
     return res.status(400).json({ error: "precio_compra debe ser mayor a 0" });
-  if (!fecha_entrada)
+  if (!fecha)
     return res.status(400).json({ error: "La fecha es requerida" });
 
   const client = await pool.connect();
@@ -496,20 +493,21 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Insertar registro de entrada
+    // Insertar registro de entrada con los nombres reales de columnas
     const entrada = await client.query(`
       INSERT INTO entradas_inventario
-        (producto_id, cantidad, precio_compra, proveedor, factura, notas, fecha_entrada)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+        (producto_id, usuario_id, cantidad, precio_compra, fecha_entrada, "Proveedor", "Factura", "Notas", fecha)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $5)
       RETURNING *
     `, [
       producto_id,
+      usuario_id,
       parseInt(cantidad),
       parseFloat(precio_compra),
+      fecha,
       proveedor || null,
       factura   || null,
-      notas     || null,
-      fecha_entrada
+      notas     || null
     ]);
 
     // Actualizar stock del producto atomicamente
@@ -568,21 +566,6 @@ app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
   } finally {
     client.release();
   }
-});
-
-
-// ── DIAGNÓSTICO TEMPORAL — borrar después ───────────────────────
-app.get("/api/debug/entradas-schema", authMiddleware, async (req, res) => {
-  try {
-    const cols = await pool.query(`
-      SELECT column_name, data_type, is_nullable
-      FROM information_schema.columns
-      WHERE table_name = 'entradas_inventario'
-      ORDER BY ordinal_position
-    `);
-    const sample = await pool.query(`SELECT * FROM entradas_inventario LIMIT 3`);
-    res.json({ columnas: cols.rows, muestra: sample.rows });
-  } catch(err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── KEEP-ALIVE (evita que Render se duerma) ─────────────────────
