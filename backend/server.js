@@ -443,7 +443,7 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
         e.proveedor,
         e.factura,
         e.notas,
-        e.fecha_entrada,
+        e.fecha_entrada AS fecha,
         e.fecha_creacion,
         ROUND(
           ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
