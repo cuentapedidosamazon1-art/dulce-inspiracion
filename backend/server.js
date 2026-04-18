@@ -40,6 +40,13 @@ async function initDB() {
     // Migraciones seguras
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS usuario_id INT NULL;`).catch(() => {});
+    // Migrar columnas con mayusculas a minusculas si existen
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Proveedor" TO proveedor;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Factura" TO factura;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Notas" TO notas;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_entrada TO fecha;`).catch(() => {});
+    await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN fecha_registro TO fecha_creacion;`).catch(() => {});
     // El primer usuario (admin) siempre es admin
     await client.query(`UPDATE usuarios SET rol='admin' WHERE email='admin@dulceinspiracion.com';`).catch(() => {});
 
@@ -90,6 +97,7 @@ async function initDB() {
       CREATE TABLE IF NOT EXISTS entradas_inventario (
         id            SERIAL PRIMARY KEY,
         producto_id   INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
+        usuario_id    INT NULL,
         cantidad      INT NOT NULL CHECK (cantidad > 0),
         precio_compra DECIMAL(10,2) NOT NULL CHECK (precio_compra > 0),
         proveedor     VARCHAR(200) NULL,
@@ -436,17 +444,17 @@ app.get("/api/admin/entradas", authMiddleware, async (req, res) => {
         p.precio::float                                                 AS precio_venta,
         e.cantidad,
         e.precio_compra::float,
-        COALESCE(e."Proveedor", '')                                     AS proveedor,
-        COALESCE(e."Factura",   '')                                     AS factura,
-        COALESCE(e."Notas",     '')                                     AS notas,
-        COALESCE(e.fecha_entrada, e.fecha)                              AS fecha,
-        e.fecha_registro                                                AS fecha_creacion,
+        COALESCE(e.proveedor, '')                                       AS proveedor,
+        COALESCE(e.factura,   '')                                       AS factura,
+        COALESCE(e.notas,     '')                                       AS notas,
+        e.fecha,
+        e.fecha_creacion,
         ROUND(
           ((p.precio - e.precio_compra) / NULLIF(p.precio, 0)) * 100, 1
         )::float                                                        AS margen_pct
       FROM entradas_inventario e
       JOIN productos p ON p.id = e.producto_id
-      ORDER BY e.fecha_registro DESC
+      ORDER BY e.fecha_creacion DESC
     `);
     res.json(result.rows);
   } catch (err) { res.status(500).json({ error: err.message }); }
@@ -493,11 +501,11 @@ app.post("/api/admin/entradas", authMiddleware, async (req, res) => {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Insertar registro de entrada con los nombres reales de columnas
+    // Insertar registro de entrada
     const entrada = await client.query(`
       INSERT INTO entradas_inventario
-        (producto_id, usuario_id, cantidad, precio_compra, fecha_entrada, "Proveedor", "Factura", "Notas", fecha)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $5)
+        (producto_id, usuario_id, cantidad, precio_compra, fecha, proveedor, factura, notas)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `, [
       producto_id,
