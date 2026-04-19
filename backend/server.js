@@ -512,9 +512,10 @@ app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
   }
 });
 
-// ── ESTADÍSTICAS ADMIN ─────────────────────────────────────────
+// ── ESTADÍSTICAS ADMIN (unificadas: pedidos online + POS) ──────
 app.get("/api/admin/estadisticas", authMiddleware, async (req, res) => {
   try {
+    // ── Totales de pedidos ONLINE ────────────────────────────────
     const totalesRes = await pool.query(`
       SELECT
         COUNT(*)::int                                             AS total_pedidos,
@@ -525,36 +526,211 @@ app.get("/api/admin/estadisticas", authMiddleware, async (req, res) => {
       WHERE estado != 'cancelado'
     `);
 
+    // ── Totales de ventas POS ────────────────────────────────────
+    const posRes = await pool.query(`
+      SELECT
+        COUNT(*)::int                                              AS total_ventas_pos,
+        COALESCE(SUM(total) FILTER (WHERE estado='completada'),0)::float  AS ingresos_pos,
+        COUNT(*) FILTER (WHERE estado='completada')::int           AS completadas_pos,
+        COUNT(*) FILTER (WHERE estado='anulada')::int              AS anuladas_pos,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Efectivo'       AND estado='completada'),0)::float AS pos_efectivo,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Tarjeta'        AND estado='completada'),0)::float AS pos_tarjeta,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Transferencia'  AND estado='completada'),0)::float AS pos_transferencia
+      FROM ventas_tienda
+    `);
+
+    // ── Resumen KPIs de hoy (POS) ────────────────────────────────
+    const hoy = new Date().toISOString().slice(0,10);
+    const posHoyRes = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE estado='completada')::int                  AS ventas_hoy,
+        COALESCE(SUM(total) FILTER (WHERE estado='completada'),0)::float  AS ingresos_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Efectivo' AND estado='completada'),0)::float AS efectivo_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Tarjeta'  AND estado='completada'),0)::float AS tarjeta_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Transferencia' AND estado='completada'),0)::float AS transferencia_hoy
+      FROM ventas_tienda
+      WHERE DATE(fecha_creacion) = $1
+    `, [hoy]);
+
+    // ── Ingresos de hoy pedidos ONLINE ───────────────────────────
+    const onlineHoyRes = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE estado IN ('confirmado','entregado'))::int AS pedidos_hoy,
+        COALESCE(SUM(total) FILTER (WHERE estado IN ('confirmado','entregado')),0)::float AS ingresos_hoy_online
+      FROM pedidos
+      WHERE DATE(fecha_creacion) = $1
+    `, [hoy]);
+
+    // ── Producto más vendido (pedidos + POS combinados) ──────────
     const masRes = await pool.query(`
       SELECT p.id, p.nombre, p.precio::float, p.imagen,
-        SUM(dp.cantidad)::int                    AS total_vendido,
-        SUM(dp.cantidad * dp.precio)::float      AS ingresos_total,
-        COUNT(DISTINCT dp.pedido_id)::int        AS num_pedidos
+        SUM(ventas.qty)::int        AS total_vendido,
+        SUM(ventas.ingresos)::float AS ingresos_total,
+        SUM(ventas.num_tx)::int     AS num_pedidos
       FROM productos p
-      JOIN detalle_pedido dp ON dp.producto_id = p.id
-      JOIN pedidos pe        ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+      JOIN (
+        -- Ventas online
+        SELECT dp.producto_id,
+               SUM(dp.cantidad)                AS qty,
+               SUM(dp.cantidad * dp.precio)    AS ingresos,
+               COUNT(DISTINCT dp.pedido_id)    AS num_tx
+        FROM detalle_pedido dp
+        JOIN pedidos pe ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+        WHERE dp.producto_id IS NOT NULL
+        GROUP BY dp.producto_id
+        UNION ALL
+        -- Ventas POS
+        SELECT dvt.producto_id,
+               SUM(dvt.cantidad)               AS qty,
+               SUM(dvt.subtotal)               AS ingresos,
+               COUNT(DISTINCT dvt.venta_id)    AS num_tx
+        FROM detalle_venta_tienda dvt
+        JOIN ventas_tienda vt ON vt.id = dvt.venta_id AND vt.estado = 'completada'
+        WHERE dvt.producto_id IS NOT NULL
+        GROUP BY dvt.producto_id
+      ) ventas ON ventas.producto_id = p.id
       GROUP BY p.id, p.nombre, p.precio, p.imagen
       ORDER BY total_vendido DESC
       LIMIT 1
     `);
 
+    // ── Producto menos vendido (pedidos + POS combinados) ────────
     const menosRes = await pool.query(`
       SELECT p.id, p.nombre, p.precio::float, p.imagen,
-        SUM(dp.cantidad)::int                              AS total_vendido,
-        SUM(dp.cantidad * dp.precio)::float                AS ingresos_total,
-        EXTRACT(DAY FROM NOW() - p.fecha_creacion)::int    AS dias_en_inventario
+        SUM(ventas.qty)::int        AS total_vendido,
+        SUM(ventas.ingresos)::float AS ingresos_total,
+        EXTRACT(DAY FROM NOW() - p.fecha_creacion)::int AS dias_en_inventario
       FROM productos p
-      JOIN detalle_pedido dp ON dp.producto_id = p.id
-      JOIN pedidos pe        ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+      JOIN (
+        SELECT dp.producto_id,
+               SUM(dp.cantidad)             AS qty,
+               SUM(dp.cantidad * dp.precio) AS ingresos
+        FROM detalle_pedido dp
+        JOIN pedidos pe ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+        WHERE dp.producto_id IS NOT NULL
+        GROUP BY dp.producto_id
+        UNION ALL
+        SELECT dvt.producto_id,
+               SUM(dvt.cantidad)  AS qty,
+               SUM(dvt.subtotal)  AS ingresos
+        FROM detalle_venta_tienda dvt
+        JOIN ventas_tienda vt ON vt.id = dvt.venta_id AND vt.estado = 'completada'
+        WHERE dvt.producto_id IS NOT NULL
+        GROUP BY dvt.producto_id
+      ) ventas ON ventas.producto_id = p.id
       GROUP BY p.id, p.nombre, p.precio, p.imagen, p.fecha_creacion
       ORDER BY total_vendido ASC
       LIMIT 1
     `);
 
+    // ── Top 5 productos más vendidos (combinados) ────────────────
+    const top5Res = await pool.query(`
+      SELECT p.id, p.nombre, p.precio::float, p.imagen,
+        SUM(ventas.qty)::int        AS total_vendido,
+        SUM(ventas.ingresos)::float AS ingresos_total
+      FROM productos p
+      JOIN (
+        SELECT dp.producto_id, SUM(dp.cantidad) AS qty, SUM(dp.cantidad * dp.precio) AS ingresos
+        FROM detalle_pedido dp
+        JOIN pedidos pe ON pe.id = dp.pedido_id AND pe.estado != 'cancelado'
+        WHERE dp.producto_id IS NOT NULL GROUP BY dp.producto_id
+        UNION ALL
+        SELECT dvt.producto_id, SUM(dvt.cantidad) AS qty, SUM(dvt.subtotal) AS ingresos
+        FROM detalle_venta_tienda dvt
+        JOIN ventas_tienda vt ON vt.id = dvt.venta_id AND vt.estado = 'completada'
+        WHERE dvt.producto_id IS NOT NULL GROUP BY dvt.producto_id
+      ) ventas ON ventas.producto_id = p.id
+      GROUP BY p.id, p.nombre, p.precio, p.imagen
+      ORDER BY total_vendido DESC LIMIT 5
+    `);
+
+    // ── Métodos de pago unificados ───────────────────────────────
+    const metodosPagosRes = await pool.query(`
+      SELECT metodo_pago, SUM(total)::float AS total, COUNT(*)::int AS cantidad
+      FROM (
+        SELECT metodo_pago, total FROM pedidos
+        WHERE estado IN ('confirmado','entregado')
+        UNION ALL
+        SELECT metodo_pago, total FROM ventas_tienda
+        WHERE estado = 'completada'
+      ) t
+      GROUP BY metodo_pago
+      ORDER BY total DESC
+    `);
+
+    // ── Ingresos por día (últimos 30 días, combinados) ───────────
+    const tendenciaRes = await pool.query(`
+      SELECT fecha, SUM(total)::float AS total
+      FROM (
+        SELECT DATE(fecha_creacion) AS fecha, total
+        FROM pedidos
+        WHERE estado IN ('confirmado','entregado')
+          AND fecha_creacion >= NOW() - INTERVAL '30 days'
+        UNION ALL
+        SELECT DATE(fecha_creacion) AS fecha, total
+        FROM ventas_tienda
+        WHERE estado = 'completada'
+          AND fecha_creacion >= NOW() - INTERVAL '30 days'
+      ) t
+      GROUP BY fecha
+      ORDER BY fecha ASC
+    `);
+
+    const posData    = posRes.rows[0]    || {};
+    const posHoyData = posHoyRes.rows[0] || {};
+    const onlineHoy  = onlineHoyRes.rows[0] || {};
+    const online     = totalesRes.rows[0] || {};
+
+    const ingresos_totales_combinados =
+      (parseFloat(online.ingresos_totales) || 0) +
+      (parseFloat(posData.ingresos_pos)    || 0);
+
     res.json({
-      totales:      totalesRes.rows[0] || { total_pedidos:0, ingresos_totales:0, pendientes:0, entregados:0 },
-      masVendido:   masRes.rows[0]     || null,
-      menosVendido: menosRes.rows[0]   || null,
+      // ── Compatibilidad con el frontend anterior ──────────────
+      totales: {
+        total_pedidos:    (online.total_pedidos    || 0) + (posData.completadas_pos || 0),
+        ingresos_totales: ingresos_totales_combinados,
+        pendientes:       online.pendientes  || 0,
+        entregados:       online.entregados  || 0,
+      },
+      masVendido:   masRes.rows[0]   || null,
+      menosVendido: menosRes.rows[0] || null,
+
+      // ── Datos nuevos para el frontend coordinado ─────────────
+      online: {
+        total_pedidos:   online.total_pedidos   || 0,
+        ingresos:        online.ingresos_totales || 0,
+        pendientes:      online.pendientes       || 0,
+        entregados:      online.entregados       || 0,
+        ingresos_hoy:    onlineHoy.ingresos_hoy_online || 0,
+        pedidos_hoy:     onlineHoy.pedidos_hoy   || 0,
+      },
+      pos: {
+        total_ventas:    posData.total_ventas_pos    || 0,
+        completadas:     posData.completadas_pos      || 0,
+        anuladas:        posData.anuladas_pos          || 0,
+        ingresos:        posData.ingresos_pos          || 0,
+        efectivo:        posData.pos_efectivo          || 0,
+        tarjeta:         posData.pos_tarjeta           || 0,
+        transferencia:   posData.pos_transferencia     || 0,
+        ingresos_hoy:    posHoyData.ingresos_hoy       || 0,
+        ventas_hoy:      posHoyData.ventas_hoy         || 0,
+        efectivo_hoy:    posHoyData.efectivo_hoy       || 0,
+        tarjeta_hoy:     posHoyData.tarjeta_hoy        || 0,
+        transferencia_hoy: posHoyData.transferencia_hoy || 0,
+      },
+      combinado: {
+        ingresos_totales: ingresos_totales_combinados,
+        ingresos_hoy:
+          (onlineHoy.ingresos_hoy_online || 0) +
+          (posHoyData.ingresos_hoy       || 0),
+        transacciones_totales:
+          (online.total_pedidos    || 0) +
+          (posData.completadas_pos || 0),
+      },
+      top5Productos: top5Res.rows,
+      metodosPago:   metodosPagosRes.rows,
+      tendencia30d:  tendenciaRes.rows,
     });
   } catch (err) { res.status(500).json({ error: err.message }); }
 });
