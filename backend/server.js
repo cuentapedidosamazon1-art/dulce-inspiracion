@@ -90,6 +90,35 @@ async function initDB() {
         cantidad        INT NOT NULL DEFAULT 1
       );
 
+      CREATE TABLE IF NOT EXISTS ventas_tienda (
+        id              SERIAL PRIMARY KEY,
+        numero_factura  VARCHAR(30) NOT NULL UNIQUE,
+        usuario_id      INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        cliente_nombre  VARCHAR(200) NULL,
+        subtotal        DECIMAL(10,2) NOT NULL,
+        descuento_pct   DECIMAL(5,2) NOT NULL DEFAULT 0,
+        descuento_monto DECIMAL(10,2) NOT NULL DEFAULT 0,
+        itbis           DECIMAL(10,2) NOT NULL DEFAULT 0,
+        total           DECIMAL(10,2) NOT NULL,
+        metodo_pago     VARCHAR(50)  NOT NULL DEFAULT 'Efectivo',
+        monto_recibido  DECIMAL(10,2) NULL,
+        cambio          DECIMAL(10,2) NULL,
+        notas           TEXT NULL,
+        estado          VARCHAR(20)  NOT NULL DEFAULT 'completada'
+                        CHECK (estado IN ('completada','anulada')),
+        fecha_creacion  TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS detalle_venta_tienda (
+        id              SERIAL PRIMARY KEY,
+        venta_id        INT NOT NULL REFERENCES ventas_tienda(id) ON DELETE CASCADE,
+        producto_id     INT NULL REFERENCES productos(id) ON DELETE SET NULL,
+        nombre_producto VARCHAR(200) NOT NULL,
+        precio_unitario DECIMAL(10,2) NOT NULL,
+        cantidad        INT NOT NULL DEFAULT 1,
+        subtotal        DECIMAL(10,2) NOT NULL
+      );
+
       CREATE TABLE IF NOT EXISTS entradas_inventario (
         id             SERIAL PRIMARY KEY,
         producto_id    INT NOT NULL REFERENCES productos(id) ON DELETE CASCADE,
@@ -721,6 +750,291 @@ app.delete("/api/admin/entradas/:id", authMiddleware, async (req, res) => {
     );
 
     await client.query("DELETE FROM entradas_inventario WHERE id = $1", [req.params.id]);
+
+    await client.query("COMMIT");
+    res.json({ ok: true });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// ══════════════════════════════════════════════════════════════
+//  PUNTO DE VENTA (POS) — VENTA EN TIENDA FÍSICA
+// ══════════════════════════════════════════════════════════════
+
+// Generar número de factura único: DI-YYYYMMDD-XXXXX
+async function generarNumFactura(client) {
+  const hoy = new Date();
+  const fecha = hoy.getFullYear().toString()
+    + String(hoy.getMonth()+1).padStart(2,"0")
+    + String(hoy.getDate()).padStart(2,"0");
+  const res = await client.query(
+    `SELECT COUNT(*) FROM ventas_tienda
+     WHERE numero_factura LIKE $1`,
+    [`DI-${fecha}-%`]
+  );
+  const seq = String(parseInt(res.rows[0].count) + 1).padStart(4,"0");
+  return `DI-${fecha}-${seq}`;
+}
+
+// GET /api/admin/pos/productos → catálogo activo con stock para la caja POS
+app.get("/api/admin/pos/productos", authMiddleware, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT id, nombre, descripcion, precio::float, stock, imagen, estado
+      FROM productos
+      WHERE estado = 'activo'
+      ORDER BY nombre ASC
+    `);
+    res.json(result.rows);
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/pos/resumen-hoy → KPIs de caja del día actual
+app.get("/api/admin/pos/resumen-hoy", authMiddleware, async (req, res) => {
+  try {
+    const hoy = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    const r = await pool.query(`
+      SELECT
+        COUNT(*) FILTER (WHERE estado='completada')::int          AS ventas_hoy,
+        COALESCE(SUM(total) FILTER (WHERE estado='completada'),0)::float AS ingresos_hoy,
+        COUNT(*) FILTER (WHERE estado='anulada')::int             AS anuladas_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Efectivo' AND estado='completada'),0)::float AS efectivo_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Tarjeta'  AND estado='completada'),0)::float AS tarjeta_hoy,
+        COALESCE(SUM(total) FILTER (WHERE metodo_pago='Transferencia' AND estado='completada'),0)::float AS transferencia_hoy,
+        COUNT(DISTINCT DATE(fecha_creacion))::int                 AS dias_con_ventas
+      FROM ventas_tienda
+      WHERE DATE(fecha_creacion) = $1
+    `, [hoy]);
+
+    // Top 5 productos vendidos hoy
+    const top = await pool.query(`
+      SELECT dvt.nombre_producto, SUM(dvt.cantidad)::int AS qty,
+             SUM(dvt.subtotal)::float AS total
+      FROM detalle_venta_tienda dvt
+      JOIN ventas_tienda vt ON vt.id = dvt.venta_id
+      WHERE DATE(vt.fecha_creacion) = $1 AND vt.estado = 'completada'
+      GROUP BY dvt.nombre_producto
+      ORDER BY qty DESC LIMIT 5
+    `, [hoy]);
+
+    res.json({ ...r.rows[0], top_productos: top.rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/pos/ventas → historial con filtros opcionales
+app.get("/api/admin/pos/ventas", authMiddleware, async (req, res) => {
+  const { desde, hasta, estado, metodo } = req.query;
+  try {
+    let where = ["1=1"];
+    const params = [];
+    if (desde)  { params.push(desde);  where.push(`DATE(vt.fecha_creacion) >= $${params.length}`); }
+    if (hasta)  { params.push(hasta);  where.push(`DATE(vt.fecha_creacion) <= $${params.length}`); }
+    if (estado) { params.push(estado); where.push(`vt.estado = $${params.length}`); }
+    if (metodo) { params.push(metodo); where.push(`vt.metodo_pago = $${params.length}`); }
+
+    const ventas = await pool.query(`
+      SELECT vt.*,
+             vt.subtotal::float,
+             vt.descuento_pct::float,
+             vt.descuento_monto::float,
+             vt.itbis::float,
+             vt.total::float,
+             vt.monto_recibido::float,
+             vt.cambio::float,
+             u.nombre AS cajero
+      FROM ventas_tienda vt
+      LEFT JOIN usuarios u ON u.id = vt.usuario_id
+      WHERE ${where.join(" AND ")}
+      ORDER BY vt.fecha_creacion DESC
+    `, params);
+
+    if (!ventas.rows.length) return res.json([]);
+
+    const ids = ventas.rows.map(v => v.id);
+    const detalles = await pool.query(`
+      SELECT venta_id, nombre_producto, precio_unitario::float,
+             cantidad, subtotal::float, producto_id
+      FROM detalle_venta_tienda
+      WHERE venta_id = ANY($1)
+    `, [ids]);
+
+    const detMap = {};
+    for (const d of detalles.rows) {
+      if (!detMap[d.venta_id]) detMap[d.venta_id] = [];
+      detMap[d.venta_id].push(d);
+    }
+
+    res.json(ventas.rows.map(v => ({ ...v, items: detMap[v.id] || [] })));
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// GET /api/admin/pos/ventas/:id → factura individual
+app.get("/api/admin/pos/ventas/:id", authMiddleware, async (req, res) => {
+  try {
+    const venta = await pool.query(`
+      SELECT vt.*, vt.subtotal::float, vt.descuento_pct::float,
+             vt.descuento_monto::float, vt.itbis::float,
+             vt.total::float, vt.monto_recibido::float, vt.cambio::float,
+             u.nombre AS cajero
+      FROM ventas_tienda vt
+      LEFT JOIN usuarios u ON u.id = vt.usuario_id
+      WHERE vt.id = $1
+    `, [req.params.id]);
+    if (!venta.rows.length) return res.status(404).json({ error: "Venta no encontrada" });
+
+    const items = await pool.query(`
+      SELECT nombre_producto, precio_unitario::float, cantidad, subtotal::float
+      FROM detalle_venta_tienda WHERE venta_id = $1
+    `, [req.params.id]);
+
+    res.json({ ...venta.rows[0], items: items.rows });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// POST /api/admin/pos/venta → registrar nueva venta en tienda
+app.post("/api/admin/pos/venta", authMiddleware, async (req, res) => {
+  const {
+    items, cliente_nombre, metodo_pago,
+    descuento_pct, itbis_pct,
+    monto_recibido, notas
+  } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0)
+    return res.status(400).json({ error: "La venta debe tener al menos un producto" });
+  if (!metodo_pago)
+    return res.status(400).json({ error: "metodo_pago es requerido" });
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    // Verificar stock y bloquear filas
+    for (const item of items) {
+      if (!item.producto_id) continue;
+      const prod = await client.query(
+        "SELECT stock, nombre FROM productos WHERE id=$1 FOR UPDATE",
+        [item.producto_id]
+      );
+      if (!prod.rows.length) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ error: `Producto ID ${item.producto_id} no encontrado` });
+      }
+      const { stock, nombre } = prod.rows[0];
+      if (stock < item.cantidad) {
+        await client.query("ROLLBACK");
+        return res.status(400).json({
+          error: `Stock insuficiente para "${nombre}". Disponible: ${stock}, solicitado: ${item.cantidad}`
+        });
+      }
+    }
+
+    // Calcular totales
+    const descPct  = parseFloat(descuento_pct  || 0);
+    const itbisPct = parseFloat(itbis_pct || 0);
+    const subtotalBruto = items.reduce((s, i) => s + (parseFloat(i.precio_unitario) * parseInt(i.cantidad)), 0);
+    const descMonto     = parseFloat((subtotalBruto * descPct / 100).toFixed(2));
+    const subtotal      = parseFloat((subtotalBruto - descMonto).toFixed(2));
+    const itbisMonto    = parseFloat((subtotal * itbisPct / 100).toFixed(2));
+    const total         = parseFloat((subtotal + itbisMonto).toFixed(2));
+    const cambio        = monto_recibido ? parseFloat((parseFloat(monto_recibido) - total).toFixed(2)) : null;
+
+    // Número de factura
+    const numero_factura = await generarNumFactura(client);
+
+    // Insertar cabecera
+    const ventaRes = await client.query(`
+      INSERT INTO ventas_tienda
+        (numero_factura, usuario_id, cliente_nombre, subtotal, descuento_pct,
+         descuento_monto, itbis, total, metodo_pago, monto_recibido, cambio, notas)
+      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+      RETURNING *
+    `, [
+      numero_factura,
+      req.user.id,
+      cliente_nombre || null,
+      subtotal,
+      descPct,
+      descMonto,
+      itbisMonto,
+      total,
+      metodo_pago,
+      monto_recibido ? parseFloat(monto_recibido) : null,
+      cambio,
+      notas || null
+    ]);
+
+    const ventaId = ventaRes.rows[0].id;
+
+    // Insertar detalles + descontar stock
+    for (const item of items) {
+      const linSub = parseFloat((parseFloat(item.precio_unitario) * parseInt(item.cantidad)).toFixed(2));
+      await client.query(`
+        INSERT INTO detalle_venta_tienda
+          (venta_id, producto_id, nombre_producto, precio_unitario, cantidad, subtotal)
+        VALUES ($1,$2,$3,$4,$5,$6)
+      `, [ventaId, item.producto_id || null, item.nombre_producto, parseFloat(item.precio_unitario), parseInt(item.cantidad), linSub]);
+
+      if (item.producto_id) {
+        await client.query(
+          "UPDATE productos SET stock = GREATEST(stock - $1, 0) WHERE id=$2",
+          [parseInt(item.cantidad), item.producto_id]
+        );
+      }
+    }
+
+    await client.query("COMMIT");
+    res.status(201).json({
+      ok: true,
+      venta_id: ventaId,
+      numero_factura,
+      total,
+      cambio
+    });
+  } catch (err) {
+    await client.query("ROLLBACK");
+    res.status(500).json({ error: err.message });
+  } finally {
+    client.release();
+  }
+});
+
+// PUT /api/admin/pos/ventas/:id/anular → anular venta y reponer stock
+app.put("/api/admin/pos/ventas/:id/anular", authMiddleware, async (req, res) => {
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+
+    const venta = await client.query(
+      "SELECT estado FROM ventas_tienda WHERE id=$1", [req.params.id]
+    );
+    if (!venta.rows.length) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Venta no encontrada" });
+    }
+    if (venta.rows[0].estado === "anulada") {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "La venta ya está anulada" });
+    }
+
+    // Reponer stock
+    const items = await client.query(
+      "SELECT producto_id, cantidad FROM detalle_venta_tienda WHERE venta_id=$1 AND producto_id IS NOT NULL",
+      [req.params.id]
+    );
+    for (const row of items.rows) {
+      await client.query(
+        "UPDATE productos SET stock = stock + $1 WHERE id=$2",
+        [row.cantidad, row.producto_id]
+      );
+    }
+
+    await client.query(
+      "UPDATE ventas_tienda SET estado='anulada' WHERE id=$1", [req.params.id]
+    );
 
     await client.query("COMMIT");
     res.json({ ok: true });
