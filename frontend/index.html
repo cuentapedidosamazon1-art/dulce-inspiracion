@@ -4271,6 +4271,340 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
   .stat-num { font-size: 1.4rem; }
   .cat-chip { font-size: .72rem; padding: 6px 11px; }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   PUNTO DE VENTA (POS) — ESTILOS
+═══════════════════════════════════════════════════════════ */
+
+/* KPI strip */
+.pos-kpi-strip {
+  display: grid;
+  grid-template-columns: repeat(4,1fr);
+  gap: 14px;
+  margin-bottom: 24px;
+}
+@media(max-width:900px){ .pos-kpi-strip { grid-template-columns: repeat(2,1fr); } }
+@media(max-width:480px){ .pos-kpi-strip { grid-template-columns: 1fr 1fr; } }
+
+.pos-kpi-card {
+  border-radius: 20px; padding: 20px;
+  display: flex; align-items: center; gap: 14px;
+  position: relative; overflow: hidden;
+  transition: transform .25s, box-shadow .25s;
+}
+.pos-kpi-card:hover { transform: translateY(-4px); box-shadow: 0 16px 40px rgba(0,0,0,.15); }
+.pos-kpi-rose { background: linear-gradient(135deg,var(--rose),#a02035); color:#fff; }
+.pos-kpi-gold { background: linear-gradient(135deg,var(--gold),#a07020); color:#fff; }
+.pos-kpi-green{ background: linear-gradient(135deg,#16a34a,#166534);    color:#fff; }
+.pos-kpi-blue { background: linear-gradient(135deg,#2563eb,#1d4ed8);    color:#fff; }
+.pos-kpi-icon { font-size:1.8rem; flex-shrink:0; }
+.pos-kpi-val  { font-family:var(--ff-head); font-size:1.5rem; font-weight:700; line-height:1; }
+.pos-kpi-lbl  { font-size:.7rem; opacity:.8; margin-top:3px; letter-spacing:.04em; text-transform:uppercase; }
+
+/* Layout 2-col */
+.pos-layout {
+  display: grid;
+  grid-template-columns: 1fr 380px;
+  gap: 20px;
+  align-items: start;
+  margin-bottom: 32px;
+}
+@media(max-width:1100px){ .pos-layout { grid-template-columns: 1fr 340px; } }
+@media(max-width:860px) { .pos-layout { grid-template-columns: 1fr; } }
+
+/* ── Catálogo ── */
+.pos-catalog-col { display: flex; flex-direction: column; gap: 14px; }
+.pos-search-bar  { display: flex; gap: 10px; }
+.pos-search-wrap {
+  flex: 1; position: relative;
+  background: #fff; border: 1.5px solid var(--border);
+  border-radius: 14px; overflow: hidden;
+  transition: border-color .2s;
+}
+.pos-search-wrap:focus-within { border-color: var(--rose); }
+.pos-search-icon {
+  position: absolute; left: 14px; top: 50%; transform: translateY(-50%);
+  color: var(--muted); font-size: .88rem; pointer-events: none;
+}
+.pos-search-input {
+  width: 100%; padding: 11px 36px 11px 38px;
+  border: none; outline: none;
+  font-family: var(--ff-body); font-size: .9rem; background: transparent;
+}
+.pos-search-clear {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  background: var(--muted); color: #fff; border: none; border-radius: 50%;
+  width: 18px; height: 18px; font-size: .75rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.pos-prod-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
+  gap: 12px;
+  max-height: 580px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+.pos-prod-loading { grid-column: 1/-1; display: flex; justify-content: center; padding: 48px; }
+
+.pos-prod-card {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 18px;
+  padding: 14px;
+  cursor: pointer;
+  transition: all .2s cubic-bezier(.22,.68,0,1.2);
+  position: relative;
+  overflow: hidden;
+  user-select: none;
+}
+.pos-prod-card:hover { border-color: var(--rose); box-shadow: 0 8px 24px rgba(192,57,75,.15); transform: translateY(-3px); }
+.pos-prod-card:active { transform: scale(.96); }
+.pos-prod-card.out-of-stock { opacity: .5; cursor: not-allowed; }
+.pos-prod-card.out-of-stock:hover { transform: none; box-shadow: none; border-color: var(--border); }
+
+.pos-prod-img {
+  width: 100%; aspect-ratio: 1;
+  border-radius: 12px; object-fit: cover;
+  background: var(--cream);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2.5rem; margin-bottom: 10px; overflow: hidden;
+}
+.pos-prod-img img { width: 100%; height: 100%; object-fit: cover; }
+.pos-prod-name { font-weight: 700; font-size: .84rem; color: var(--dark); line-height: 1.3; margin-bottom: 5px; }
+.pos-prod-price { font-family: var(--ff-head); font-size: 1.05rem; font-weight: 700; color: var(--rose); }
+.pos-prod-stock {
+  position: absolute; top: 10px; right: 10px;
+  font-size: .62rem; font-weight: 700;
+  padding: 3px 7px; border-radius: 999px;
+}
+.pos-stock-ok   { background: rgba(22,163,74,.1);  color: #15803d; }
+.pos-stock-low  { background: rgba(245,158,11,.15); color: #b45309; }
+.pos-stock-out  { background: rgba(239,68,68,.1);  color: #dc2626; }
+
+/* Add-to-cart flash */
+@keyframes posAddFlash { 0%{transform:scale(1)} 40%{transform:scale(1.12)} 100%{transform:scale(1)} }
+.pos-prod-card.added { animation: posAddFlash .3s ease; border-color: var(--rose); }
+
+/* ── Carrito POS ── */
+.pos-cart-col {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 24px;
+  padding: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 8px 32px rgba(26,10,14,.07);
+  position: sticky;
+  top: 80px;
+}
+
+.pos-cart-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(135deg, rgba(192,57,75,.04), rgba(201,150,58,.03));
+}
+.pos-cart-title { font-family: var(--ff-head); font-size: 1.15rem; font-weight: 800; color: var(--dark); display: flex; align-items: center; gap: 8px; }
+.pos-cart-clear-btn { background: rgba(239,68,68,.08); color: #dc2626; border: none; border-radius: 10px; padding: 7px 10px; cursor: pointer; transition: background .2s; font-size: .88rem; }
+.pos-cart-clear-btn:hover { background: rgba(239,68,68,.18); }
+
+.pos-cart-items {
+  flex: 1;
+  overflow-y: auto;
+  max-height: 280px;
+  padding: 10px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pos-cart-empty {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 8px; padding: 32px; text-align: center; color: var(--muted); font-size: .84rem;
+}
+.pos-cart-empty span { font-size: 2.5rem; }
+
+.pos-cart-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px;
+  background: var(--cream);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  animation: fadeUp .25s ease both;
+}
+.pos-ci-name { flex: 1; font-weight: 600; font-size: .84rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pos-ci-qty  { display: flex; align-items: center; gap: 5px; }
+.pos-ci-qty-btn {
+  width: 26px; height: 26px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: #fff;
+  font-weight: 700; font-size: .9rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s; color: var(--mid);
+}
+.pos-ci-qty-btn:hover { border-color: var(--rose); color: var(--rose); background: rgba(192,57,75,.06); }
+.pos-ci-qty-num { font-weight: 700; font-size: .88rem; min-width: 22px; text-align: center; }
+.pos-ci-price { font-family: var(--ff-head); font-size: .92rem; font-weight: 700; color: var(--rose); white-space: nowrap; }
+.pos-ci-del { background: none; border: none; color: var(--muted); cursor: pointer; font-size: .82rem; padding: 4px; border-radius: 6px; transition: color .15s; }
+.pos-ci-del:hover { color: #dc2626; }
+
+/* Cliente */
+.pos-cart-client { padding: 10px 16px 0; }
+.pos-client-input {
+  width: 100%; padding: 9px 14px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  font-family: var(--ff-body); font-size: .84rem; outline: none;
+  transition: border-color .2s;
+}
+.pos-client-input:focus { border-color: var(--rose); }
+
+/* Ajustes descuento/itbis */
+.pos-cart-adjustments { padding: 10px 16px 0; }
+.pos-adj-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pos-adj-lbl { font-size: .72rem; font-weight: 600; color: var(--mid); text-transform: uppercase; letter-spacing: .04em; white-space: nowrap; min-width: 70px; }
+.pos-adj-btns { display: flex; gap: 5px; flex-wrap: wrap; }
+.pos-adj-btn {
+  padding: 5px 10px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: #fff;
+  font-family: var(--ff-body); font-size: .72rem; font-weight: 600;
+  cursor: pointer; transition: all .15s; color: var(--mid);
+}
+.pos-adj-btn:hover   { border-color: var(--rose); color: var(--rose); }
+.pos-adj-btn.active  { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+/* Totales */
+.pos-totals { padding: 12px 16px 0; }
+.pos-total-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: .84rem; color: var(--mid); padding: 4px 0;
+}
+.pos-total-final {
+  font-family: var(--ff-head); font-size: 1.4rem; font-weight: 800;
+  color: var(--dark); border-top: 2px solid var(--border);
+  margin-top: 6px; padding-top: 8px;
+}
+
+/* Métodos pago */
+.pos-pay-methods { display: flex; gap: 8px; padding: 12px 16px 0; }
+.pos-pay-btn {
+  flex: 1; padding: 9px 6px; border-radius: 12px;
+  border: 1.5px solid var(--border); background: #fff;
+  font-family: var(--ff-body); font-size: .78rem; font-weight: 600;
+  cursor: pointer; transition: all .15s; color: var(--mid);
+  white-space: nowrap;
+}
+.pos-pay-btn:hover  { border-color: var(--rose); color: var(--rose); }
+.pos-pay-btn.active { background: var(--dark); color: #fff; border-color: var(--dark); }
+
+/* Efectivo */
+.pos-efectivo-wrap { padding: 8px 16px 0; }
+.pos-efectivo-row  { display: flex; gap: 8px; align-items: center; }
+.pos-efectivo-input {
+  flex: 1; padding: 9px 12px;
+  border: 1.5px solid var(--border); border-radius: 12px;
+  font-family: var(--ff-body); font-size: .88rem; outline: none;
+  transition: border-color .2s;
+}
+.pos-efectivo-input:focus { border-color: var(--rose); }
+.pos-cambio-badge {
+  background: rgba(22,163,74,.1); color: #15803d;
+  font-weight: 700; font-size: .78rem;
+  padding: 6px 10px; border-radius: 10px;
+  white-space: nowrap; min-width: 90px; text-align: center;
+}
+.pos-cambio-badge.negativo { background: rgba(239,68,68,.1); color: #dc2626; }
+.pos-efectivo-btns { display: flex; gap: 5px; flex-wrap: wrap; margin-top: 6px; }
+.pos-ef-btn {
+  padding: 5px 10px; border-radius: 8px;
+  border: 1.5px solid var(--border); background: #fff;
+  font-size: .72rem; font-weight: 700; cursor: pointer; transition: all .15s; color: var(--mid);
+}
+.pos-ef-btn:hover { border-color: var(--gold); color: var(--gold); }
+
+/* Notas */
+.pos-notas-input {
+  margin: 10px 16px 0; width: calc(100% - 32px);
+  padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 12px;
+  font-family: var(--ff-body); font-size: .82rem; resize: none; outline: none;
+  transition: border-color .2s;
+}
+.pos-notas-input:focus { border-color: var(--rose); }
+
+/* Cobrar */
+.pos-cobrar-btn {
+  margin: 12px 16px 16px; width: calc(100% - 32px);
+  background: linear-gradient(135deg, var(--rose), #a02035);
+  color: #fff; border: none; border-radius: 16px;
+  padding: 16px; font-family: var(--ff-head); font-size: 1.1rem;
+  font-weight: 800; cursor: pointer; letter-spacing: .02em;
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  box-shadow: 0 6px 20px rgba(192,57,75,.4);
+  transition: transform .2s, box-shadow .2s;
+}
+.pos-cobrar-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(192,57,75,.5); }
+.pos-cobrar-btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+/* Historial */
+.pos-historial-section { margin-top: 10px; }
+.pos-hist-header {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+.pos-hist-title { font-family: var(--ff-head); font-size: 1.2rem; font-weight: 800; color: var(--dark); }
+
+.pos-venta-card {
+  background: #fff; border: 1px solid var(--border);
+  border-radius: 18px; padding: 18px 20px;
+  margin-bottom: 12px;
+  transition: box-shadow .2s;
+  position: relative; overflow: hidden;
+}
+.pos-venta-card::before {
+  content:""; position:absolute; top:0; left:0; bottom:0; width:4px; border-radius:18px 0 0 18px;
+}
+.pos-venta-card.completada::before { background: linear-gradient(180deg,#16a34a,#4ade80); }
+.pos-venta-card.anulada::before    { background: linear-gradient(180deg,#ef4444,#f87171); opacity:.6; }
+.pos-venta-card.anulada            { opacity: .7; }
+.pos-venta-card:hover { box-shadow: 0 8px 24px rgba(26,10,14,.08); }
+
+.pos-venta-top { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; padding-left: 6px; }
+.pos-venta-num { font-family: monospace; font-size: .76rem; font-weight: 700; color: var(--rose); background: rgba(192,57,75,.07); padding: 3px 8px; border-radius: 6px; }
+.pos-venta-cliente { font-weight: 700; font-size: .94rem; color: var(--dark); }
+.pos-venta-total { font-family: var(--ff-head); font-size: 1.4rem; font-weight: 700; color: var(--dark); }
+.pos-venta-meta { display: flex; gap: 8px; flex-wrap: wrap; font-size: .74rem; color: var(--muted); margin-bottom: 10px; padding-left: 6px; }
+.pos-venta-items { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 12px; padding-left: 6px; }
+.pos-venta-chip { font-size: .72rem; background: var(--cream); padding: 3px 9px; border-radius: 7px; color: var(--mid); }
+.pos-venta-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-left: 6px; }
+
+/* Factura impresa POS */
+@media print {
+  body > *:not(#pos-print-area) { display: none !important; }
+  #pos-print-area { display: block !important; }
+  @page { margin: 0; size: 80mm auto; }
+}
+#pos-print-area {
+  display: none;
+  font-family: 'DM Sans', monospace, sans-serif;
+  width: 80mm; max-width: 80mm;
+  background: #fff; color: #000;
+  padding: 8mm 6mm;
+  font-size: 12px;
+}
+.pp-logo    { text-align: center; font-size: 22px; margin-bottom: 2mm; }
+.pp-title   { text-align: center; font-weight: 800; font-size: 14px; }
+.pp-sub     { text-align: center; font-size: 10px; color: #555; margin-bottom: 3mm; }
+.pp-divider { border: none; border-top: 1px dashed #999; margin: 3mm 0; }
+.pp-row     { display: flex; justify-content: space-between; margin-bottom: 1.5mm; font-size: 11px; }
+.pp-row-bold{ display: flex; justify-content: space-between; font-weight: 800; font-size: 13px; margin-top: 2mm; }
+.pp-items   { width: 100%; border-collapse: collapse; margin: 2mm 0; }
+.pp-items th{ text-align: left; font-size: 10px; color: #555; padding-bottom: 1mm; border-bottom: 1px solid #ccc; }
+.pp-items td{ font-size: 11px; padding: 1.5mm 0; }
+.pp-items td:last-child { text-align: right; }
+.pp-thanks  { text-align: center; margin-top: 4mm; font-size: 10px; color: #555; }
 </style>
 
 </head>
@@ -4580,6 +4914,7 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       <button class="tab-btn" id="tbtn-s" onclick="switchTab('s')">📊 Estadísticas</button>
       <button class="tab-btn" id="tbtn-u" onclick="switchTab('u')">👥 Usuarios</button>
       <button class="tab-btn" id="tbtn-e" onclick="switchTab('e')">📋 Registro Mercancía</button>
+      <button class="tab-btn" id="tbtn-pos" onclick="switchTab('pos')">🏪 Punto de Venta</button>
     </div>
 
     <!-- Tab Dashboard -->
@@ -5353,6 +5688,177 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
       </div>
 
     </div>
+
+    <!-- ═══ TAB PUNTO DE VENTA ═══════════════════════════════════ -->
+    <div id="tab-pos" style="display:none">
+
+      <!-- KPI strip -->
+      <div class="pos-kpi-strip" id="pos-kpi-strip">
+        <div class="pos-kpi-card pos-kpi-rose">
+          <div class="pos-kpi-icon">💰</div>
+          <div><div class="pos-kpi-val" id="pos-kpi-ingresos">RD$ 0</div><div class="pos-kpi-lbl">Ventas Hoy</div></div>
+        </div>
+        <div class="pos-kpi-card pos-kpi-gold">
+          <div class="pos-kpi-icon">🧾</div>
+          <div><div class="pos-kpi-val" id="pos-kpi-count">0</div><div class="pos-kpi-lbl">Facturas Hoy</div></div>
+        </div>
+        <div class="pos-kpi-card pos-kpi-green">
+          <div class="pos-kpi-icon">💵</div>
+          <div><div class="pos-kpi-val" id="pos-kpi-efectivo">RD$ 0</div><div class="pos-kpi-lbl">Efectivo</div></div>
+        </div>
+        <div class="pos-kpi-card pos-kpi-blue">
+          <div class="pos-kpi-icon">💳</div>
+          <div><div class="pos-kpi-val" id="pos-kpi-tarjeta">RD$ 0</div><div class="pos-kpi-lbl">Tarjeta/Transf.</div></div>
+        </div>
+      </div>
+
+      <!-- Layout: caja izq + carrito der -->
+      <div class="pos-layout">
+
+        <!-- ── Columna izquierda: catálogo ── -->
+        <div class="pos-catalog-col">
+          <div class="pos-search-bar">
+            <div class="pos-search-wrap">
+              <i class="fa-solid fa-magnifying-glass pos-search-icon"></i>
+              <input class="pos-search-input" id="pos-search" type="text"
+                placeholder="Buscar producto por nombre..."
+                oninput="posFilterProds()" autocomplete="off">
+              <button class="pos-search-clear" onclick="posSearchClear()" id="pos-search-clear" style="display:none">×</button>
+            </div>
+            <button class="btn btn-secondary" style="padding:10px 14px;font-size:.82rem;white-space:nowrap" onclick="loadPosResumen()">
+              <i class="fa-solid fa-rotate"></i>
+            </button>
+          </div>
+
+          <div class="pos-prod-grid" id="pos-prod-grid">
+            <div class="pos-prod-loading"><div class="spinner"></div></div>
+          </div>
+        </div>
+
+        <!-- ── Columna derecha: carrito POS ── -->
+        <div class="pos-cart-col">
+          <div class="pos-cart-header">
+            <div class="pos-cart-title"><i class="fa-solid fa-cash-register"></i> Caja</div>
+            <button class="pos-cart-clear-btn" onclick="posClearCart()" title="Vaciar caja">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+
+          <!-- Items del carrito -->
+          <div class="pos-cart-items" id="pos-cart-items">
+            <div class="pos-cart-empty" id="pos-cart-empty">
+              <span>🛒</span>
+              <p>Agrega productos<br>desde el catálogo</p>
+            </div>
+          </div>
+
+          <!-- Cliente (opcional) -->
+          <div class="pos-cart-client">
+            <input class="pos-client-input" id="pos-cliente" type="text"
+              placeholder="👤 Nombre del cliente (opcional)">
+          </div>
+
+          <!-- Descuento e ITBIS -->
+          <div class="pos-cart-adjustments">
+            <div class="pos-adj-row">
+              <label class="pos-adj-lbl">Descuento %</label>
+              <div class="pos-adj-btns">
+                <button onclick="posSetDesc(0)"  class="pos-adj-btn" id="pdesc-0">0%</button>
+                <button onclick="posSetDesc(5)"  class="pos-adj-btn" id="pdesc-5">5%</button>
+                <button onclick="posSetDesc(10)" class="pos-adj-btn" id="pdesc-10">10%</button>
+                <button onclick="posSetDesc(15)" class="pos-adj-btn" id="pdesc-15">15%</button>
+                <button onclick="posSetDesc(20)" class="pos-adj-btn" id="pdesc-20">20%</button>
+              </div>
+            </div>
+            <div class="pos-adj-row" style="margin-top:8px">
+              <label class="pos-adj-lbl">ITBIS</label>
+              <div class="pos-adj-btns">
+                <button onclick="posSetItbis(0)"  class="pos-adj-btn" id="pitbis-0">Sin ITBIS</button>
+                <button onclick="posSetItbis(18)" class="pos-adj-btn" id="pitbis-18">18%</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Totales -->
+          <div class="pos-totals" id="pos-totals">
+            <div class="pos-total-row"><span>Subtotal</span><span id="pos-subtotal">RD$ 0.00</span></div>
+            <div class="pos-total-row pos-desc-row" id="pos-desc-row" style="display:none">
+              <span id="pos-desc-lbl">Descuento (0%)</span>
+              <span id="pos-desc-val" style="color:#15803d">-RD$ 0.00</span>
+            </div>
+            <div class="pos-total-row pos-itbis-row" id="pos-itbis-row" style="display:none">
+              <span id="pos-itbis-lbl">ITBIS (18%)</span>
+              <span id="pos-itbis-val">RD$ 0.00</span>
+            </div>
+            <div class="pos-total-row pos-total-final">
+              <span>TOTAL</span>
+              <span id="pos-total-final">RD$ 0.00</span>
+            </div>
+          </div>
+
+          <!-- Método de pago -->
+          <div class="pos-pay-methods">
+            <button class="pos-pay-btn active" id="ppay-Efectivo"       onclick="posSelPay('Efectivo')">💵 Efectivo</button>
+            <button class="pos-pay-btn"        id="ppay-Tarjeta"        onclick="posSelPay('Tarjeta')">💳 Tarjeta</button>
+            <button class="pos-pay-btn"        id="ppay-Transferencia"  onclick="posSelPay('Transferencia')">🏦 Transferencia</button>
+          </div>
+
+          <!-- Monto recibido (solo Efectivo) -->
+          <div class="pos-efectivo-wrap" id="pos-efectivo-wrap">
+            <div class="pos-efectivo-row">
+              <input class="pos-efectivo-input" id="pos-monto-recibido" type="number"
+                placeholder="Monto recibido (RD$)" oninput="posCalcCambio()">
+              <div class="pos-cambio-badge" id="pos-cambio-badge">Cambio: —</div>
+            </div>
+            <div class="pos-efectivo-btns">
+              <button onclick="posSetMonto('exact')" class="pos-ef-btn">Exacto</button>
+              <button onclick="posSetMonto(500)"  class="pos-ef-btn">500</button>
+              <button onclick="posSetMonto(1000)" class="pos-ef-btn">1,000</button>
+              <button onclick="posSetMonto(2000)" class="pos-ef-btn">2,000</button>
+              <button onclick="posSetMonto(5000)" class="pos-ef-btn">5,000</button>
+            </div>
+          </div>
+
+          <!-- Notas -->
+          <textarea class="pos-notas-input" id="pos-notas" placeholder="Notas (opcional)" rows="2"></textarea>
+
+          <!-- Botón cobrar -->
+          <button class="pos-cobrar-btn" id="pos-cobrar-btn" onclick="posProcesarVenta()">
+            <i class="fa-solid fa-check-circle"></i> Cobrar
+            <span id="pos-cobrar-total"> RD$ 0.00</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Historial de ventas del día ── -->
+      <div class="pos-historial-section">
+        <div class="pos-hist-header">
+          <div class="pos-hist-title">🧾 Historial de Ventas</div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+            <input type="date" id="pos-hist-desde" class="ord-filter" style="font-size:.8rem"
+              onchange="loadPosHistorial()">
+            <input type="date" id="pos-hist-hasta" class="ord-filter" style="font-size:.8rem"
+              onchange="loadPosHistorial()">
+            <select class="ord-filter" id="pos-hist-metodo" onchange="loadPosHistorial()">
+              <option value="">Todos los métodos</option>
+              <option>Efectivo</option><option>Tarjeta</option><option>Transferencia</option>
+            </select>
+            <select class="ord-filter" id="pos-hist-estado" onchange="loadPosHistorial()">
+              <option value="">Todos</option>
+              <option value="completada">Completadas</option>
+              <option value="anulada">Anuladas</option>
+            </select>
+          </div>
+        </div>
+        <div id="pos-hist-loading" class="loading-wrap" style="display:none"><div class="spinner"></div></div>
+        <div id="pos-hist-list"></div>
+        <div id="pos-hist-empty" class="empty-wrap" style="display:none">
+          <span class="empty-icon">🧾</span>
+          <p style="color:var(--muted)">No hay ventas en este período</p>
+        </div>
+      </div>
+
+    </div><!-- /tab-pos -->
 
   </div>
 </div>
@@ -8515,7 +9021,7 @@ function switchTab(t) {
     toast("⛔ Sin acceso a esta sección");
     t = "d";
   }
-  ["d","p","o","s","u","e"].forEach(x => {
+  ["d","p","o","s","u","e","pos"].forEach(x => {
     const tab = document.getElementById("tab-"+x), btn = document.getElementById("tbtn-"+x);
     if (tab) tab.style.display = t===x?"block":"none";
     if (btn) btn.className = "tab-btn"+(t===x?" active":"");
@@ -8526,6 +9032,7 @@ function switchTab(t) {
   if (t==="s") { loadEstadisticas(); if (!orders.length) loadOrders().then(loadStats); else loadStats(); setTimeout(applyRoleRestrictions,200); }
   if (t==="u") { loadUsers(); setTimeout(applyRoleRestrictions,300); }
   if (t==="e") { loadEntradas(); setTimeout(applyRoleRestrictions,300); }
+  if (t==="pos") { initPOS(); setTimeout(applyRoleRestrictions,300); }
 }
 
 /* ══════════════════════════════════════════════════════
@@ -9482,8 +9989,482 @@ async function doDeleteEntrada() {
   }
 }
 
+/* ══════════════════════════════════════════════════════════════
+   PUNTO DE VENTA (POS) — JAVASCRIPT COMPLETO
+══════════════════════════════════════════════════════════════ */
 
+// Estado global del POS
+const posState = {
+  productos: [],        // Catálogo cargado
+  cart: [],             // Items en caja: {producto_id, nombre_producto, precio_unitario, cantidad}
+  descuento_pct: 0,
+  itbis_pct: 0,
+  metodo_pago: "Efectivo",
+  initialized: false
+};
 
+// ── Inicializar POS (primera vez o al volver al tab) ──────────
+async function initPOS() {
+  if (!posState.initialized) {
+    await loadPosProductos();
+    posState.initialized = true;
+  }
+  loadPosResumen();
+  loadPosHistorial();
+  posRenderCart();
+  // Fecha por defecto en historial
+  const hoy = new Date().toISOString().slice(0,10);
+  const desdeEl = document.getElementById("pos-hist-desde");
+  const hastaEl = document.getElementById("pos-hist-hasta");
+  if (desdeEl && !desdeEl.value) desdeEl.value = hoy;
+  if (hastaEl && !hastaEl.value) hastaEl.value = hoy;
+}
+
+// ── Cargar catálogo de productos ─────────────────────────────
+async function loadPosProductos() {
+  const grid = document.getElementById("pos-prod-grid");
+  if (!grid) return;
+  grid.innerHTML = '<div class="pos-prod-loading"><div class="spinner"></div></div>';
+  try {
+    posState.productos = await api("GET", "/api/admin/pos/productos");
+    posRenderProds(posState.productos);
+  } catch(e) {
+    grid.innerHTML = `<div style="padding:32px;color:var(--muted);text-align:center">Error: ${e.message}</div>`;
+  }
+}
+
+// ── Renderizar catálogo ───────────────────────────────────────
+function posRenderProds(list) {
+  const grid = document.getElementById("pos-prod-grid");
+  if (!grid) return;
+  if (!list.length) {
+    grid.innerHTML = '<div style="padding:48px;text-align:center;color:var(--muted);grid-column:1/-1">No se encontraron productos</div>';
+    return;
+  }
+  grid.innerHTML = list.map(p => {
+    const stockVal = parseInt(p.stock) || 0;
+    const isOut    = stockVal <= 0;
+    const isLow    = !isOut && stockVal <= 5;
+    const stockClass = isOut ? "pos-stock-out" : isLow ? "pos-stock-low" : "pos-stock-ok";
+    const stockTxt   = isOut ? "Sin stock" : `${stockVal} uds`;
+    const imgHtml = p.imagen
+      ? `<img src="${p.imagen}" alt="${p.nombre}" style="width:100%;height:100%;object-fit:cover;border-radius:12px">`
+      : "🍬";
+    return `
+      <div class="pos-prod-card${isOut?" out-of-stock":""}" id="ppc-${p.id}"
+           onclick="${isOut?"":"posAddToCart("+p.id+")"}">
+        <div class="pos-prod-img">${imgHtml}</div>
+        <span class="pos-prod-stock ${stockClass}">${stockTxt}</span>
+        <div class="pos-prod-name">${p.nombre}</div>
+        <div class="pos-prod-price">RD$ ${parseFloat(p.precio).toLocaleString("es-DO",{minimumFractionDigits:2})}</div>
+      </div>`;
+  }).join("");
+}
+
+// ── Filtrar búsqueda en catálogo ──────────────────────────────
+function posFilterProds() {
+  const term = (document.getElementById("pos-search").value || "").toLowerCase();
+  const clearBtn = document.getElementById("pos-search-clear");
+  if (clearBtn) clearBtn.style.display = term ? "flex" : "none";
+  const filtered = term
+    ? posState.productos.filter(p => p.nombre.toLowerCase().includes(term))
+    : posState.productos;
+  posRenderProds(filtered);
+}
+
+function posSearchClear() {
+  const inp = document.getElementById("pos-search");
+  if (inp) { inp.value = ""; inp.focus(); }
+  posRenderProds(posState.productos);
+  const clearBtn = document.getElementById("pos-search-clear");
+  if (clearBtn) clearBtn.style.display = "none";
+}
+
+// ── Agregar al carrito ────────────────────────────────────────
+function posAddToCart(prodId) {
+  const prod = posState.productos.find(p => p.id === prodId);
+  if (!prod) return;
+
+  // Comprobar stock disponible vs cantidad en carrito
+  const enCarrito = posState.cart.find(c => c.producto_id === prodId);
+  const cantActual = enCarrito ? enCarrito.cantidad : 0;
+  if (cantActual >= parseInt(prod.stock)) {
+    toast(`⚠️ Solo hay ${prod.stock} unidad(es) disponibles`); return;
+  }
+
+  if (enCarrito) {
+    enCarrito.cantidad += 1;
+  } else {
+    posState.cart.push({
+      producto_id: prod.id,
+      nombre_producto: prod.nombre,
+      precio_unitario: parseFloat(prod.precio),
+      cantidad: 1
+    });
+  }
+
+  // Flash visual en la tarjeta
+  const card = document.getElementById(`ppc-${prodId}`);
+  if (card) { card.classList.add("added"); setTimeout(()=>card.classList.remove("added"), 350); }
+
+  posRenderCart();
+}
+
+// ── Cambiar cantidad en carrito ───────────────────────────────
+function posChangeQty(prodId, delta) {
+  const idx = posState.cart.findIndex(c => c.producto_id === prodId);
+  if (idx === -1) return;
+  posState.cart[idx].cantidad += delta;
+  if (posState.cart[idx].cantidad <= 0) posState.cart.splice(idx, 1);
+  posRenderCart();
+}
+
+function posRemoveItem(prodId) {
+  posState.cart = posState.cart.filter(c => c.producto_id !== prodId);
+  posRenderCart();
+}
+
+function posClearCart() {
+  if (!posState.cart.length) return;
+  posState.cart = [];
+  posState.descuento_pct = 0;
+  posState.itbis_pct = 0;
+  // Reset buttons
+  posSetDesc(0);
+  posSetItbis(0);
+  document.getElementById("pos-monto-recibido") && (document.getElementById("pos-monto-recibido").value = "");
+  document.getElementById("pos-notas") && (document.getElementById("pos-notas").value = "");
+  document.getElementById("pos-cliente") && (document.getElementById("pos-cliente").value = "");
+  posRenderCart();
+}
+
+// ── Renderizar carrito y calcular totales ─────────────────────
+function posRenderCart() {
+  const itemsEl  = document.getElementById("pos-cart-items");
+  const emptyEl  = document.getElementById("pos-cart-empty");
+  const cobrBtn  = document.getElementById("pos-cobrar-btn");
+  if (!itemsEl) return;
+
+  if (!posState.cart.length) {
+    itemsEl.innerHTML = "";
+    itemsEl.appendChild(emptyEl || document.createElement("div"));
+    if (emptyEl) { emptyEl.style.display = "flex"; itemsEl.appendChild(emptyEl); }
+    posUpdateTotals(0,0,0,0);
+    if (cobrBtn) cobrBtn.disabled = true;
+    return;
+  }
+
+  if (emptyEl) emptyEl.style.display = "none";
+  itemsEl.innerHTML = posState.cart.map(item => `
+    <div class="pos-cart-item">
+      <div class="pos-ci-name">${item.nombre_producto}</div>
+      <div class="pos-ci-qty">
+        <button class="pos-ci-qty-btn" onclick="posChangeQty(${item.producto_id},-1)">−</button>
+        <span class="pos-ci-qty-num">${item.cantidad}</span>
+        <button class="pos-ci-qty-btn" onclick="posChangeQty(${item.producto_id},1)">+</button>
+      </div>
+      <div class="pos-ci-price">RD$ ${(item.precio_unitario * item.cantidad).toLocaleString("es-DO",{minimumFractionDigits:2})}</div>
+      <button class="pos-ci-del" onclick="posRemoveItem(${item.producto_id})" title="Quitar">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+  `).join("");
+
+  // Cálculo de totales
+  const subtotalBruto = posState.cart.reduce((s,i) => s + i.precio_unitario * i.cantidad, 0);
+  const descMonto     = subtotalBruto * posState.descuento_pct / 100;
+  const subtotal      = subtotalBruto - descMonto;
+  const itbisMonto    = subtotal * posState.itbis_pct / 100;
+  const total         = subtotal + itbisMonto;
+
+  posUpdateTotals(subtotalBruto, descMonto, itbisMonto, total);
+  if (cobrBtn) {
+    cobrBtn.disabled = false;
+    const totalSpan = document.getElementById("pos-cobrar-total");
+    if (totalSpan) totalSpan.textContent = " RD$ " + total.toLocaleString("es-DO",{minimumFractionDigits:2});
+  }
+  posCalcCambio();
+}
+
+function posUpdateTotals(sub, desc, itbis, total) {
+  const fmt = n => "RD$ " + n.toLocaleString("es-DO",{minimumFractionDigits:2});
+  const el = id => document.getElementById(id);
+
+  el("pos-subtotal")   && (el("pos-subtotal").textContent   = fmt(sub));
+  el("pos-total-final") && (el("pos-total-final").textContent = fmt(total));
+
+  if (el("pos-desc-row"))  el("pos-desc-row").style.display  = desc  > 0 ? "flex" : "none";
+  if (el("pos-itbis-row")) el("pos-itbis-row").style.display = itbis > 0 ? "flex" : "none";
+  if (el("pos-desc-lbl"))  el("pos-desc-lbl").textContent   = `Descuento (${posState.descuento_pct}%)`;
+  if (el("pos-desc-val"))  el("pos-desc-val").textContent   = "-" + fmt(desc);
+  if (el("pos-itbis-lbl")) el("pos-itbis-lbl").textContent  = `ITBIS (${posState.itbis_pct}%)`;
+  if (el("pos-itbis-val")) el("pos-itbis-val").textContent  = fmt(itbis);
+  const cobrTotal = document.getElementById("pos-cobrar-total");
+  if (cobrTotal) cobrTotal.textContent = " RD$ " + total.toLocaleString("es-DO",{minimumFractionDigits:2});
+}
+
+// ── Descuento & ITBIS ─────────────────────────────────────────
+function posSetDesc(pct) {
+  posState.descuento_pct = pct;
+  [0,5,10,15,20].forEach(v => {
+    const b = document.getElementById(`pdesc-${v}`);
+    if (b) b.classList.toggle("active", v === pct);
+  });
+  posRenderCart();
+}
+
+function posSetItbis(pct) {
+  posState.itbis_pct = pct;
+  [0,18].forEach(v => {
+    const b = document.getElementById(`pitbis-${v}`);
+    if (b) b.classList.toggle("active", v === pct);
+  });
+  posRenderCart();
+}
+
+// ── Método de pago ────────────────────────────────────────────
+function posSelPay(metodo) {
+  posState.metodo_pago = metodo;
+  ["Efectivo","Tarjeta","Transferencia"].forEach(m => {
+    const b = document.getElementById(`ppay-${m}`);
+    if (b) b.classList.toggle("active", m === metodo);
+  });
+  const wrap = document.getElementById("pos-efectivo-wrap");
+  if (wrap) wrap.style.display = metodo === "Efectivo" ? "block" : "none";
+}
+
+// ── Cambio ────────────────────────────────────────────────────
+function posCalcCambio() {
+  const badge = document.getElementById("pos-cambio-badge");
+  if (!badge) return;
+  const monto = parseFloat(document.getElementById("pos-monto-recibido")?.value || 0);
+  const sub   = posState.cart.reduce((s,i) => s + i.precio_unitario * i.cantidad, 0);
+  const desc  = sub * posState.descuento_pct / 100;
+  const total = (sub - desc) * (1 + posState.itbis_pct / 100);
+  if (!monto) { badge.textContent = "Cambio: —"; badge.className = "pos-cambio-badge"; return; }
+  const cambio = monto - total;
+  badge.textContent = cambio >= 0
+    ? "Cambio: RD$ " + cambio.toLocaleString("es-DO",{minimumFractionDigits:2})
+    : "⚠️ Faltan: RD$ " + Math.abs(cambio).toLocaleString("es-DO",{minimumFractionDigits:2});
+  badge.className = "pos-cambio-badge" + (cambio < 0 ? " negativo" : "");
+}
+
+function posSetMonto(val) {
+  const inp = document.getElementById("pos-monto-recibido");
+  if (!inp) return;
+  if (val === "exact") {
+    const sub   = posState.cart.reduce((s,i) => s + i.precio_unitario * i.cantidad, 0);
+    const desc  = sub * posState.descuento_pct / 100;
+    const total = (sub - desc) * (1 + posState.itbis_pct / 100);
+    inp.value = total.toFixed(2);
+  } else {
+    inp.value = val;
+  }
+  posCalcCambio();
+}
+
+// ── Procesar venta ────────────────────────────────────────────
+async function posProcesarVenta() {
+  if (!posState.cart.length) { toast("⚠️ El carrito está vacío"); return; }
+
+  const btn = document.getElementById("pos-cobrar-btn");
+  const origHTML = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Procesando...';
+
+  const montoRec = parseFloat(document.getElementById("pos-monto-recibido")?.value || 0);
+
+  // Validar monto recibido en efectivo
+  if (posState.metodo_pago === "Efectivo" && montoRec > 0) {
+    const sub   = posState.cart.reduce((s,i) => s + i.precio_unitario * i.cantidad, 0);
+    const desc  = sub * posState.descuento_pct / 100;
+    const total = (sub - desc) * (1 + posState.itbis_pct / 100);
+    if (montoRec < total) {
+      toast("⚠️ El monto recibido es menor al total");
+      btn.disabled = false; btn.innerHTML = origHTML; return;
+    }
+  }
+
+  try {
+    const result = await api("POST", "/api/admin/pos/venta", {
+      items:           posState.cart,
+      cliente_nombre:  document.getElementById("pos-cliente")?.value.trim() || null,
+      metodo_pago:     posState.metodo_pago,
+      descuento_pct:   posState.descuento_pct,
+      itbis_pct:       posState.itbis_pct,
+      monto_recibido:  montoRec || null,
+      notas:           document.getElementById("pos-notas")?.value.trim() || null
+    });
+
+    toast("✅ Venta registrada — " + result.numero_factura);
+
+    // Imprimir ticket automáticamente
+    await posPrintTicket(result.venta_id);
+
+    // Limpiar carrito y recargar
+    posClearCart();
+    posState.initialized = false;
+    await loadPosProductos();
+    posState.initialized = true;
+    loadPosResumen();
+    loadPosHistorial();
+
+  } catch(e) {
+    toast("❌ " + e.message);
+  } finally {
+    btn.disabled = false; btn.innerHTML = origHTML;
+  }
+}
+
+// ── KPIs de caja ─────────────────────────────────────────────
+async function loadPosResumen() {
+  try {
+    const r = await api("GET", "/api/admin/pos/resumen-hoy");
+    const fmt = n => "RD$ " + (parseFloat(n)||0).toLocaleString("es-DO",{minimumFractionDigits:2});
+    const el = id => document.getElementById(id);
+    if (el("pos-kpi-ingresos")) el("pos-kpi-ingresos").textContent = fmt(r.ingresos_hoy);
+    if (el("pos-kpi-count"))    el("pos-kpi-count").textContent    = r.ventas_hoy || 0;
+    if (el("pos-kpi-efectivo")) el("pos-kpi-efectivo").textContent = fmt(r.efectivo_hoy);
+    if (el("pos-kpi-tarjeta"))  el("pos-kpi-tarjeta").textContent  = fmt((r.tarjeta_hoy||0) + (r.transferencia_hoy||0));
+  } catch(e) { /* silencioso */ }
+}
+
+// ── Historial de ventas ───────────────────────────────────────
+async function loadPosHistorial() {
+  const loadEl = document.getElementById("pos-hist-loading");
+  const listEl = document.getElementById("pos-hist-list");
+  const empEl  = document.getElementById("pos-hist-empty");
+  if (!listEl) return;
+
+  const desde  = document.getElementById("pos-hist-desde")?.value || "";
+  const hasta  = document.getElementById("pos-hist-hasta")?.value || "";
+  const metodo = document.getElementById("pos-hist-metodo")?.value || "";
+  const estado = document.getElementById("pos-hist-estado")?.value || "";
+
+  const params = new URLSearchParams();
+  if (desde)  params.append("desde",  desde);
+  if (hasta)  params.append("hasta",  hasta);
+  if (metodo) params.append("metodo", metodo);
+  if (estado) params.append("estado", estado);
+
+  if (loadEl) loadEl.style.display = "flex";
+  listEl.innerHTML = "";
+  if (empEl) empEl.style.display = "none";
+
+  try {
+    const ventas = await api("GET", `/api/admin/pos/ventas?${params.toString()}`);
+    if (loadEl) loadEl.style.display = "none";
+
+    if (!ventas.length) {
+      if (empEl) empEl.style.display = "flex";
+      return;
+    }
+
+    listEl.innerHTML = ventas.map(v => {
+      const fmt    = n => "RD$ " + parseFloat(n).toLocaleString("es-DO",{minimumFractionDigits:2});
+      const fecha  = new Date(v.fecha_creacion).toLocaleString("es-DO",{day:"2-digit",month:"short",year:"numeric",hour:"2-digit",minute:"2-digit"});
+      const chips  = (v.items||[]).map(i => `<span class="pos-venta-chip">${i.cantidad}× ${i.nombre_producto}</span>`).join("");
+      const payIcon = v.metodo_pago === "Efectivo" ? "💵" : v.metodo_pago === "Tarjeta" ? "💳" : "🏦";
+      const esAnulada = v.estado === "anulada";
+      const btnAnular = !esAnulada
+        ? `<button class="btn-os" onclick="posAnularVenta(${v.id},'${v.numero_factura}')" style="color:#dc2626">
+             <i class="fa-solid fa-ban"></i> Anular
+           </button>`
+        : `<span class="os-badge os-cancelado">Anulada</span>`;
+      return `
+        <div class="pos-venta-card ${v.estado}">
+          <div class="pos-venta-top">
+            <div>
+              <span class="pos-venta-num">${v.numero_factura}</span>
+              <div class="pos-venta-cliente" style="margin-top:5px">${v.cliente_nombre || "Cliente general"}</div>
+            </div>
+            <div class="pos-venta-total">${fmt(v.total)}</div>
+          </div>
+          <div class="pos-venta-meta">
+            <span>${payIcon} ${v.metodo_pago}</span>
+            <span>·</span>
+            <span>🕐 ${fecha}</span>
+            ${v.cajero ? `<span>·</span><span>👤 ${v.cajero}</span>` : ""}
+            ${v.descuento_pct > 0 ? `<span>·</span><span>🏷️ ${v.descuento_pct}% desc.</span>` : ""}
+          </div>
+          <div class="pos-venta-items">${chips}</div>
+          <div class="pos-venta-actions">
+            <button class="btn-os" onclick="posPrintTicket(${v.id})">
+              <i class="fa-solid fa-print"></i> Reimprimir
+            </button>
+            ${btnAnular}
+          </div>
+        </div>`;
+    }).join("");
+  } catch(e) {
+    if (loadEl) loadEl.style.display = "none";
+    listEl.innerHTML = `<div style="padding:24px;color:var(--muted);text-align:center">Error: ${e.message}</div>`;
+  }
+}
+
+// ── Anular venta ──────────────────────────────────────────────
+async function posAnularVenta(id, num) {
+  if (!confirm(`¿Seguro que deseas anular la factura ${num}?\nEsto repondrá el stock de los productos.`)) return;
+  try {
+    await api("PUT", `/api/admin/pos/ventas/${id}/anular`);
+    toast("🚫 Venta anulada — stock repuesto");
+    loadPosResumen();
+    loadPosHistorial();
+    // Recargar catálogo para reflejar nuevo stock
+    await loadPosProductos();
+  } catch(e) { toast("❌ " + e.message); }
+}
+
+// ── Imprimir ticket ───────────────────────────────────────────
+async function posPrintTicket(ventaId) {
+  try {
+    const v = await api("GET", `/api/admin/pos/ventas/${ventaId}`);
+    const fmt    = n => "RD$ " + parseFloat(n).toLocaleString("es-DO",{minimumFractionDigits:2});
+    const fecha  = new Date(v.fecha_creacion).toLocaleString("es-DO",{day:"2-digit",month:"long",year:"numeric",hour:"2-digit",minute:"2-digit"});
+
+    const itemsRows = (v.items||[]).map(i => `
+      <tr>
+        <td>${i.nombre_producto}</td>
+        <td style="text-align:center">${i.cantidad}</td>
+        <td>${fmt(i.precio_unitario)}</td>
+        <td>${fmt(i.subtotal)}</td>
+      </tr>`).join("");
+
+    const printEl = document.getElementById("pos-print-area");
+    printEl.innerHTML = `
+      <div class="pp-logo">🍭</div>
+      <div class="pp-title">Suplidora Dulce Inspiración</div>
+      <div class="pp-sub">La Altagracia, Rep. Dom. · +1 (829) 555-1234</div>
+      <hr class="pp-divider">
+      <div class="pp-row"><span>Factura:</span><strong>${v.numero_factura}</strong></div>
+      <div class="pp-row"><span>Fecha:</span><span>${fecha}</span></div>
+      <div class="pp-row"><span>Cliente:</span><span>${v.cliente_nombre || "General"}</span></div>
+      <div class="pp-row"><span>Cajero:</span><span>${v.cajero || "—"}</span></div>
+      <div class="pp-row"><span>Pago:</span><span>${v.metodo_pago}</span></div>
+      <hr class="pp-divider">
+      <table class="pp-items">
+        <thead><tr>
+          <th>Producto</th><th style="text-align:center">Cant</th>
+          <th>P.Unit</th><th style="text-align:right">Total</th>
+        </tr></thead>
+        <tbody>${itemsRows}</tbody>
+      </table>
+      <hr class="pp-divider">
+      <div class="pp-row"><span>Subtotal:</span><span>${fmt(v.subtotal)}</span></div>
+      ${v.descuento_pct > 0 ? `<div class="pp-row"><span>Descuento (${v.descuento_pct}%):</span><span>-${fmt(v.descuento_monto)}</span></div>` : ""}
+      ${v.itbis > 0 ? `<div class="pp-row"><span>ITBIS:</span><span>${fmt(v.itbis)}</span></div>` : ""}
+      <div class="pp-row-bold"><span>TOTAL:</span><span>${fmt(v.total)}</span></div>
+      ${v.monto_recibido ? `<div class="pp-row"><span>Recibido:</span><span>${fmt(v.monto_recibido)}</span></div>` : ""}
+      ${v.cambio != null ? `<div class="pp-row"><span>Cambio:</span><span>${fmt(v.cambio)}</span></div>` : ""}
+      ${v.notas ? `<hr class="pp-divider"><div class="pp-row" style="font-size:10px;color:#555">Nota: ${v.notas}</div>` : ""}
+      <hr class="pp-divider">
+      <div class="pp-thanks">¡Gracias por tu compra! 🍬<br>Vuelve pronto</div>
+    `;
+    window.print();
+  } catch(e) {
+    toast("❌ No se pudo cargar la factura: " + e.message);
+  }
+}
 </script>
 
 
@@ -9626,5 +10607,8 @@ async function doDeleteEntrada() {
 
 <!-- ════ ÁREA DE IMPRESIÓN ════════════════════════════ -->
 <div id="print-area"></div>
+
+<!-- POS Ticket de impresión -->
+<div id="pos-print-area"></div>
 </body>
 </html>
