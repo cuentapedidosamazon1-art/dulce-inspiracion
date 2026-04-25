@@ -54,6 +54,7 @@ body::before {
 @keyframes pulse    { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
 @keyframes shimmer  { 0%{background-position:-400px 0} 100%{background-position:400px 0} }
 @keyframes floatUp  { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+@keyframes trackPulse { 0%,100%{box-shadow:0 0 0 0 rgba(37,211,102,.4)} 50%{box-shadow:0 0 0 8px rgba(37,211,102,0)} }
 
 .fade-up   { animation: fadeUp .65s cubic-bezier(.22,.68,0,1.2) both; }
 .delay-1   { animation-delay:.1s; }
@@ -4768,10 +4769,268 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 .pp-items td{ font-size: 11px; padding: 1.5mm 0; }
 .pp-items td:last-child { text-align: right; }
 .pp-thanks  { text-align: center; margin-top: 4mm; font-size: 10px; color: #555; }
+
+/* ═══ NUEVOS ESTADOS DE PEDIDO ═══════════════════════════ */
+.os-preparando { background:rgba(249,115,22,.15); color:#c2410c; border-color:rgba(249,115,22,.25); }
+.os-listo      { background:rgba(59,130,246,.15);  color:#1d4ed8; border-color:rgba(59,130,246,.25); }
+.os-en_camino  { background:rgba(139,92,246,.15);  color:#6d28d9; border-color:rgba(139,92,246,.25); }
+.st-preparando { border-left-color: #f97316; }
+.st-listo      { border-left-color: #3b82f6; }
+.st-en_camino  { border-left-color: #8b5cf6; }
+.av-preparando { background:rgba(249,115,22,.1);  color:#c2410c; }
+.av-listo      { background:rgba(59,130,246,.1);  color:#1d4ed8; }
+.av-en_camino  { background:rgba(139,92,246,.1);  color:#6d28d9; }
+.kc-preparando { border-top-color:#f97316; }
+.kc-listo      { border-top-color:#3b82f6; }
+.kc-en_camino  { border-top-color:#8b5cf6; }
+
+/* ═══ PÁGINA DE TRACKING PÚBLICA ═════════════════════════ */
+#tracking-page {
+  display: none;
+  min-height: 100vh;
+  background: var(--cream);
+  padding: 0;
+  position: relative;
+  z-index: 10;
+}
+#tracking-page.active { display: block; }
+
+.trk-header {
+  background: linear-gradient(135deg, var(--rose), var(--rose2));
+  padding: 36px 24px 60px;
+  text-align: center;
+  color: #fff;
+}
+.trk-logo { font-size: 2.4rem; margin-bottom: 6px; }
+.trk-brand { font-family: var(--ff-head); font-size: 1.2rem; font-weight: 700; opacity: .92; }
+.trk-title { font-size: 1rem; opacity: .75; margin-top: 4px; }
+
+.trk-card {
+  max-width: 480px;
+  margin: -40px auto 32px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(26,10,14,.14);
+  overflow: hidden;
+  padding: 0 0 24px;
+}
+
+.trk-order-band {
+  background: linear-gradient(135deg,var(--rose),var(--rose2));
+  color: #fff;
+  padding: 18px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.trk-order-num { font-family: var(--ff-head); font-size: 1.6rem; font-weight: 900; }
+.trk-order-date { font-size: .78rem; opacity: .8; text-align: right; }
+
+.trk-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.trk-status-dot {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: var(--rose);
+  animation: trackPulse 2s infinite;
+  flex-shrink: 0;
+}
+.trk-status-label {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--dark);
+}
+.trk-status-sub { font-size: .78rem; color: var(--muted); }
+
+/* Pipeline de seguimiento */
+.trk-pipeline {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.trk-pipeline-title {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+.trk-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  position: relative;
+}
+.trk-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  position: relative;
+  padding-bottom: 20px;
+}
+.trk-step:last-child { padding-bottom: 0; }
+.trk-step-line {
+  position: absolute;
+  left: 18px;
+  top: 36px;
+  width: 2px;
+  bottom: 0;
+  background: var(--border);
+}
+.trk-step:last-child .trk-step-line { display: none; }
+.trk-step-dot {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+  border: 2px solid var(--border);
+  background: #f8f3ef;
+  color: var(--muted);
+  transition: all .3s;
+}
+.trk-step.done .trk-step-dot {
+  background: linear-gradient(135deg,#16a34a,#15803d);
+  border-color: #16a34a;
+  color: #fff;
+}
+.trk-step.done .trk-step-line { background: #16a34a; }
+.trk-step.active .trk-step-dot {
+  background: linear-gradient(135deg, var(--rose), var(--rose2));
+  border-color: var(--rose);
+  color: #fff;
+  animation: trackPulse 2s infinite;
+}
+.trk-step-info { flex: 1; padding-top: 6px; }
+.trk-step-name {
+  font-weight: 700;
+  font-size: .88rem;
+  color: var(--dark);
+}
+.trk-step.pending .trk-step-name { color: var(--muted); font-weight: 500; }
+.trk-step-time {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.trk-step-nota {
+  font-size: .74rem;
+  color: var(--mid);
+  margin-top: 4px;
+  font-style: italic;
+  background: rgba(192,57,75,.05);
+  padding: 4px 10px;
+  border-radius: 8px;
+  border-left: 2px solid var(--rose);
+}
+
+.trk-items {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.trk-items-title {
+  font-size: .7rem;
+  font-weight: 700;
+  letter-spacing: .08em;
+  color: var(--muted);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+.trk-item {
+  display: flex;
+  justify-content: space-between;
+  font-size: .84rem;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--border);
+  color: var(--dark);
+}
+.trk-item:last-child { border-bottom: none; }
+.trk-item-qty { color: var(--muted); margin-right: 6px; }
+.trk-total {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 700;
+  font-size: .95rem;
+  padding: 12px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.trk-total-val { color: var(--rose); font-family: var(--ff-head); }
+
+.trk-footer {
+  padding: 16px 24px 0;
+  text-align: center;
+}
+.trk-footer-brand {
+  font-size: .78rem;
+  color: var(--muted);
+  margin-bottom: 10px;
+}
+.trk-wa-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg,#25d366,#128c7e);
+  color: #fff;
+  padding: 12px 24px;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .88rem;
+  text-decoration: none;
+  transition: transform .2s, box-shadow .2s;
+}
+.trk-wa-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,211,102,.35); }
+
+.trk-not-found {
+  max-width: 360px;
+  margin: 40px auto;
+  text-align: center;
+  padding: 40px 24px;
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 20px 60px rgba(26,10,14,.1);
+}
+.trk-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--rose);
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 999px;
+  font-size: .84rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 16px;
+  transition: transform .2s;
+}
+.trk-refresh:hover { transform: translateY(-2px); }
 </style>
 
 </head>
 <body>
+
+<!-- ════ PÁGINA PÚBLICA DE TRACKING ═════════════════════ -->
+<div id="tracking-page">
+  <div class="trk-header">
+    <div class="trk-logo">🍭</div>
+    <div class="trk-brand">Suplidora Dulce Inspiración</div>
+    <div class="trk-title">Seguimiento de pedido en vivo</div>
+  </div>
+  <div id="trk-content">
+    <div class="trk-not-found" id="trk-loading">
+      <div style="font-size:2rem;margin-bottom:12px">⏳</div>
+      <div style="font-weight:700;color:var(--dark);margin-bottom:6px">Cargando tu pedido...</div>
+    </div>
+  </div>
+</div>
 
 <!-- ════ SPLASH SCREEN ════════════════════════════════ -->
 <div id="splash">
@@ -7877,26 +8136,40 @@ function renderOrders(list) {
   empty.style.display = "none";
 
   const ESTADO_META = {
-    pendiente:  { label:"⏳ Pendiente",  cls:"os-pendiente",  avCls:"av-pendiente",  stCls:"st-pendiente",  icon:"⏳" },
-    confirmado: { label:"✅ Confirmado", cls:"os-confirmado", avCls:"av-confirmado", stCls:"st-confirmado", icon:"✅" },
-    entregado:  { label:"🚚 Entregado",  cls:"os-entregado",  avCls:"av-entregado",  stCls:"st-entregado",  icon:"🚚" },
-    cancelado:  { label:"❌ Cancelado",  cls:"os-cancelado",  avCls:"av-cancelado",  stCls:"st-cancelado",  icon:"❌" }
+    pendiente:   { label:"⏳ Pendiente",   cls:"os-pendiente",  avCls:"av-pendiente",  stCls:"st-pendiente",  icon:"⏳" },
+    confirmado:  { label:"✅ Confirmado",  cls:"os-confirmado", avCls:"av-confirmado", stCls:"st-confirmado", icon:"✅" },
+    preparando:  { label:"🧁 Preparando",  cls:"os-preparando", avCls:"av-preparando", stCls:"st-preparando", icon:"🧁" },
+    listo:       { label:"📦 Listo",       cls:"os-listo",      avCls:"av-listo",      stCls:"st-listo",      icon:"📦" },
+    en_camino:   { label:"🛵 En camino",   cls:"os-en_camino",  avCls:"av-en_camino",  stCls:"st-en_camino",  icon:"🛵" },
+    entregado:   { label:"🎉 Entregado",   cls:"os-entregado",  avCls:"av-entregado",  stCls:"st-entregado",  icon:"🎉" },
+    cancelado:   { label:"❌ Cancelado",   cls:"os-cancelado",  avCls:"av-cancelado",  stCls:"st-cancelado",  icon:"❌" }
   };
   const STATE_BTNS = {
     pendiente:  [
-      { k:"entregado", lbl:"Entregado", css:"btn-st-deliver" },
-      { k:"cancelado", lbl:"Cancelar",  css:"btn-st-cancel"  }
+      { k:"confirmado", lbl:"✅ Confirmar",   css:"btn-st-deliver" },
+      { k:"cancelado",  lbl:"❌ Cancelar",    css:"btn-st-cancel"  }
     ],
     confirmado: [
-      { k:"entregado",  lbl:"Entregado",   css:"btn-st-deliver" },
-      { k:"pendiente",  lbl:"↩ Pendiente", css:"btn-st-pending" },
-      { k:"cancelado",  lbl:"Cancelar",    css:"btn-st-cancel"  }
+      { k:"preparando", lbl:"🧁 Preparando",  css:"btn-st-deliver" },
+      { k:"cancelado",  lbl:"❌ Cancelar",    css:"btn-st-cancel"  }
+    ],
+    preparando: [
+      { k:"listo",      lbl:"📦 Listo",       css:"btn-st-deliver" },
+      { k:"pendiente",  lbl:"↩ Atrás",        css:"btn-st-pending" }
+    ],
+    listo: [
+      { k:"en_camino",  lbl:"🛵 En camino",   css:"btn-st-deliver" },
+      { k:"preparando", lbl:"↩ Atrás",        css:"btn-st-pending" }
+    ],
+    en_camino: [
+      { k:"entregado",  lbl:"🎉 Entregado",   css:"btn-st-deliver" },
+      { k:"listo",      lbl:"↩ Atrás",        css:"btn-st-pending" }
     ],
     entregado:  [
-      { k:"pendiente",  lbl:"↩ Pendiente", css:"btn-st-pending" }
+      { k:"pendiente",  lbl:"↩ Reabrir",      css:"btn-st-pending" }
     ],
     cancelado:  [
-      { k:"pendiente",  lbl:"↩ Restaurar", css:"btn-st-pending" }
+      { k:"pendiente",  lbl:"↩ Restaurar",    css:"btn-st-pending" }
     ]
   };
 
@@ -7919,7 +8192,7 @@ function renderOrders(list) {
       Array.from(body.children).forEach(c => { if (!c.classList.contains("kanban-empty")) c.remove(); });
 
       const colList = list.filter(o => {
-        if (estado === "pendiente") return o.estado === "pendiente" || o.estado === "confirmado";
+        if (estado === "pendiente") return ["pendiente","confirmado","preparando","listo","en_camino"].includes(o.estado);
         return o.estado === estado;
       }).sort((a,b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion));
 
@@ -7964,9 +8237,28 @@ function renderOrders(list) {
           ? `<a class="kc-btn kc-btn-wa" href="https://wa.me/${waNum}" target="_blank"><i class="fa-brands fa-whatsapp"></i> WA</a>`
           : "";
         const printBtn = `<button class="kc-btn kc-btn-print" onclick="printOrder(${o.id})"><i class="fa-solid fa-print"></i></button>`;
+        const trackBtn = o.token
+          ? `<button class="kc-btn" style="background:rgba(37,211,102,.12);color:#15803d;border-color:rgba(37,211,102,.3)" onclick="copyTrackingLink('${o.token}')"><i class="fa-solid fa-link"></i></button>`
+          : "";
 
         const meta = ESTADO_META[o.estado] || ESTADO_META.pendiente;
         const estadoCls = estado; // pendiente|entregado|cancelado
+
+        // Mini pipeline visual dentro de la tarjeta
+        const PIPELINE = ["pendiente","confirmado","preparando","listo","en_camino","entregado"];
+        const curIdx = PIPELINE.indexOf(o.estado);
+        const miniPipeline = o.estado !== "cancelado" ? `
+          <div style="display:flex;gap:3px;align-items:center;margin-bottom:8px;flex-wrap:wrap">
+            ${PIPELINE.map((s,i) => {
+              const done   = i < curIdx;
+              const active = i === curIdx;
+              const emojis = {pendiente:"⏳",confirmado:"✅",preparando:"🧁",listo:"📦",en_camino:"🛵",entregado:"🎉"};
+              const bg = done ? "rgba(37,211,102,.15)" : active ? "rgba(192,57,75,.15)" : "rgba(0,0,0,.05)";
+              const co = done ? "#15803d" : active ? "#c0394b" : "#9b7080";
+              const fw = active ? "700" : "500";
+              return `<span style="font-size:.6rem;padding:2px 6px;border-radius:999px;background:${bg};color:${co};font-weight:${fw};white-space:nowrap">${emojis[s]||"·"}</span>`;
+            }).join("")}
+          </div>` : "";
 
         const card = document.createElement("div");
         card.className = `kanban-card kc-${estadoCls}`;
@@ -7984,10 +8276,11 @@ function renderOrders(list) {
               </div>
               <div class="kc-id">#${String(o.id).padStart(4,"0")}</div>
             </div>
+            ${miniPipeline}
             <div class="kc-amount">RD$ ${Number(o.total).toLocaleString()}</div>
             ${o.ubicacion ? `<div class="kc-addr"><span>📍</span>${o.ubicacion}</div>` : ""}
             <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:${chips?'8px':'0'}">
-              ${o.estado === "confirmado" ? `<span class="kc-pay-tag">✅ Confirmado</span>` : ""}
+              <span class="kc-pay-tag">${meta.icon} ${meta.label.replace(/^[^ ]+ /,"")}</span>
               ${o.metodo_pago ? `<span class="kc-pay-tag">💳 ${o.metodo_pago}</span>` : ""}
               ${o.envio > 0 ? `<span class="kc-delivery-tag">🛵 RD$ ${Number(o.envio).toLocaleString()}</span>` : ""}
             </div>
@@ -7996,6 +8289,7 @@ function renderOrders(list) {
           <div class="kc-actions">
             ${renderKcBtns}
             ${waBtn}
+            ${trackBtn}
             ${printBtn}
           </div>`;
         body.appendChild(card);
@@ -8115,6 +8409,7 @@ function renderOrders(list) {
             <div class="actions-left">${stateBtns}</div>
             <div class="actions-right">
               ${waNum ? `<a class="btn-state btn-st-wa" href="https://wa.me/${waNum}" target="_blank" onclick="event.stopPropagation()"><i class="fa-brands fa-whatsapp"></i> WhatsApp</a>` : ""}
+              ${o.token ? `<button class="btn-state" style="background:rgba(37,211,102,.1);color:#15803d;border-color:rgba(37,211,102,.3)" onclick="copyTrackingLink('${o.token}');event.stopPropagation()"><i class="fa-solid fa-link"></i> Tracking</button>` : ""}
               <button class="btn-state btn-st-print" onclick="printOrder(${o.id});event.stopPropagation()"><i class="fa-solid fa-print"></i> Imprimir</button>
             </div>
           </div>
@@ -8132,7 +8427,10 @@ async function updOrder(id, estado) {
     const msgs = {
       cancelado:  "❌ Pedido cancelado — stock restaurado",
       confirmado: "✅ Pedido confirmado",
-      entregado:  "🚚 Pedido marcado como entregado",
+      preparando: "🧁 Preparando el pedido",
+      listo:      "📦 Pedido listo para despacho",
+      en_camino:  "🛵 Pedido en camino al cliente",
+      entregado:  "🎉 Pedido entregado exitosamente",
       pendiente:  "⏳ Pedido vuelto a pendiente"
     };
     toast(msgs[estado] || "✅ Estado actualizado");
@@ -8143,6 +8441,17 @@ async function updOrder(id, estado) {
     if (document.getElementById("tab-d")?.style.display === "block") loadDashboard();
   } catch (e) {
     toast("❌ " + e.message);
+  }
+}
+
+function copyTrackingLink(token) {
+  const FRONTEND_URL = API_URL.replace("onrender.com", "netlify.app") || window.location.origin;
+  // Usa la URL del frontend donde está el index.html
+  const url = window.location.origin + "/pedido/" + token;
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(url).then(() => toast("🔗 Link copiado al portapapeles"));
+  } else {
+    prompt("Copia este link de seguimiento:", url);
   }
 }
 
@@ -10176,7 +10485,9 @@ async function submitCheckout() {
       items, total, metodo_pago: payMethod
     });
 
-    // Build WhatsApp message
+    const trackingUrl = resp.trackingUrl || "";
+
+    // Build WhatsApp message — incluye link de seguimiento
     const waMsg =
       `🍭 *NUEVO PEDIDO — Dulce Inspiración*\n` +
       `━━━━━━━━━━━━━━━━━━━━━━━\n\n` +
@@ -10192,14 +10503,23 @@ async function submitCheckout() {
       `━━━━━━━━━━━━━━━━━━━━━━━\n` +
       (deliveryCost > 0 ? `📦 Subtotal: RD$ ${subtotal.toLocaleString()}\n🛵 Envío: RD$ ${deliveryCost.toLocaleString()}\n` : "") +
       `💵 *TOTAL: RD$ ${total.toLocaleString()}*\n\n` +
+      (trackingUrl ? `🔍 *Seguimiento en vivo:*\n${trackingUrl}\n\n` : "") +
       `_Pedido registrado en el sistema ✅_`;
+
+    // Build WhatsApp message para el CLIENTE (seguimiento)
+    const waMsgCliente =
+      `🍬 *¡Gracias por tu pedido, ${nombre}!*\n\n` +
+      `Tu pedido *#${resp.pedidoId}* fue registrado exitosamente.\n\n` +
+      `📦 Puedes ver el estado de tu pedido en tiempo real aquí:\n` +
+      `👉 ${trackingUrl}\n\n` +
+      `Te iremos notificando cada vez que cambie el estado. ¡Gracias por elegirnos! 🍭`;
 
     // Close checkout and show confirmation screen
     closeCheckout();
     showConfirm(
       resp.pedidoId,
       { nombre, apellido, telefono: tel, ubicacion: dir, metodo_pago: payMethod },
-      items, total, deliveryCost, waMsg
+      items, total, deliveryCost, waMsg, waMsgCliente, trackingUrl, tel
     );
 
     // Reset everything
@@ -10248,7 +10568,7 @@ async function submitCheckout() {
 ══════════════════════════════════════════════════════ */
 let pendingWAMsg = "";
 
-function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg) {
+function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg, waMsgCliente, trackingUrl, clienteTel) {
   pendingWAMsg = waMsg;
 
   // Order number
@@ -10272,6 +10592,14 @@ function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg) {
       cfRow("📍", "Dirección",   clienteData.ubicacion) +
       cfRow("💳", "Pago",        clienteData.metodo_pago) +
       cfRow("📦", "Artículos",   itemsData.length + " producto" + (itemsData.length !== 1 ? "s" : ""));
+  }
+
+  // Tracking link section
+  const trackEl = document.getElementById("cf-tracking-section");
+  if (trackEl && trackingUrl) {
+    trackEl.style.display = "block";
+    const linkEl = document.getElementById("cf-tracking-link");
+    if (linkEl) { linkEl.href = trackingUrl; linkEl.textContent = trackingUrl; }
   }
 
   // Totals
@@ -10299,9 +10627,19 @@ function showConfirm(pedidoId, clienteData, itemsData, total, envio, waMsg) {
     bcCode.textContent = code;
   }
 
-  // WhatsApp button
+  // WhatsApp botón → notifica al negocio
   const waBtn = document.getElementById("confirm-wa-btn");
   if (waBtn) waBtn.onclick = () => window.open(`https://wa.me/${WA_NUM}?text=${encodeURIComponent(pendingWAMsg)}`, "_blank");
+
+  // WhatsApp botón → envía seguimiento al cliente
+  const waClienteBtn = document.getElementById("confirm-wa-cliente-btn");
+  if (waClienteBtn && waMsgCliente && clienteTel) {
+    const cleanTel = clienteTel.replace(/\D/g,"");
+    waClienteBtn.onclick = () => window.open(`https://wa.me/${cleanTel}?text=${encodeURIComponent(waMsgCliente)}`, "_blank");
+    waClienteBtn.style.display = "flex";
+  } else if (waClienteBtn) {
+    waClienteBtn.style.display = "none";
+  }
 
   // Animate timeline fill after open
   setTimeout(() => {
@@ -11363,6 +11701,189 @@ async function posPrintTicket(ventaId) {
     toast("❌ No se pudo cargar la factura: " + e.message);
   }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   SISTEMA DE TRACKING PÚBLICO
+   Detecta /pedido/:token en la URL y muestra la página de seguimiento
+══════════════════════════════════════════════════════════════ */
+
+const PIPELINE_STEPS = [
+  { key:"pendiente",  emoji:"⏳", label:"Pedido recibido",      sub:"Tu pedido llegó a nuestro sistema" },
+  { key:"confirmado", emoji:"✅", label:"Pedido confirmado",     sub:"Ya revisamos tu pedido" },
+  { key:"preparando", emoji:"🧁", label:"Preparando tu pedido",  sub:"Estamos preparando todo con cariño" },
+  { key:"listo",      emoji:"📦", label:"Listo para despacho",   sub:"Tu pedido está empacado y listo" },
+  { key:"en_camino",  emoji:"🛵", label:"En camino",             sub:"¡Tu pedido está en ruta hacia ti!" },
+  { key:"entregado",  emoji:"🎉", label:"¡Entregado!",           sub:"Esperamos que lo disfrutes mucho 🍭" }
+];
+
+const ESTADO_COLOR = {
+  pendiente:  { dot:"#f59e0b", bg:"rgba(245,158,11,.1)"   },
+  confirmado: { dot:"#16a34a", bg:"rgba(22,163,74,.1)"    },
+  preparando: { dot:"#f97316", bg:"rgba(249,115,22,.1)"   },
+  listo:      { dot:"#3b82f6", bg:"rgba(59,130,246,.1)"   },
+  en_camino:  { dot:"#8b5cf6", bg:"rgba(139,92,246,.1)"   },
+  entregado:  { dot:"#16a34a", bg:"rgba(22,163,74,.1)"    },
+  cancelado:  { dot:"#ef4444", bg:"rgba(239,68,68,.1)"    }
+};
+
+function fmtDate(str) {
+  if (!str) return "—";
+  return new Date(str).toLocaleString("es-DO", { day:"2-digit", month:"short", hour:"2-digit", minute:"2-digit" });
+}
+
+function renderTrackingPage(data) {
+  const cont = document.getElementById("trk-content");
+  if (!cont) return;
+
+  const { nombre, apellido, total, metodo_pago, estado, fecha_creacion, items, historial } = data;
+
+  // Build historial map: key=estado → fecha/nota
+  const histMap = {};
+  (historial||[]).forEach(h => { histMap[h.estado] = h; });
+
+  const curIdx  = PIPELINE_STEPS.findIndex(s => s.key === estado);
+  const isCancelled = estado === "cancelado";
+
+  const col = ESTADO_COLOR[estado] || ESTADO_COLOR.pendiente;
+  const curStep = PIPELINE_STEPS[curIdx] || { emoji:"⏳", label: estado, sub:"" };
+
+  // Steps HTML
+  const stepsHtml = isCancelled
+    ? `<div style="text-align:center;padding:16px 0;color:#ef4444;font-weight:700">❌ Este pedido fue cancelado</div>`
+    : PIPELINE_STEPS.map((step, i) => {
+        const done   = i < curIdx;
+        const active = i === curIdx;
+        const cls    = done ? "done" : active ? "active" : "pending";
+        const h      = histMap[step.key];
+        return `
+          <div class="trk-step ${cls}">
+            ${i < PIPELINE_STEPS.length - 1 ? '<div class="trk-step-line"></div>' : ""}
+            <div class="trk-step-dot">${done ? "✓" : step.emoji}</div>
+            <div class="trk-step-info">
+              <div class="trk-step-name">${step.label}</div>
+              ${h ? `<div class="trk-step-time">🕐 ${fmtDate(h.fecha)}</div>` : `<div class="trk-step-time" style="color:var(--border)">Pendiente</div>`}
+              ${h && h.nota ? `<div class="trk-step-nota">${h.nota}</div>` : ""}
+            </div>
+          </div>`;
+      }).join("");
+
+  // Items HTML
+  const itemsHtml = (items||[]).map(i =>
+    `<div class="trk-item">
+      <span><span class="trk-item-qty">${i.cantidad}×</span> ${i.nombre_producto}</span>
+      <span>RD$ ${(Number(i.precio) * Number(i.cantidad)).toLocaleString()}</span>
+    </div>`
+  ).join("");
+
+  cont.innerHTML = `
+    <div class="trk-card">
+      <!-- Banda número pedido -->
+      <div class="trk-order-band">
+        <div>
+          <div style="font-size:.7rem;opacity:.75;letter-spacing:.06em;text-transform:uppercase">Pedido de</div>
+          <div style="font-weight:700;font-size:1.05rem">${nombre} ${apellido}</div>
+        </div>
+        <div class="trk-order-date">
+          <div style="font-size:.68rem;opacity:.7">Realizado el</div>
+          <div style="font-weight:600">${fmtDate(fecha_creacion)}</div>
+        </div>
+      </div>
+
+      <!-- Estado actual destacado -->
+      <div class="trk-status-badge" style="background:${col.bg}">
+        <div class="trk-status-dot" style="background:${col.dot};animation:${isCancelled?'none':'trackPulse 2s infinite'}"></div>
+        <div>
+          <div class="trk-status-label">${isCancelled ? "❌ Cancelado" : curStep.emoji + " " + curStep.label}</div>
+          <div class="trk-status-sub">${isCancelled ? "Contáctanos si tienes dudas" : curStep.sub}</div>
+        </div>
+      </div>
+
+      <!-- Pipeline de pasos -->
+      <div class="trk-pipeline">
+        <div class="trk-pipeline-title">📍 Progreso del pedido</div>
+        <div class="trk-steps">${stepsHtml}</div>
+      </div>
+
+      <!-- Detalle de productos -->
+      ${itemsHtml ? `
+      <div class="trk-items">
+        <div class="trk-items-title">🛍️ Productos</div>
+        ${itemsHtml}
+      </div>` : ""}
+
+      <!-- Total -->
+      <div class="trk-total">
+        <span>Total</span>
+        <span class="trk-total-val">RD$ ${Number(total).toLocaleString()}</span>
+      </div>
+
+      <!-- Footer con WA del negocio -->
+      <div class="trk-footer">
+        <div class="trk-footer-brand">💳 Pago: ${metodo_pago} · Dulce Inspiración, Rep. Dom.</div>
+        <a class="trk-wa-btn" href="https://wa.me/${WA_NUM}" target="_blank">
+          <i class="fa-brands fa-whatsapp"></i> Contactar al negocio
+        </a>
+        <div style="margin-top:14px">
+          <button class="trk-refresh" onclick="initTrackingPage()">
+            <i class="fa-solid fa-rotate-right"></i> Actualizar estado
+          </button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderTrackingNotFound(msg) {
+  const cont = document.getElementById("trk-content");
+  if (!cont) return;
+  cont.innerHTML = `
+    <div class="trk-not-found">
+      <div style="font-size:2.5rem;margin-bottom:12px">🔍</div>
+      <div style="font-weight:700;font-size:1.1rem;color:var(--dark);margin-bottom:8px">Pedido no encontrado</div>
+      <div style="color:var(--muted);font-size:.88rem;line-height:1.6">${msg || "El enlace de seguimiento no es válido o ha expirado."}</div>
+      <a href="/" style="display:inline-flex;align-items:center;gap:8px;margin-top:20px;background:var(--rose);color:#fff;padding:10px 22px;border-radius:999px;font-weight:700;font-size:.88rem;text-decoration:none">
+        🍭 Ir a la tienda
+      </a>
+    </div>`;
+}
+
+let _trkToken = null;
+
+async function initTrackingPage() {
+  // Detectar si la URL es /pedido/:token
+  const path = window.location.pathname;
+  const match = path.match(/^\/pedido\/([a-f0-9]{48})$/);
+  if (!match) return; // No es página de tracking — mostrar tienda normal
+
+  _trkToken = match[1];
+
+  // Ocultar la app normal, mostrar tracking
+  const trkPage = document.getElementById("tracking-page");
+  const userView = document.getElementById("user-view");
+  const adminView = document.getElementById("admin-view");
+  const splash = document.getElementById("splash");
+
+  if (trkPage) trkPage.classList.add("active");
+  if (userView) userView.style.display = "none";
+  if (adminView) adminView.style.display = "none";
+  if (splash) splash.style.display = "none";
+
+  // Cargar datos del pedido
+  try {
+    const data = await fetch(API_URL + "/api/pedido/" + _trkToken).then(r => r.json());
+    if (data.error) {
+      renderTrackingNotFound(data.error);
+    } else {
+      renderTrackingPage(data);
+    }
+  } catch(e) {
+    renderTrackingNotFound("No se pudo conectar con el servidor. Intenta de nuevo.");
+  }
+}
+
+// Llamar en DOMContentLoaded — si es tracking, toma control
+document.addEventListener("DOMContentLoaded", () => {
+  initTrackingPage();
+});
 </script>
 
 
@@ -11462,9 +11983,20 @@ async function posPrintTicket(ventaId) {
 
       <!-- Botones -->
       <div class="cf-actions">
+        <!-- Sección de seguimiento -->
+        <div id="cf-tracking-section" style="display:none;background:linear-gradient(135deg,rgba(37,211,102,.08),rgba(37,211,102,.04));border:1.5px solid rgba(37,211,102,.3);border-radius:14px;padding:14px 16px;margin-bottom:12px;text-align:left">
+          <div style="font-size:.75rem;font-weight:700;color:#15803d;letter-spacing:.04em;margin-bottom:6px">🔍 LINK DE SEGUIMIENTO EN VIVO</div>
+          <a id="cf-tracking-link" href="#" target="_blank" style="font-size:.72rem;color:#16a34a;word-break:break-all;text-decoration:underline;line-height:1.5"></a>
+          <div style="font-size:.7rem;color:#6b7280;margin-top:6px">Tu cliente puede ver el estado del pedido en tiempo real</div>
+        </div>
+
         <button class="cf-btn-wa" id="confirm-wa-btn">
           <i class="fa-brands fa-whatsapp fa-lg"></i>
-          Confirmar por WhatsApp
+          Notificar al negocio
+        </button>
+        <button class="cf-btn-wa" id="confirm-wa-cliente-btn" style="display:none;background:linear-gradient(135deg,#16a34a,#15803d)">
+          <i class="fa-brands fa-whatsapp fa-lg"></i>
+          Enviar seguimiento al cliente
         </button>
         <button class="cf-btn-close" onclick="closeConfirm()">
           Volver a la tienda &rarr;
