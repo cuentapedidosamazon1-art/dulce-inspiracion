@@ -76,9 +76,18 @@ async function initDB() {
         ubicacion      VARCHAR(500) NOT NULL,
         total          DECIMAL(10,2) NOT NULL,
         metodo_pago    VARCHAR(50)  NOT NULL,
-        estado         VARCHAR(20)  NOT NULL DEFAULT 'pendiente'
-                       CHECK (estado IN ('pendiente','confirmado','entregado','cancelado')),
+        estado         VARCHAR(30)  NOT NULL DEFAULT 'pendiente',
+        token          VARCHAR(64)  UNIQUE,
         fecha_creacion TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+
+      CREATE TABLE IF NOT EXISTS pedido_estados (
+        id          SERIAL PRIMARY KEY,
+        pedido_id   INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+        estado      VARCHAR(30) NOT NULL,
+        nota        TEXT NULL,
+        usuario_id  INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        fecha       TIMESTAMP NOT NULL DEFAULT NOW()
       );
 
       CREATE TABLE IF NOT EXISTS detalle_pedido (
@@ -138,6 +147,45 @@ async function initDB() {
     await client.query(`ALTER TABLE productos ADD COLUMN IF NOT EXISTS stock INT NOT NULL DEFAULT 0;`).catch(() => {});
     await client.query(`ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS rol VARCHAR(20) NOT NULL DEFAULT 'editor';`).catch(() => {});
     await client.query(`ALTER TABLE entradas_inventario ADD COLUMN IF NOT EXISTS usuario_id INT NULL;`).catch(() => {});
+
+    // Migración: tracking token en pedidos
+    await client.query(`ALTER TABLE pedidos ADD COLUMN IF NOT EXISTS token VARCHAR(64);`).catch(() => {});
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.table_constraints
+          WHERE table_name='pedidos' AND constraint_name='pedidos_token_key'
+        ) THEN
+          ALTER TABLE pedidos ADD CONSTRAINT pedidos_token_key UNIQUE (token);
+        END IF;
+      END $$;
+    `).catch(() => {});
+
+    // Migración: ampliar CHECK de estado en pedidos (DROP y recrear)
+    await client.query(`
+      DO $$ BEGIN
+        ALTER TABLE pedidos DROP CONSTRAINT IF EXISTS pedidos_estado_check;
+      EXCEPTION WHEN OTHERS THEN NULL;
+      END $$;
+    `).catch(() => {});
+
+    // Tabla historial de estados de pedido
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS pedido_estados (
+        id          SERIAL PRIMARY KEY,
+        pedido_id   INT NOT NULL REFERENCES pedidos(id) ON DELETE CASCADE,
+        estado      VARCHAR(30) NOT NULL,
+        nota        TEXT NULL,
+        usuario_id  INT NULL REFERENCES usuarios(id) ON DELETE SET NULL,
+        fecha       TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `).catch(() => {});
+
+    // Generar tokens para pedidos que no lo tienen
+    await client.query(`
+      UPDATE pedidos SET token = encode(gen_random_bytes(24), 'hex')
+      WHERE token IS NULL;
+    `).catch(() => {});
 
     // Renombrar columnas con mayúsculas → minúsculas (solo si existen)
     await client.query(`ALTER TABLE entradas_inventario RENAME COLUMN "Proveedor" TO proveedor;`).catch(() => {});
@@ -399,12 +447,20 @@ app.post("/api/pedidos", async (req, res) => {
       }
     }
 
+    const tokenBytes = require("crypto").randomBytes(24).toString("hex");
     const ped = await client.query(
-      `INSERT INTO pedidos (nombre, apellido, telefono, ubicacion, total, metodo_pago, estado, fecha_creacion)
-       VALUES ($1,$2,$3,$4,$5,$6,'pendiente',NOW()) RETURNING id`,
-      [nombre, apellido, telefono, ubicacion, total, metodo_pago]
+      `INSERT INTO pedidos (nombre, apellido, telefono, ubicacion, total, metodo_pago, estado, token, fecha_creacion)
+       VALUES ($1,$2,$3,$4,$5,$6,'pendiente',$7,NOW()) RETURNING id, token`,
+      [nombre, apellido, telefono, ubicacion, total, metodo_pago, tokenBytes]
     );
     const pedidoId = ped.rows[0].id;
+    const trackingToken = ped.rows[0].token;
+
+    // Registrar estado inicial en historial
+    await client.query(
+      `INSERT INTO pedido_estados (pedido_id, estado, nota) VALUES ($1,'pendiente','Pedido recibido')`,
+      [pedidoId]
+    );
 
     for (const item of items) {
       await client.query(
@@ -415,7 +471,16 @@ app.post("/api/pedidos", async (req, res) => {
     }
 
     await client.query("COMMIT");
-    res.status(201).json({ ok: true, pedidoId });
+
+    const FRONTEND_URL = process.env.FRONTEND_URL || "https://tu-sitio.netlify.app";
+    const trackingUrl = `${FRONTEND_URL}/pedido/${trackingToken}`;
+
+    res.status(201).json({
+      ok: true,
+      pedidoId,
+      token: trackingToken,
+      trackingUrl
+    });
   } catch (err) {
     await client.query("ROLLBACK");
     res.status(500).json({ error: err.message });
@@ -455,8 +520,8 @@ app.get("/api/admin/pedidos", authMiddleware, async (req, res) => {
 });
 
 app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
-  const estadoNuevo = req.body.estado;
-  const estadosValidos = ["pendiente", "confirmado", "entregado", "cancelado"];
+  const { estado: estadoNuevo, nota } = req.body;
+  const estadosValidos = ["pendiente","confirmado","preparando","listo","en_camino","entregado","cancelado"];
   if (!estadosValidos.includes(estadoNuevo))
     return res.status(400).json({ error: "Estado no válido" });
 
@@ -502,6 +567,13 @@ app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
     }
 
     await client.query("UPDATE pedidos SET estado=$1 WHERE id=$2", [estadoNuevo, req.params.id]);
+
+    // Registrar en historial
+    await client.query(
+      `INSERT INTO pedido_estados (pedido_id, estado, nota, usuario_id) VALUES ($1,$2,$3,$4)`,
+      [req.params.id, estadoNuevo, nota || null, req.user.id]
+    );
+
     await client.query("COMMIT");
     res.json({ ok: true });
   } catch (err) {
@@ -510,6 +582,48 @@ app.put("/api/admin/pedidos/:id/estado", authMiddleware, async (req, res) => {
   } finally {
     client.release();
   }
+});
+
+// ── TRACKING PÚBLICO — GET /api/pedido/:token ───────────────
+// Acceso sin autenticación, solo expone campos no sensibles
+app.get("/api/pedido/:token", async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT id, nombre, apellido, total::float, metodo_pago, estado, fecha_creacion, token
+       FROM pedidos WHERE token=$1`,
+      [req.params.token]
+    );
+    if (!result.rows.length)
+      return res.status(404).json({ error: "Pedido no encontrado" });
+
+    const pedido = result.rows[0];
+
+    const items = await pool.query(
+      `SELECT nombre_producto, cantidad, precio::float FROM detalle_pedido WHERE pedido_id=$1`,
+      [pedido.id]
+    );
+
+    const historial = await pool.query(
+      `SELECT pe.estado, pe.nota, pe.fecha, u.nombre AS usuario
+       FROM pedido_estados pe
+       LEFT JOIN usuarios u ON u.id = pe.usuario_id
+       WHERE pe.pedido_id=$1
+       ORDER BY pe.fecha ASC`,
+      [pedido.id]
+    );
+
+    // No exponer ID ni teléfono al público, solo nombre + estado
+    res.json({
+      nombre: pedido.nombre,
+      apellido: pedido.apellido,
+      total: pedido.total,
+      metodo_pago: pedido.metodo_pago,
+      estado: pedido.estado,
+      fecha_creacion: pedido.fecha_creacion,
+      items: items.rows,
+      historial: historial.rows
+    });
+  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // ── ESTADÍSTICAS ADMIN (unificadas: pedidos online + POS) ──────
