@@ -2737,124 +2737,287 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
 
 /* ═══ UBICACIÓN GPS + COSTO ENVÍO ════════════════════════ */
-.location-wrap { position: relative; }
+/* ═══════════════════════════════════════════════════════════
+   GEOLOCALIZACIÓN PREMIUM — Mapa + Búsqueda + Zonas
+═══════════════════════════════════════════════════════════ */
 
-.btn-gps {
-  position: absolute;
-  right: 10px; top: 10px;
-  background: var(--rose);
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  padding: 7px 12px;
-  font-size: .75rem;
-  font-weight: 700;
+/* Leaflet overrides */
+.leaflet-container { font-family: var(--ff-body) !important; border-radius: 16px; }
+.leaflet-control-zoom { border: none !important; box-shadow: 0 4px 14px rgba(0,0,0,.12) !important; }
+.leaflet-control-zoom a { border-radius: 8px !important; color: var(--dark) !important; }
+
+/* ── Buscador de dirección con sugerencias ── */
+.geo-search-wrap {
+  position: relative;
+  margin-bottom: 10px;
+}
+.geo-search-input {
+  width: 100%;
+  padding: 13px 48px 13px 16px;
+  border: 2px solid var(--border);
+  border-radius: 14px;
+  font-family: var(--ff-body);
+  font-size: .9rem;
+  color: var(--dark);
+  background: #fff;
+  outline: none;
+  transition: border-color .2s, box-shadow .2s;
+}
+.geo-search-input:focus {
+  border-color: var(--rose);
+  box-shadow: 0 0 0 3px rgba(192,57,75,.1);
+}
+.geo-search-input::placeholder { color: var(--muted); }
+.geo-search-icon {
+  position: absolute; right: 14px; top: 50%;
+  transform: translateY(-50%);
+  color: var(--muted); pointer-events: none;
+  font-size: .9rem;
+}
+/* Sugerencias dropdown */
+.geo-suggestions {
+  position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 12px 40px rgba(26,10,14,.14);
+  z-index: 9999;
+  overflow: hidden;
+  animation: fadeUp .2s ease both;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.geo-suggestion-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 11px 14px;
   cursor: pointer;
+  transition: background .15s;
+  border-bottom: 1px solid rgba(0,0,0,.04);
+  font-size: .84rem;
+  color: var(--dark);
+}
+.geo-suggestion-item:last-child { border-bottom: none; }
+.geo-suggestion-item:hover { background: rgba(192,57,75,.05); }
+.geo-sug-icon { color: var(--rose); font-size: .8rem; flex-shrink: 0; }
+.geo-sug-main { font-weight: 600; font-size: .83rem; }
+.geo-sug-sub  { font-size: .72rem; color: var(--muted); margin-top: 1px; }
+
+/* ── Botones de acción GPS ── */
+.geo-action-row {
+  display: flex; gap: 8px; margin-bottom: 10px;
+}
+.btn-gps-new {
+  flex: 1;
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  padding: 11px 14px;
+  border: none; border-radius: 12px;
+  font-family: var(--ff-body); font-weight: 700; font-size: .8rem;
+  cursor: pointer; transition: all .22s; white-space: nowrap;
+}
+.btn-gps-main {
+  background: linear-gradient(135deg, var(--rose), #a02035);
+  color: #fff;
+  box-shadow: 0 4px 14px rgba(192,57,75,.35);
+}
+.btn-gps-main:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(192,57,75,.45); }
+.btn-gps-main.loading { background: var(--muted); box-shadow: none; cursor: wait; }
+.btn-gps-main.success { background: linear-gradient(135deg, #16a34a, #14532d); box-shadow: 0 4px 14px rgba(22,163,74,.35); }
+.btn-map-toggle {
+  background: var(--ivory);
+  border: 1.5px solid var(--border);
+  color: var(--mid);
+  padding: 11px 16px;
+  flex: none;
+}
+.btn-map-toggle:hover { border-color: var(--rose); color: var(--rose); }
+.btn-map-toggle.map-open { background: var(--rose); color: #fff; border-color: var(--rose); }
+
+/* ── Mini-mapa interactivo ── */
+.geo-map-container {
+  display: none;
+  margin-top: 10px;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  box-shadow: 0 8px 28px rgba(26,10,14,.1);
+  animation: fadeUp .3s ease both;
+  position: relative;
+}
+.geo-map-container.open { display: block; }
+#geo-map {
+  height: 200px;
+  width: 100%;
+  z-index: 1;
+}
+.geo-map-overlay-tip {
+  position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
+  background: rgba(26,10,14,.75); backdrop-filter: blur(8px);
+  color: #fff; font-size: .7rem; font-weight: 600;
+  padding: 5px 12px; border-radius: 999px;
+  z-index: 10; pointer-events: none; white-space: nowrap;
+  opacity: 1; transition: opacity .5s;
+}
+.geo-map-overlay-tip.hidden { opacity: 0; }
+
+/* ── Status bar mejorado ── */
+.location-status {
+  font-size: .75rem;
+  margin-top: 6px;
+  min-height: 20px;
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: all .2s;
-  z-index: 2;
-  white-space: nowrap;
+  padding: 5px 10px;
+  border-radius: 8px;
+  transition: all .25s;
 }
-.btn-gps:hover    { background: #a02035; transform: scale(1.04); }
-.btn-gps.loading  { background: var(--muted); cursor: wait; }
-.btn-gps.success  { background: #15803d; }
+.location-status.ok   { color: #15803d; background: rgba(22,163,74,.08); }
+.location-status.err  { color: #dc2626; background: rgba(239,68,68,.08); }
+.location-status.info { color: var(--muted); background: rgba(92,48,64,.06); }
 
-.location-status {
+/* ── Zona de coordenadas ── */
+.geo-coords-pill {
+  display: none;
+  align-items: center; gap: 7px;
+  background: rgba(22,163,74,.08);
+  border: 1px solid rgba(22,163,74,.2);
+  border-radius: 10px;
+  padding: 7px 12px;
+  margin-top: 6px;
   font-size: .72rem;
-  margin-top: 5px;
-  min-height: 16px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
+  font-weight: 600;
+  color: #15803d;
 }
-.location-status.ok   { color: #15803d; }
-.location-status.err  { color: #dc2626; }
-.location-status.info { color: var(--muted); }
+.geo-coords-pill.visible { display: flex; }
+.geo-coords-pill a {
+  color: #15803d; margin-left: auto;
+  text-decoration: none; font-size: .7rem;
+  display: flex; align-items: center; gap: 4px;
+}
+.geo-coords-pill a:hover { text-decoration: underline; }
 
-/* Delivery estimate card */
+/* ── Estimación de entrega ── */
 .delivery-estimate {
   display: none;
-  background: linear-gradient(135deg, #fff, var(--ivory));
+  background: #fff;
   border: 1.5px solid var(--border);
-  border-radius: 16px;
-  padding: 16px 18px;
+  border-radius: 18px;
+  overflow: hidden;
   margin-top: 12px;
   animation: fadeUp .3s ease both;
+  box-shadow: 0 4px 20px rgba(26,10,14,.07);
 }
 .delivery-estimate.visible { display: block; }
+
 .delivery-est-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  display: flex; align-items: center; gap: 10px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid rgba(0,0,0,.06);
+  background: linear-gradient(90deg, rgba(192,57,75,.04), rgba(201,150,58,.04));
 }
 .delivery-est-title {
-  font-weight: 700;
-  font-size: .9rem;
-  color: var(--dark);
+  font-weight: 700; font-size: .88rem; color: var(--dark); flex: 1;
 }
 .delivery-est-dist {
-  font-size: .74rem;
-  color: var(--muted);
-  margin-left: auto;
+  font-size: .73rem; color: var(--muted);
+  background: rgba(0,0,0,.05);
+  padding: 3px 10px; border-radius: 999px;
 }
+/* Barra de progreso de distancia */
+.delivery-dist-bar-wrap {
+  padding: 10px 16px 0;
+}
+.delivery-dist-bar-track {
+  height: 4px; background: rgba(0,0,0,.07); border-radius: 999px; overflow: hidden;
+}
+.delivery-dist-bar-fill {
+  height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, #22c55e, var(--gold), var(--rose));
+  transition: width .6s cubic-bezier(.22,.68,0,1.2);
+}
+.delivery-dist-labels {
+  display: flex; justify-content: space-between;
+  font-size: .62rem; color: var(--muted);
+  margin-top: 3px; padding: 0 1px;
+}
+
+/* Tiers */
 .delivery-tiers {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   gap: 8px;
+  padding: 12px 14px 14px;
 }
 .delivery-tier {
   border: 2px solid rgba(0,0,0,.07);
-  border-radius: 12px;
-  padding: 10px 8px;
+  border-radius: 14px;
+  padding: 12px 8px 10px;
   text-align: center;
   cursor: pointer;
-  transition: all .2s;
+  transition: all .22s cubic-bezier(.22,.68,0,1.2);
   position: relative;
+  background: #fff;
 }
-.delivery-tier:hover   { border-color: var(--rose); }
-.delivery-tier.sel     { border-color: var(--rose); background: rgba(192,57,75,.04); }
+.delivery-tier:hover { border-color: var(--rose); transform: translateY(-2px); box-shadow: 0 4px 14px rgba(192,57,75,.15); }
+.delivery-tier.sel { border-color: var(--rose); background: linear-gradient(135deg, rgba(192,57,75,.05), rgba(201,150,58,.04)); box-shadow: 0 4px 16px rgba(192,57,75,.18); }
 .delivery-tier.sel::after {
-  content: "✓";
-  position: absolute;
-  top: 5px; right: 7px;
-  font-size: .65rem;
-  font-weight: 700;
-  color: var(--rose);
+  content: "✓"; position: absolute; top: 6px; right: 8px;
+  font-size: .6rem; font-weight: 900; color: #fff;
+  background: var(--rose); border-radius: 50%;
+  width: 14px; height: 14px;
+  display: flex; align-items: center; justify-content: center;
 }
-.tier-icon  { font-size: 1.4rem; display: block; margin-bottom: 4px; }
+.tier-icon  { font-size: 1.5rem; display: block; margin-bottom: 5px; }
 .tier-name  { font-size: .7rem; font-weight: 700; color: var(--dark); }
-.tier-time  { font-size: .65rem; color: var(--muted); margin-top: 1px; }
+.tier-time  { font-size: .62rem; color: var(--muted); margin-top: 2px; }
 .tier-price {
   font-family: var(--ff-head);
-  font-size: .95rem;
-  font-weight: 700;
-  color: var(--rose);
-  margin-top: 5px;
+  font-size: .98rem; font-weight: 700;
+  color: var(--rose); margin-top: 6px;
 }
+.tier-badge {
+  display: inline-block;
+  font-size: .58rem; font-weight: 700;
+  padding: 2px 7px; border-radius: 999px;
+  margin-top: 4px; letter-spacing: .03em;
+}
+.tier-badge.popular { background: rgba(201,150,58,.15); color: #a07020; }
+.tier-badge.fast    { background: rgba(22,163,74,.12);  color: #15803d; }
+
 .delivery-note {
-  font-size: .7rem;
-  color: var(--muted);
-  text-align: center;
-  margin-top: 10px;
-  font-style: italic;
+  font-size: .7rem; color: var(--muted); text-align: center;
+  padding: 0 16px 12px; font-style: italic;
 }
+
+/* Zona fuera de cobertura */
 .no-delivery-zone {
   display: none;
-  background: rgba(239,68,68,.07);
-  border: 1px solid rgba(239,68,68,.2);
-  border-radius: 12px;
-  padding: 12px 14px;
+  margin: 12px 0 0;
+  background: rgba(239,68,68,.06);
+  border: 1.5px solid rgba(239,68,68,.2);
+  border-radius: 14px;
+  padding: 14px 16px;
   font-size: .8rem;
   color: #dc2626;
-  margin-top: 10px;
   text-align: center;
+}
+
+@keyframes ripple {
+  0%   { transform: scale(1); opacity: .6; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+.store-pin-pulse::after {
+  content: "";
+  position: absolute; inset: -6px;
+  border: 2px solid var(--rose);
+  border-radius: 50%;
+  animation: ripple 1.8s ease-out infinite;
 }
 
 @media(max-width:400px){
   .delivery-tiers { grid-template-columns: 1fr 1fr; }
+  .geo-action-row { flex-direction: column; }
+  .btn-map-toggle { flex: 1; }
 }
 
 
@@ -5568,6 +5731,9 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
 
 
 
+      <!-- ── Fila área + donut ── -->
+      <div class="s-charts-row" style="margin-bottom:16px">
+
         <!-- Área: ingresos por día / semana -->
         <div class="s-chart-card s-chart-main">
           <div class="s-chart-hdr">
@@ -6130,35 +6296,86 @@ td img { width:52px; height:52px; object-fit:cover; border-radius:10px; backgrou
         <!-- ══ PANEL: ENVÍO A DOMICILIO ══ -->
         <div class="pay-details-panel" id="panel-envio" style="display:block">
 
-          <!-- Ubicación + GPS -->
+          <!-- ══ GEOLOCALIZACIÓN PREMIUM ══ -->
           <div style="margin-top:14px">
-            <label style="display:block;font-size:.76rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.04em;margin-bottom:8px">📍 Dirección de entrega</label>
-            <div class="location-wrap">
-              <textarea class="fi" id="f-dir" rows="3"
-                placeholder="Escribe tu dirección o usa el GPS 📍"
-                style="resize:none;padding-right:130px"
-                autocomplete="street-address"
-                oninput="onAddressChange()"></textarea>
-              <button type="button" class="btn-gps" id="btn-gps" onclick="getGPSLocation()">
-                <i class="fa-solid fa-location-crosshairs"></i> Usar GPS
+            <label style="display:block;font-size:.76rem;font-weight:600;color:var(--mid);text-transform:uppercase;letter-spacing:.04em;margin-bottom:10px">
+              <i class="fa-solid fa-location-dot" style="color:var(--rose)"></i> Dirección de entrega
+            </label>
+
+            <!-- Buscador con autocompletado -->
+            <div class="geo-search-wrap" id="geo-search-wrap">
+              <input
+                type="text"
+                id="f-dir"
+                class="geo-search-input"
+                placeholder="Escribe tu barrio, calle o sector…"
+                autocomplete="off"
+                oninput="onGeoSearchInput(this.value)"
+                onfocus="onGeoSearchFocus()"
+              >
+              <i class="fa-solid fa-magnifying-glass geo-search-icon" id="geo-search-icon"></i>
+              <!-- Sugerencias dropdown -->
+              <div class="geo-suggestions" id="geo-suggestions" style="display:none"></div>
+            </div>
+
+            <!-- Botones: GPS + Ver mapa -->
+            <div class="geo-action-row">
+              <button type="button" class="btn-gps-new btn-gps-main" id="btn-gps" onclick="getGPSLocation()">
+                <i class="fa-solid fa-location-crosshairs"></i>
+                <span id="btn-gps-text">Detectar con GPS</span>
+              </button>
+              <button type="button" class="btn-gps-new btn-map-toggle" id="btn-map-toggle" onclick="toggleMap()">
+                <i class="fa-solid fa-map"></i> Mapa
               </button>
             </div>
+
+            <!-- Status bar -->
             <div class="location-status info" id="location-status">
-              <i class="fa-solid fa-circle-info" style="font-size:.65rem"></i>
-              Escribe tu dirección o presiona GPS para detectarla automáticamente
+              <i class="fa-solid fa-circle-info"></i>
+              Escribe tu dirección o usa GPS para detectarla
             </div>
-            <!-- Delivery estimate -->
+
+            <!-- Coordenadas pill -->
+            <div class="geo-coords-pill" id="geo-coords-pill">
+              <i class="fa-solid fa-crosshairs" style="font-size:.8rem"></i>
+              <span id="geo-coords-text">—</span>
+              <a id="geo-maps-link" href="#" target="_blank" rel="noopener">
+                <i class="fa-solid fa-arrow-up-right-from-square"></i> Ver
+              </a>
+            </div>
+
+            <!-- Mini-mapa interactivo -->
+            <div class="geo-map-container" id="geo-map-container">
+              <div id="geo-map"></div>
+              <div class="geo-map-overlay-tip" id="geo-map-tip">
+                <i class="fa-solid fa-hand-pointer"></i> Toca el mapa para ajustar tu ubicación
+              </div>
+            </div>
+
+            <!-- Estimación de envío -->
             <div class="delivery-estimate" id="delivery-estimate">
               <div class="delivery-est-header">
-                <span style="font-size:1.3rem">🛵</span>
-                <div><div class="delivery-est-title">Opciones de envío</div></div>
+                <span style="font-size:1.4rem">🛵</span>
+                <div class="delivery-est-title">Opciones de envío</div>
                 <span class="delivery-est-dist" id="delivery-dist-lbl"></span>
               </div>
+              <!-- Barra de distancia visual -->
+              <div class="delivery-dist-bar-wrap">
+                <div class="delivery-dist-bar-track">
+                  <div class="delivery-dist-bar-fill" id="delivery-dist-bar" style="width:0%"></div>
+                </div>
+                <div class="delivery-dist-labels">
+                  <span>Tienda</span><span>5 km</span><span>20 km</span><span>40 km</span>
+                </div>
+              </div>
               <div class="delivery-tiers" id="delivery-tiers"></div>
-              <p class="delivery-note">El costo de envío se suma al total del pedido</p>
+              <p class="delivery-note">💳 El costo de envío se suma al total del pedido</p>
             </div>
+
             <div class="no-delivery-zone" id="no-delivery-zone">
-              📍 Tu ubicación está fuera de nuestra zona de entrega. Contáctanos para coordinar.
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              Tu ubicación está fuera de nuestra zona de cobertura.<br>
+              <strong>Contáctanos por WhatsApp para coordinar.</strong>
             </div>
           </div>
 
@@ -8221,14 +8438,21 @@ function loadStats() {
     }).join("");
   }
 
-  // ── 5. Top products ──
+  // ── 5. Top products (online + fallback POS del backend) ──
   const prodCount = {}, prodIng = {};
   exitosos.forEach(o => (o.items||[]).forEach(item => {
-    const n = item.nombre_producto||item.nombre; const q = item.cantidad||1;
+    const n = item.nombre_producto||item.nombre; if (!n) return;
+    const q = item.cantidad||1;
     prodCount[n] = (prodCount[n]||0)+q;
     prodIng[n]   = (prodIng[n]||0)+(Number(item.precio)*q);
   }));
-  const topList = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  let topList = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,6);
+  // Si no hay datos online, usar top5 del backend (incluye POS)
+  const useBackendTop = !topList.length && _statsData?.top5Productos?.length;
+  if (useBackendTop) {
+    topList = _statsData.top5Productos.slice(0,6).map(p => [p.nombre, p.total_vendido]);
+    _statsData.top5Productos.forEach(p => { prodIng[p.nombre] = p.ingresos_total || 0; });
+  }
   const maxProd = topList[0]?.[1]||1;
   const tpEl = document.getElementById("s-top-products");
   const MEDALS = ["🥇","🥈","🥉"];
@@ -8257,58 +8481,71 @@ function loadStats() {
     }
   }
 
-  // ── 6. Métodos de pago ──
+  // ── 6. Métodos de pago (online + fallback backend que incluye POS) ──
   const payMap = {};
   exitosos.forEach(o => { const m = o.metodo_pago||"Otro"; payMap[m] = (payMap[m]||0)+1; });
-  const payList = Object.entries(payMap).sort((a,b)=>b[1]-a[1]);
+  let payList = Object.entries(payMap).sort((a,b)=>b[1]-a[1]);
+  const useBackendPay = !payList.length && _statsData?.metodosPago?.length;
+  if (useBackendPay) {
+    payList = _statsData.metodosPago.map(m => [m.metodo_pago, m.cantidad]);
+  }
   const maxPay  = payList[0]?.[1]||1;
-  const PAY_ICONS = { Efectivo:"💵", Transferencia:"🏦", "Efectivo en tienda":"🏪", "Transferencia en tienda":"🏦" };
+  const PAY_ICONS = { Efectivo:"💵", Transferencia:"🏦", "Efectivo en tienda":"🏪", "Transferencia en tienda":"🏦", Tarjeta:"💳" };
   const pmEl = document.getElementById("s-pay-methods");
   if (pmEl) {
     if (!payList.length) {
       pmEl.innerHTML = '<p style="color:var(--muted);font-size:.84rem">Sin datos</p>';
     } else {
+      const totalPays = payList.reduce((s,[,c])=>s+c,0)||1;
       pmEl.innerHTML = payList.map(([m,c]) => `<div class="s-pay-row">
         <div class="s-pay-icon">${PAY_ICONS[m]||"💳"}</div>
         <div class="s-pay-info">
           <div class="s-pay-lbl">${m}</div>
           <div class="s-pay-bar-bg"><div class="s-pay-bar-fill" style="width:${Math.round(c/maxPay*100)}%"></div></div>
         </div>
-        <span class="s-pay-pct">${Math.round(c/exitosos.length*100)}%</span>
+        <span class="s-pay-pct">${Math.round(c/totalPays*100)}%</span>
       </div>`).join("");
     }
   }
 
-  // ── 7. Mejor/peor día ──
+  // ── 7. Mejor/peor día (online + tendencia backend si hay datos) ──
   const dayMap = {};
-  exitosos.forEach(o => {
-    if (!o.fecha_creacion) return;
-    const key = new Date(o.fecha_creacion).toDateString();
-    dayMap[key] = (dayMap[key]||0) + Number(o.total);
-  });
+  // Usar tendencia30d del backend si existe (incluye POS)
+  if (_statsData?.tendencia30d?.length) {
+    _statsData.tendencia30d.forEach(d => {
+      if (d.total > 0) dayMap[new Date(d.fecha).toDateString()] = parseFloat(d.total);
+    });
+  } else {
+    exitosos.forEach(o => {
+      if (!o.fecha_creacion) return;
+      const key = new Date(o.fecha_creacion).toDateString();
+      dayMap[key] = (dayMap[key]||0) + Number(o.total);
+    });
+  }
   const dayEntries = Object.entries(dayMap);
   const bdEl = document.getElementById("s-best-days");
   if (bdEl) {
     if (dayEntries.length === 0) {
       bdEl.innerHTML = '<p style="color:var(--muted);font-size:.84rem">Sin datos</p>';
     } else {
-      const best  = dayEntries.sort((a,b)=>b[1]-a[1])[0];
-      const worst = dayEntries.sort((a,b)=>a[1]-b[1])[0];
-      const fmt = s => new Date(s).toLocaleDateString("es-DO",{weekday:"long",day:"numeric",month:"long"});
+      const sorted  = [...dayEntries].sort((a,b)=>b[1]-a[1]);
+      const best    = sorted[0];
+      const worst   = sorted[sorted.length-1];
+      const fmtDay  = s => new Date(s).toLocaleDateString("es-DO",{weekday:"long",day:"numeric",month:"long"});
       bdEl.innerHTML = `
         <div class="s-day-card best">
           <span class="s-day-icon">🌟</span>
           <div class="s-day-info">
             <div class="s-day-label">Mejor día</div>
-            <div class="s-day-date">${fmt(best[0])}</div>
+            <div class="s-day-date">${fmtDay(best[0])}</div>
           </div>
           <div class="s-day-val">RD$ ${Math.round(best[1]).toLocaleString()}</div>
         </div>
-        ${dayEntries.length > 1 ? `<div class="s-day-card worst">
+        ${sorted.length > 1 ? `<div class="s-day-card worst">
           <span class="s-day-icon">📉</span>
           <div class="s-day-info">
             <div class="s-day-label">Día más bajo</div>
-            <div class="s-day-date">${fmt(worst[0])}</div>
+            <div class="s-day-date">${fmtDay(worst[0])}</div>
           </div>
           <div class="s-day-val">RD$ ${Math.round(worst[1]).toLocaleString()}</div>
         </div>` : ""}`;
@@ -8319,23 +8556,28 @@ function loadStats() {
   const insEl = document.getElementById("s-insight");
   if (insEl) {
     const insights = [];
-    if (filtered.length === 0 && posCompletadasCount === 0) {
+    const hayDatos = filtered.length > 0 || posCompletadasCount > 0 || topList.length > 0;
+    if (!hayDatos) {
       insights.push({ e:"📭", t:"No hay pedidos ni ventas POS en este período." });
     } else {
-      if (conversion >= 80) insights.push({ e:"🎉", t:`Excelente tasa de conversión del ${conversion}%. Más del 80% de pedidos online son exitosos.` });
-      else if (conversion < 50 && filtered.length > 0) insights.push({ e:"⚠️", t:`Tasa de conversión online baja (${conversion}%). Revisa pedidos cancelados o pendientes.` });
+      if (conversion >= 80 && filtered.length > 0) insights.push({ e:"🎉", t:`Excelente tasa de conversión del ${conversion}%. Más del 80% de pedidos online son exitosos.` });
+      else if (conversion < 50 && filtered.length > 3) insights.push({ e:"⚠️", t:`Tasa de conversión online baja (${conversion}%). Revisa pedidos cancelados o pendientes.` });
       if (crecPct !== null && crecPct >= 20) insights.push({ e:"📈", t:`Los ingresos crecieron un ${crecPct}% vs el período anterior. ¡Buen ritmo!` });
-      if (crecPct !== null && crecPct < 0)   insights.push({ e:"📉", t:`Los ingresos bajaron un ${Math.abs(crecPct)}% vs el período anterior.` });
-      // Insight POS
+      if (crecPct !== null && crecPct < -5)  insights.push({ e:"📉", t:`Los ingresos bajaron un ${Math.abs(crecPct)}% vs el período anterior.` });
       if (posCompletadasCount > 0) {
         const posIngresos = (_statsData?.pos?.ingresos || 0);
         const posShare = totalIngresosConPOS > 0 ? Math.round((posIngresos / totalIngresosConPOS) * 100) : 0;
         insights.push({ e:"🏪", t:`El POS aportó RD$ ${posIngresos.toLocaleString()} (${posShare}% del total) con ${posCompletadasCount} venta${posCompletadasCount!==1?"s":""} completada${posCompletadasCount!==1?"s":""}.` });
       }
-      if (topList[0]) insights.push({ e:"🏆", t:`"${topList[0][0]}" es tu producto estrella con ${topList[0][1]} unidades vendidas (online).` });
-      else if (_statsData?.top5Productos?.[0]) insights.push({ e:"🏆", t:`"${_statsData.top5Productos[0].nombre}" lidera ventas con ${_statsData.top5Productos[0].total_vendido} unidades (todos los canales).` });
+      if (topList[0]) {
+        const src = useBackendTop ? "todos los canales" : "online";
+        insights.push({ e:"🏆", t:`"${topList[0][0]}" es tu producto estrella con ${topList[0][1]} unidades vendidas (${src}).` });
+      }
       if (pendientes.length > 0) insights.push({ e:"⏳", t:`Tienes ${pendientes.length} pedido${pendientes.length>1?"s":""} online pendiente${pendientes.length>1?"s":""} sin atender.` });
-      if (payList[0]) insights.push({ e:"💡", t:`El ${Math.round(payList[0][1]/Math.max(exitosos.length,1)*100)}% de tus clientes online pagan con "${payList[0][0]}".` });
+      if (payList.length > 0) {
+        const totalPagos = payList.reduce((s,[,c])=>s+c,0)||1;
+        insights.push({ e:"💡", t:`El ${Math.round(payList[0][1]/totalPagos*100)}% de los pagos son con "${payList[0][0]}".` });
+      }
     }
     insEl.innerHTML = insights.slice(0,4).map(({e,t}) =>
       `<div class="s-insight-item"><span class="s-insight-emoji">${e}</span><span>${t}</span></div>`
@@ -8729,75 +8971,6 @@ function loadDashboard() {
       </div>`).join("")
       : `<div style="text-align:center;padding:20px;color:var(--muted);font-size:.82rem">Sin pedidos recientes</div>`;
   }
-}  // ── Top 3 products ──
-  const prodCount = {}, prodIngresos = {};
-  exitosos.forEach(o => {
-    (o.items||[]).forEach(item => {
-      const n = item.nombre_producto || item.nombre;
-      const qty = item.cantidad || 1;
-      prodCount[n]    = (prodCount[n]||0) + qty;
-      prodIngresos[n] = (prodIngresos[n]||0) + (Number(item.precio)*qty);
-    });
-  });
-  const topProds = Object.entries(prodCount).sort((a,b)=>b[1]-a[1]).slice(0,3);
-  const maxProd  = topProds[0]?.[1] || 1;
-  const topEl    = document.getElementById("dash-top-prods");
-  if (topEl) {
-    const MEDALS = ["🥇","🥈","🥉"];
-    if (!topProds.length) {
-      topEl.innerHTML = '<p style="color:var(--muted);font-size:.84rem;text-align:center;padding:10px">Sin ventas registradas aún</p>';
-    } else {
-      topEl.innerHTML = topProds.map(([name, qty], i) => {
-        const prod = prods.find(p => p.nombre === name);
-        const imgHtml = prod?.imagen
-          ? `<img src="${prod.imagen}" class="dash-top-img" style="width:42px;height:42px;border-radius:10px;object-fit:cover">`
-          : `<div class="dash-top-img">🍬</div>`;
-        const pct = Math.round((qty/maxProd)*100);
-        return `<div class="dash-top-prod">
-          <span class="dash-top-rank">${MEDALS[i]||i+1}</span>
-          ${imgHtml}
-          <div class="dash-top-info">
-            <div class="dash-top-name">${name}</div>
-            <div class="dash-top-bar-wrap"><div class="dash-top-bar-fill" style="width:${pct}%"></div></div>
-            <div class="dash-top-qty">${qty} uds vendidas</div>
-          </div>
-          <div class="dash-top-val">RD$ ${(prodIngresos[name]||0).toLocaleString()}</div>
-        </div>`;
-      }).join("");
-    }
-  }
-
-  // ── Recent orders ──
-  const recent = document.getElementById("dash-recent");
-  if (!recent) return;
-  const last6 = [...orders].slice(0, 6);
-  const EICONS = { pendiente:"⏳", confirmado:"✅", entregado:"🚚", cancelado:"❌" };
-  const ESTADO_COLORS = {
-    pendiente:"rgba(251,191,36,.1);color:#b45309",
-    confirmado:"rgba(59,130,246,.1);color:#1d4ed8",
-    entregado:"rgba(22,163,74,.1);color:#15803d",
-    cancelado:"rgba(239,68,68,.1);color:#dc2626"
-  };
-  recent.innerHTML = last6.length ? last6.map(o => {
-    const fecha = o.fecha_creacion
-      ? new Date(o.fecha_creacion).toLocaleString("es-DO", { dateStyle:"short", timeStyle:"short" })
-      : "—";
-    const isCanceled = o.estado === "cancelado";
-    const clr = ESTADO_COLORS[o.estado] || ESTADO_COLORS.pendiente;
-    return `<div class="dash-recent-item" style="${isCanceled?"opacity:.6":""}">
-      <div style="display:flex;align-items:center;gap:10px">
-        <div style="width:36px;height:36px;border-radius:10px;background:${clr.split(";")[0].replace("rgba","rgba")};display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${EICONS[o.estado]||"⏳"}</div>
-        <div>
-          <div class="dash-client">${o.nombre} ${o.apellido} <span style="font-size:.68rem;color:var(--muted);font-family:monospace">#${o.id}</span></div>
-          <div class="dash-time">${fecha} · ${o.metodo_pago}</div>
-        </div>
-      </div>
-      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
-        <div class="dash-total" style="${isCanceled?"text-decoration:line-through;color:var(--muted)":""}">RD$ ${Number(o.total).toLocaleString()}</div>
-        <span style="font-size:.66rem;padding:2px 8px;border-radius:999px;font-weight:600;background:${clr}">${(o.estado||"").charAt(0).toUpperCase()+(o.estado||"").slice(1)}</span>
-      </div>
-    </div>`;
-  }).join("") : '<p style="color:var(--muted);text-align:center;padding:20px">No hay pedidos todavía</p>';
 }
 
 /* ══════════════════════════════════════════════════════
@@ -9310,7 +9483,11 @@ function switchTab(t) {
   if (t==="d") { if (!orders.length) loadOrders().then(()=>{ loadDashboard(); setTimeout(applyRoleRestrictions,100); }); else { loadDashboard(); setTimeout(applyRoleRestrictions,100); } }
   if (t==="o") loadOrders().then ? loadOrders().then(()=>setTimeout(applyRoleRestrictions,100)) : (loadOrders(), setTimeout(applyRoleRestrictions,300));
   if (t==="p") { const prom = loadAdminProducts(); prom && prom.then ? prom.then(()=>setTimeout(applyRoleRestrictions,100)) : setTimeout(applyRoleRestrictions,300); }
-  if (t==="s") { loadEstadisticas(); if (!orders.length) loadOrders().then(loadStats); else loadStats(); setTimeout(applyRoleRestrictions,200); }
+  if (t==="s") {
+    const runStats = () => { if (!orders.length) loadOrders().then(loadStats); else loadStats(); };
+    loadEstadisticas().then(runStats).catch(runStats);
+    setTimeout(applyRoleRestrictions, 200);
+  }
   if (t==="u") { loadUsers(); setTimeout(applyRoleRestrictions,300); }
   if (t==="e") { loadEntradas(); setTimeout(applyRoleRestrictions,300); }
   if (t==="pos") { initPOS(); setTimeout(applyRoleRestrictions,300); }
@@ -9427,40 +9604,48 @@ function doLogout(isAuto=false) {
 
 
 /* ══════════════════════════════════════════════════════
-   UBICACIÓN GPS + ESTIMACIÓN DE COSTO DE ENVÍO
+   GEOLOCALIZACIÓN PREMIUM v3.0
+   - Mapa interactivo Leaflet
+   - Búsqueda con autocompletado Nominatim
+   - Barra visual de distancia
+   - Tiers mejorados con badges
 ══════════════════════════════════════════════════════ */
 
-// ── Tienda ubicada en Santo Domingo Este ──
+// ── Tienda: Santo Domingo Este ──
 const STORE_LAT = 18.4861;
 const STORE_LNG = -69.8475;
+const MAX_ZONE_KM = 40; // radio máximo de cobertura
 
-// ── Tarifas de envío por distancia (como Uber/InDrive) ──
+// ── Tarifas de envío por distancia ──
 const DELIVERY_TIERS = [
   {
-    id:    "express",
-    icon:  "⚡",
-    name:  "Express",
-    time:  "30–45 min",
-    baseKm: 5,        // hasta 5 km
-    baseCost: 150,    // RD$ 150 base
-    perKm: 30,        // RD$ 30 por km adicional
+    id: "express",
+    icon: "⚡",
+    name: "Express",
+    time: "30–45 min",
+    badge: { text: "Más rápido", cls: "fast" },
+    baseKm: 5,
+    baseCost: 150,
+    perKm: 30,
     maxKm: 10
   },
   {
-    id:    "standard",
-    icon:  "🛵",
-    name:  "Estándar",
-    time:  "45–90 min",
+    id: "standard",
+    icon: "🛵",
+    name: "Estándar",
+    time: "45–90 min",
+    badge: { text: "Popular", cls: "popular" },
     baseKm: 10,
     baseCost: 200,
     perKm: 25,
     maxKm: 20
   },
   {
-    id:    "scheduled",
-    icon:  "📅",
-    name:  "Programado",
-    time:  "Acordar hora",
+    id: "scheduled",
+    icon: "📅",
+    name: "Programado",
+    time: "Acordar hora",
+    badge: null,
     baseKm: 20,
     baseCost: 250,
     perKm: 20,
@@ -9468,42 +9653,406 @@ const DELIVERY_TIERS = [
   }
 ];
 
-let userLat        = null;
-let userLng        = null;
-let deliveryCost   = 0;
-let selectedTier   = null;
-let userCoords     = null;
+let userLat      = null;
+let userLng      = null;
+let deliveryCost = 0;
+let selectedTier = null;
+let userCoords   = null;
+let geoMap       = null;       // instancia Leaflet
+let geoMarker    = null;       // marcador del usuario
+let geoCircles   = [];         // círculos de zona
+let mapOpen      = false;
+let searchTimer  = null;       // debounce búsqueda
 
-// Haversine formula — distance between two coords in km
+// ──────────────────────────────────────────────────────────
+// Haversine — distancia en km
+// ──────────────────────────────────────────────────────────
 function calcDistance(lat1, lng1, lat2, lng2) {
   const R    = 6371;
   const dLat = (lat2 - lat1) * Math.PI / 180;
   const dLng = (lng2 - lng1) * Math.PI / 180;
-  const a    = Math.sin(dLat/2) * Math.sin(dLat/2) +
-               Math.cos(lat1 * Math.PI/180) * Math.cos(lat2 * Math.PI/180) *
-               Math.sin(dLng/2) * Math.sin(dLng/2);
+  const a    = Math.sin(dLat/2)**2 +
+               Math.cos(lat1*Math.PI/180) * Math.cos(lat2*Math.PI/180) * Math.sin(dLng/2)**2;
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
 }
 
-// Calculate cost for a tier given distance
 function calcTierCost(tier, distKm) {
-  if (distKm > tier.maxKm) return null; // out of range for this tier
+  if (distKm > tier.maxKm) return null;
   const extra = Math.max(0, distKm - tier.baseKm);
   return Math.round(tier.baseCost + extra * tier.perKm);
 }
 
-// Show delivery estimate cards
+// ──────────────────────────────────────────────────────────
+// Inicializar / cargar Leaflet dinámicamente
+// ──────────────────────────────────────────────────────────
+function loadLeaflet(cb) {
+  if (window.L) { cb(); return; }
+  // CSS
+  const link = document.createElement("link");
+  link.rel = "stylesheet";
+  link.href = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css";
+  document.head.appendChild(link);
+  // JS
+  const script = document.createElement("script");
+  script.src = "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js";
+  script.onload = cb;
+  document.head.appendChild(script);
+}
+
+// ──────────────────────────────────────────────────────────
+// Toggle mapa
+// ──────────────────────────────────────────────────────────
+function toggleMap() {
+  const container = document.getElementById("geo-map-container");
+  const btn       = document.getElementById("btn-map-toggle");
+  mapOpen = !mapOpen;
+  if (mapOpen) {
+    container.classList.add("open");
+    btn.classList.add("map-open");
+    btn.innerHTML = '<i class="fa-solid fa-map"></i> Cerrar';
+    loadLeaflet(() => {
+      setTimeout(() => initGeoMap(userLat, userLng), 80);
+    });
+  } else {
+    container.classList.remove("open");
+    btn.classList.remove("map-open");
+    btn.innerHTML = '<i class="fa-solid fa-map"></i> Mapa';
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// Inicializar mapa Leaflet
+// ──────────────────────────────────────────────────────────
+function initGeoMap(lat, lng) {
+  if (!window.L) return;
+
+  const centerLat = lat || STORE_LAT;
+  const centerLng = lng || STORE_LNG;
+
+  if (!geoMap) {
+    geoMap = L.map("geo-map", {
+      zoomControl: true,
+      attributionControl: false,
+      scrollWheelZoom: false
+    }).setView([centerLat, centerLng], lat ? 14 : 12);
+
+    // Tiles OpenStreetMap con estilo cálido
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom: 19,
+      className: "map-tiles"
+    }).addTo(geoMap);
+
+    // Marcador de la tienda
+    const storeIcon = L.divIcon({
+      html: `<div style="
+        width:36px;height:36px;
+        background:linear-gradient(135deg,#c0394b,#c9963a);
+        border-radius:50% 50% 50% 0;
+        transform:rotate(-45deg);
+        border:3px solid #fff;
+        box-shadow:0 4px 12px rgba(192,57,75,.5);
+        display:flex;align-items:center;justify-content:center;
+      "><span style="transform:rotate(45deg);font-size:14px">🏪</span></div>`,
+      className: "",
+      iconSize: [36, 36],
+      iconAnchor: [18, 36]
+    });
+    L.marker([STORE_LAT, STORE_LNG], { icon: storeIcon })
+      .addTo(geoMap)
+      .bindPopup("<b>🍭 Dulce Inspiración</b><br>Tu tienda de repostería");
+
+    // Círculos de zona (10, 20, 40 km) con colores semáforo
+    const zoneColors = [
+      { km: 10, color: "#22c55e", label: "Express" },
+      { km: 20, color: "#f59e0b", label: "Estándar" },
+      { km: 40, color: "#ef4444", label: "Programado" }
+    ];
+    zoneColors.forEach(z => {
+      const circle = L.circle([STORE_LAT, STORE_LNG], {
+        radius: z.km * 1000,
+        color: z.color,
+        weight: 1.5,
+        opacity: .35,
+        fillColor: z.color,
+        fillOpacity: .05
+      }).addTo(geoMap);
+      geoCircles.push(circle);
+    });
+
+    // Click en mapa → mover marcador
+    geoMap.on("click", function(e) {
+      setUserMarker(e.latlng.lat, e.latlng.lng, true);
+      hideTip();
+    });
+
+  } else {
+    geoMap.setView([centerLat, centerLng], lat ? 14 : 12);
+    geoMap.invalidateSize();
+  }
+
+  if (lat && lng) setUserMarker(lat, lng, false);
+
+  // Ocultar tip tras 3s
+  setTimeout(hideTip, 3000);
+}
+
+function hideTip() {
+  const tip = document.getElementById("geo-map-tip");
+  if (tip) tip.classList.add("hidden");
+}
+
+// ──────────────────────────────────────────────────────────
+// Poner / mover marcador del usuario
+// ──────────────────────────────────────────────────────────
+function setUserMarker(lat, lng, fromClick) {
+  userLat = lat; userLng = lng;
+  userCoords = { lat, lng };
+
+  if (!window.L || !geoMap) return;
+
+  const userIcon = L.divIcon({
+    html: `<div style="
+      width:28px;height:28px;
+      background:#3b82f6;
+      border-radius:50%;
+      border:3px solid #fff;
+      box-shadow:0 3px 10px rgba(59,130,246,.6);
+      animation:pulse 2s infinite;
+    "></div>`,
+    className: "",
+    iconSize: [28, 28],
+    iconAnchor: [14, 14]
+  });
+
+  if (geoMarker) {
+    geoMarker.setLatLng([lat, lng]);
+  } else {
+    geoMarker = L.marker([lat, lng], { icon: userIcon, draggable: true }).addTo(geoMap);
+    geoMarker.on("dragend", function(e) {
+      const p = e.target.getLatLng();
+      setUserMarker(p.lat, p.lng, true);
+    });
+  }
+  geoMap.panTo([lat, lng]);
+
+  if (fromClick) {
+    // Reverse geocode silencioso
+    reverseGeocode(lat, lng);
+    const dist = calcDistance(lat, lng, STORE_LAT, STORE_LNG);
+    showDeliveryEstimate(dist);
+    updateCoordsUI(lat, lng);
+    setLocationStatus("✅ Ubicación ajustada en el mapa", "ok");
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// Actualizar UI de coordenadas
+// ──────────────────────────────────────────────────────────
+function updateCoordsUI(lat, lng) {
+  const pill = document.getElementById("geo-coords-pill");
+  const txt  = document.getElementById("geo-coords-text");
+  const link = document.getElementById("geo-maps-link");
+  if (!pill) return;
+  pill.classList.add("visible");
+  txt.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)}`;
+  link.href = `https://maps.google.com/?q=${lat},${lng}`;
+}
+
+// ──────────────────────────────────────────────────────────
+// Reverse geocode → rellenar campo dirección
+// ──────────────────────────────────────────────────────────
+async function reverseGeocode(lat, lng) {
+  try {
+    const resp = await fetch(
+      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=es`,
+      { headers: { "Accept-Language": "es" } }
+    );
+    const data = await resp.json();
+    const parts = [];
+    if (data.address) {
+      if (data.address.road)            parts.push(data.address.road);
+      if (data.address.neighbourhood || data.address.suburb)
+        parts.push(data.address.neighbourhood || data.address.suburb);
+      if (data.address.city || data.address.town)
+        parts.push(data.address.city || data.address.town);
+    }
+    const formatted = parts.length
+      ? parts.join(", ")
+      : (data.display_name || "").split(",").slice(0, 3).join(",");
+    const el = document.getElementById("f-dir");
+    if (el) el.value = formatted;
+  } catch(_) {}
+}
+
+// ──────────────────────────────────────────────────────────
+// GPS nativo
+// ──────────────────────────────────────────────────────────
+async function getGPSLocation() {
+  const btn     = document.getElementById("btn-gps");
+  const btnText = document.getElementById("btn-gps-text");
+
+  if (!navigator.geolocation) {
+    setLocationStatus("Tu navegador no soporta GPS", "err");
+    return;
+  }
+
+  btn.className = "btn-gps-new btn-gps-main loading";
+  btnText.textContent = "Buscando...";
+  btn.querySelector("i").className = "fa-solid fa-spinner fa-spin";
+  setLocationStatus("Detectando tu ubicación con GPS…", "info");
+
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const lat = pos.coords.latitude;
+      const lng = pos.coords.longitude;
+
+      userLat = lat; userLng = lng;
+      userCoords = { lat, lng };
+
+      btn.className = "btn-gps-new btn-gps-main success";
+      btn.querySelector("i").className = "fa-solid fa-check";
+      btnText.textContent = "GPS activo";
+
+      setLocationStatus("✅ Ubicación detectada correctamente", "ok");
+      updateCoordsUI(lat, lng);
+
+      await reverseGeocode(lat, lng);
+
+      const dist = calcDistance(lat, lng, STORE_LAT, STORE_LNG);
+      showDeliveryEstimate(dist);
+
+      // Abrir mapa automáticamente si no estaba abierto
+      if (!mapOpen) {
+        toggleMap();
+      } else {
+        setUserMarker(lat, lng, false);
+      }
+    },
+    (err) => {
+      btn.className = "btn-gps-new btn-gps-main";
+      btn.querySelector("i").className = "fa-solid fa-location-crosshairs";
+      btnText.textContent = "Detectar con GPS";
+      const msgs = {
+        1: "Permiso denegado. Activa la ubicación en tu navegador.",
+        2: "No se pudo obtener tu ubicación.",
+        3: "Tiempo agotado. Intenta de nuevo."
+      };
+      setLocationStatus(msgs[err.code] || "Error de GPS", "err");
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 }
+  );
+}
+
+// ──────────────────────────────────────────────────────────
+// Búsqueda con autocompletado (Nominatim)
+// ──────────────────────────────────────────────────────────
+function onGeoSearchInput(val) {
+  clearTimeout(searchTimer);
+  const icon = document.getElementById("geo-search-icon");
+  if (!val || val.length < 3) {
+    hideGeoSuggestions();
+    if (icon) icon.className = "fa-solid fa-magnifying-glass geo-search-icon";
+    return;
+  }
+  if (icon) icon.className = "fa-solid fa-spinner fa-spin geo-search-icon";
+  searchTimer = setTimeout(() => fetchGeoSuggestions(val), 500);
+}
+
+function onGeoSearchFocus() {
+  // noop — las sugerencias se muestran al escribir
+}
+
+async function fetchGeoSuggestions(query) {
+  const icon = document.getElementById("geo-search-icon");
+  try {
+    const resp = await fetch(
+      `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query + ", República Dominicana")}&format=json&limit=5&accept-language=es&addressdetails=1`
+    );
+    const results = await resp.json();
+    if (icon) icon.className = "fa-solid fa-magnifying-glass geo-search-icon";
+    renderGeoSuggestions(results);
+  } catch(_) {
+    if (icon) icon.className = "fa-solid fa-magnifying-glass geo-search-icon";
+    hideGeoSuggestions();
+  }
+}
+
+function renderGeoSuggestions(results) {
+  const box = document.getElementById("geo-suggestions");
+  if (!box) return;
+  if (!results.length) { hideGeoSuggestions(); return; }
+
+  box.style.display = "block";
+  box.innerHTML = results.map(r => {
+    const parts = (r.display_name || "").split(",");
+    const main  = parts.slice(0, 2).join(", ");
+    const sub   = parts.slice(2, 4).join(", ");
+    return `<div class="geo-suggestion-item" onclick="selectGeoSuggestion(${r.lat}, ${r.lon}, '${main.replace(/'/g,"\\'")}')">
+      <i class="fa-solid fa-location-dot geo-sug-icon"></i>
+      <div>
+        <div class="geo-sug-main">${main}</div>
+        ${sub ? `<div class="geo-sug-sub">${sub}</div>` : ""}
+      </div>
+    </div>`;
+  }).join("");
+
+  // Cerrar al hacer clic fuera
+  setTimeout(() => {
+    document.addEventListener("click", function closeOnClick(e) {
+      if (!box.contains(e.target) && e.target.id !== "f-dir") {
+        hideGeoSuggestions();
+        document.removeEventListener("click", closeOnClick);
+      }
+    });
+  }, 0);
+}
+
+function hideGeoSuggestions() {
+  const box = document.getElementById("geo-suggestions");
+  if (box) box.style.display = "none";
+}
+
+function selectGeoSuggestion(lat, lng, label) {
+  lat = parseFloat(lat); lng = parseFloat(lng);
+  const el = document.getElementById("f-dir");
+  if (el) el.value = label;
+  hideGeoSuggestions();
+
+  userLat = lat; userLng = lng;
+  userCoords = { lat, lng };
+  updateCoordsUI(lat, lng);
+
+  const dist = calcDistance(lat, lng, STORE_LAT, STORE_LNG);
+  showDeliveryEstimate(dist);
+  setLocationStatus("✅ Dirección seleccionada", "ok");
+
+  if (!mapOpen) {
+    toggleMap();
+  } else {
+    setUserMarker(lat, lng, false);
+  }
+}
+
+// ──────────────────────────────────────────────────────────
+// Mostrar estimación de envío
+// ──────────────────────────────────────────────────────────
 function showDeliveryEstimate(distKm) {
   const estDiv  = document.getElementById("delivery-estimate");
   const noZone  = document.getElementById("no-delivery-zone");
   const distLbl = document.getElementById("delivery-dist-lbl");
   const tiersEl = document.getElementById("delivery-tiers");
+  const distBar = document.getElementById("delivery-dist-bar");
 
   if (!estDiv) return;
 
-  distLbl.textContent = `📍 ${distKm.toFixed(1)} km de la tienda`;
+  distLbl.textContent = `${distKm.toFixed(1)} km`;
 
-  // Check if any tier covers this distance
+  // Barra de distancia visual
+  if (distBar) {
+    const pct = Math.min((distKm / MAX_ZONE_KM) * 100, 100);
+    distBar.style.width = pct + "%";
+  }
+
   const available = DELIVERY_TIERS.map(tier => ({
     ...tier,
     cost: calcTierCost(tier, distKm)
@@ -9512,8 +10061,7 @@ function showDeliveryEstimate(distKm) {
   if (!available.length) {
     estDiv.classList.remove("visible");
     noZone.style.display = "block";
-    deliveryCost = 0;
-    selectedTier = null;
+    deliveryCost = 0; selectedTier = null;
     return;
   }
 
@@ -9526,116 +10074,22 @@ function showDeliveryEstimate(distKm) {
       <div class="tier-name">${tier.name}</div>
       <div class="tier-time">${tier.time}</div>
       <div class="tier-price">RD$ ${tier.cost.toLocaleString()}</div>
+      ${tier.badge ? `<div class="tier-badge ${tier.badge.cls}">${tier.badge.text}</div>` : ""}
     </div>
   `).join("");
 
-  // Auto-select cheapest option
-  if (available.length > 0) {
-    selectTier(available[0].id, available[0].cost);
-  }
+  if (available.length) selectTier(available[0].id, available[0].cost);
 }
 
 function selectTier(tierId, cost) {
   selectedTier = tierId;
   deliveryCost = cost;
-  // Update UI
   document.querySelectorAll(".delivery-tier").forEach(el => el.classList.remove("sel"));
   const sel = document.getElementById("tier-" + tierId);
   if (sel) sel.classList.add("sel");
-  // Update cart totals
   updateCartTotals();
-  toast(`🛵 Envío ${tierId === "express" ? "express" : tierId === "standard" ? "estándar" : "programado"}: RD$ ${cost.toLocaleString()}`);
-}
-
-function updateCartTotals() {
-  const subtotal  = cart.reduce((s, i) => s + i.precio * i.qty, 0);
-  const total     = subtotal + deliveryCost;
-  const sub       = document.getElementById("cart-sub-num");
-  const tot       = document.getElementById("cart-total-num");
-  const tot2      = document.getElementById("cart-total-num2");
-  const delivRow  = document.getElementById("cart-delivery-row");
-
-  if (sub)  sub.textContent  = "RD$ " + subtotal.toLocaleString();
-
-  if (selectedTier && deliveryCost > 0) {
-    // Tier selected — show delivery cost and full total
-    if (delivRow) {
-      delivRow.style.display = "flex";
-      delivRow.innerHTML = `<span>🛵 Envío</span><span style="color:var(--rose);font-weight:700">RD$ ${deliveryCost.toLocaleString()}</span>`;
-    }
-    if (tot)  tot.textContent  = "RD$ " + total.toLocaleString();
-    if (tot2) tot2.textContent = "RD$ " + total.toLocaleString();
-  } else {
-    // No tier yet — hide delivery row, show only subtotal as total
-    if (delivRow) delivRow.style.display = "none";
-    if (tot)  tot.textContent  = "RD$ " + subtotal.toLocaleString();
-    if (tot2) tot2.textContent = "RD$ " + subtotal.toLocaleString();
-  }
-}
-
-// GPS location
-async function getGPSLocation() {
-  const btn    = document.getElementById("btn-gps");
-  const status = document.getElementById("location-status");
-
-  if (!navigator.geolocation) {
-    setLocationStatus("Tu navegador no soporta GPS", "err");
-    return;
-  }
-
-  btn.className = "btn-gps loading";
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Buscando...';
-  setLocationStatus("Detectando tu ubicación...", "info");
-
-  navigator.geolocation.getCurrentPosition(
-    async (pos) => {
-      userLat = pos.coords.latitude;
-      userLng = pos.coords.longitude;
-      userCoords = { lat: userLat, lng: userLng };
-
-      // Reverse geocode using free API
-      try {
-        const resp = await fetch(
-          `https://nominatim.openstreetmap.org/reverse?lat=${userLat}&lon=${userLng}&format=json&accept-language=es`
-        );
-        const data = await resp.json();
-        const addr = data.display_name || `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
-        // Format nicely
-        const parts = [];
-        if (data.address) {
-          if (data.address.road)        parts.push(data.address.road);
-          if (data.address.suburb)      parts.push(data.address.suburb);
-          if (data.address.city || data.address.town) parts.push(data.address.city || data.address.town);
-        }
-        const formatted = parts.length ? parts.join(", ") : addr.split(",").slice(0,3).join(",");
-        const dirEl = document.getElementById("f-dir");
-        if (dirEl) dirEl.value = formatted;
-        setLocationStatus("✅ Ubicación detectada correctamente", "ok");
-      } catch(e) {
-        const dirEl = document.getElementById("f-dir");
-        if (dirEl) dirEl.value = `${userLat.toFixed(5)}, ${userLng.toFixed(5)}`;
-        setLocationStatus("✅ Coordenadas obtenidas", "ok");
-      }
-
-      btn.className = "btn-gps success";
-      btn.innerHTML = '<i class="fa-solid fa-check"></i> GPS activo';
-
-      // Calculate distance and show estimate
-      const dist = calcDistance(userLat, userLng, STORE_LAT, STORE_LNG);
-      showDeliveryEstimate(dist);
-    },
-    (err) => {
-      btn.className = "btn-gps";
-      btn.innerHTML = '<i class="fa-solid fa-location-crosshairs"></i> Usar GPS';
-      const msgs = {
-        1: "Permiso de ubicación denegado. Actívalo en tu navegador.",
-        2: "No se pudo obtener tu ubicación.",
-        3: "Tiempo de espera agotado. Intenta de nuevo."
-      };
-      setLocationStatus(msgs[err.code] || "Error de GPS", "err");
-    },
-    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-  );
+  const lbl = { express:"express ⚡", standard:"estándar", scheduled:"programado 📅" };
+  toast(`🛵 Envío ${lbl[tierId]||tierId}: RD$ ${cost.toLocaleString()}`);
 }
 
 function setLocationStatus(msg, type) {
@@ -9643,16 +10097,39 @@ function setLocationStatus(msg, type) {
   if (!el) return;
   const icons = { ok: "fa-check-circle", err: "fa-circle-exclamation", info: "fa-circle-info" };
   el.className = "location-status " + type;
-  el.innerHTML = `<i class="fa-solid ${icons[type]||"fa-circle-info"}" style="font-size:.65rem"></i> ${msg}`;
+  el.innerHTML = `<i class="fa-solid ${icons[type]||"fa-circle-info"}"></i> ${msg}`;
 }
 
-// When user types address manually, hide GPS estimate (they typed it themselves)
+// Compatibilidad con el resto del código que llama onAddressChange
 function onAddressChange() {
   if (!userCoords) {
     const est = document.getElementById("delivery-estimate");
     if (est) est.classList.remove("visible");
-    deliveryCost = 0;
-    selectedTier = null;
+    deliveryCost = 0; selectedTier = null;
+  }
+}
+
+function updateCartTotals() {
+  const subtotal = cart.reduce((s, i) => s + i.precio * i.qty, 0);
+  const total    = subtotal + deliveryCost;
+  const sub      = document.getElementById("cart-sub-num");
+  const tot      = document.getElementById("cart-total-num");
+  const tot2     = document.getElementById("cart-total-num2");
+  const delivRow = document.getElementById("cart-delivery-row");
+
+  if (sub) sub.textContent = "RD$ " + subtotal.toLocaleString();
+
+  if (selectedTier && deliveryCost > 0) {
+    if (delivRow) {
+      delivRow.style.display = "flex";
+      delivRow.innerHTML = `<span>🛵 Envío</span><span style="color:var(--rose);font-weight:700">RD$ ${deliveryCost.toLocaleString()}</span>`;
+    }
+    if (tot)  tot.textContent  = "RD$ " + total.toLocaleString();
+    if (tot2) tot2.textContent = "RD$ " + total.toLocaleString();
+  } else {
+    if (delivRow) delivRow.style.display = "none";
+    if (tot)  tot.textContent  = "RD$ " + subtotal.toLocaleString();
+    if (tot2) tot2.textContent = "RD$ " + subtotal.toLocaleString();
   }
 }
 
@@ -9739,15 +10216,20 @@ async function submitCheckout() {
     if(fname) fname.textContent="";
     const cf=document.getElementById("comp-file"); if(cf) cf.value="";
     const gpsBtn=document.getElementById("btn-gps");
-    if(gpsBtn){ gpsBtn.className="btn-gps"; gpsBtn.innerHTML='<i class="fa-solid fa-location-crosshairs"></i> Usar GPS'; }
+    if(gpsBtn){ gpsBtn.className="btn-gps-new btn-gps-main"; gpsBtn.querySelector("i").className="fa-solid fa-location-crosshairs"; const t=document.getElementById("btn-gps-text"); if(t) t.textContent="Detectar con GPS"; }
+    // Reset map state
+    mapOpen=false; geoMap=null; geoMarker=null; geoCircles=[];
+    const mapCont=document.getElementById("geo-map-container"); if(mapCont) mapCont.classList.remove("open");
+    const mapBtn=document.getElementById("btn-map-toggle"); if(mapBtn){ mapBtn.classList.remove("map-open"); mapBtn.innerHTML='<i class="fa-solid fa-map"></i> Mapa'; }
+    const coordPill=document.getElementById("geo-coords-pill"); if(coordPill) coordPill.classList.remove("visible");
     // Reset payment mode — selModo handles everything internally
     selModo("envio");
     // Restore location section visibility
-    const locSection = document.querySelector(".location-wrap")?.closest(".fg");
+    const locSection = document.querySelector(".geo-search-wrap")?.closest("div[style]");
     if (locSection) locSection.classList.remove("delivery-hidden");
     const est=document.getElementById("delivery-estimate");
     if(est) est.classList.remove("visible");
-    setLocationStatus("Escribe tu dirección o presiona GPS para detectarla automáticamente","info");
+    setLocationStatus("Escribe tu dirección o usa GPS para detectarla","info");
     selPay("Efectivo");
     // Show confirmation screen
     openModal("m-confirm");
@@ -9964,43 +10446,7 @@ async function loadEstadisticas() {
       }).join("");
     }
 
-    // ── Tendencia 30 días (gráfica de área) ──────────────────────
-    const areaSvg    = $("s-area-svg");
-    const areaLabels = $("s-area-labels");
-    if (areaSvg && Array.isArray(data.tendencia30d) && data.tendencia30d.length > 1) {
-      const pts30  = data.tendencia30d;
-      const W = 500, H = 160, PAD = 12;
-      const maxV = Math.max(...pts30.map(d => d.total), 1);
-      const N = pts30.length;
-      const coords = pts30.map((d, i) => {
-        const x = PAD + (i / (N - 1)) * (W - PAD * 2);
-        const y = H - PAD - ((d.total / maxV) * (H - PAD * 2 - 20));
-        return [Math.round(x), Math.round(y)];
-      });
-      const lineD = `M${coords.map(p => p.join(",")).join(" L")}`;
-      const areaD = `${lineD} L${coords[N-1][0]},${H-PAD} L${coords[0][0]},${H-PAD} Z`;
-      areaSvg.innerHTML = `
-        <defs>
-          <linearGradient id="areaGrad30" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="var(--rose)" stop-opacity=".2"/>
-            <stop offset="100%" stop-color="var(--rose)" stop-opacity="0"/>
-          </linearGradient>
-        </defs>
-        <path d="${areaD}" fill="url(#areaGrad30)" class="s-area-path"/>
-        <path d="${lineD}" fill="none" class="s-line-path"/>
-        ${coords.map((p, i) => pts30[i].total > 0
-          ? `<circle cx="${p[0]}" cy="${p[1]}" r="4" class="s-area-dot">
-               <title>${new Date(pts30[i].fecha).toLocaleDateString("es-DO",{day:"numeric",month:"short"})}: ${fmt(pts30[i].total)}</title>
-             </circle>` : "").join("")}`;
-      if (areaLabels) {
-        const step = Math.max(1, Math.floor(N / 6));
-        areaLabels.innerHTML = pts30.map((d, i) =>
-          i % step === 0 || i === N - 1
-            ? `<span style="font-size:.62rem;color:var(--muted)">${new Date(d.fecha).toLocaleDateString("es-DO",{day:"numeric",month:"short"})}</span>`
-            : `<span></span>`
-        ).join("");
-      }
-    }
+    // ── Tendencia 30 días: almacenada en _statsData, loadStats la usará al ejecutarse ──
 
     // ── Más/menos vendido ────────────────────────────────────────
     const mas = data.masVendido;
